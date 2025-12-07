@@ -1,204 +1,227 @@
--------------------------------------------------------------------------------
---
--- File: MgtTest_DRP_bridge.vhd
--- Author: Brandon Griffith
--- Original Project: UltraScale MgtTest
--- Date: 23 August 2016
---
--------------------------------------------------------------------------------
--- (c) 2016 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose: Bridge logic for AXI4-Lite to UltraScale 
--- GT core with vector DRP ports
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-
---synthesis translate_off
-library unisim;
-  use unisim.vcomponents.all;
---synthesis translate_on
-
-
-entity MgtTest_DRP_bridge is
-generic(
-    kNUM_LANES : integer := 4;
-    kADDR_SIZE : integer := 9
-);
-port (
-    -- Asynchronous reset signal from the LabVIEW FPGA environment.
-    -- This signal *must* be present in the port interface for all IO Socket CLIPs.
-    -- You should reset your CLIP logic whenever this signal is logic high.
-    aResetSl     : in  std_logic;
-
--------------------------------------------------------------------------------
--- DRP interface to GT core, names are w.r.t. the GT core
--------------------------------------------------------------------------------
-    gtwiz_drpclk     : out std_logic_vector(kNUM_LANES-1 downto 0);
-    gtwiz_drpaddr_in : out std_logic_vector(kNUM_LANES*kADDR_SIZE-1 downto 0);
-    gtwiz_drpdi_in   : out std_logic_vector(kNUM_LANES*16-1 downto 0);
-    gtwiz_drpdo_out  : in  std_logic_vector(kNUM_LANES*16-1 downto 0);
-    gtwiz_drpen_in   : out std_logic_vector(kNUM_LANES-1 downto 0);
-    gtwiz_drpwe_in   : out std_logic_vector(kNUM_LANES-1 downto 0);
-    gtwiz_drprdy_out : in  std_logic_vector(kNUM_LANES-1 downto 0);
-
--------------------------------------------------------------------------------
--- AXI interfaces for LVFPGA Instruction Framework
--------------------------------------------------------------------------------
-    s_aclk : in  std_logic;
-
-    -- AXI4-Lite Interface for Channel DRP
-    drp_s_axi_awaddr  : in  std_logic_vector(31 downto 0);
-    drp_s_axi_awvalid : in  std_logic;
-    drp_s_axi_awready : out std_logic;
-    drp_s_axi_wdata   : in  std_logic_vector(31 downto 0);
-    drp_s_axi_wstrb   : in  std_logic_vector(3 downto 0);
-    drp_s_axi_wvalid  : in  std_logic;
-    drp_s_axi_wready  : out std_logic;
-    drp_s_axi_bresp   : out std_logic_vector(1 downto 0);
-    drp_s_axi_bvalid  : out std_logic;
-    drp_s_axi_bready  : in  std_logic;
-    drp_s_axi_araddr  : in  std_logic_vector(31 downto 0);
-    drp_s_axi_arvalid : in  std_logic;
-    drp_s_axi_arready : out std_logic;
-    drp_s_axi_rdata   : out std_logic_vector(31 downto 0);
-    drp_s_axi_rresp   : out std_logic_vector(1 downto 0);
-    drp_s_axi_rvalid  : out std_logic;
-    drp_s_axi_rready  : in  std_logic
-);
-
-end MgtTest_DRP_bridge;
-
-architecture rtl of MgtTest_DRP_bridge is
-    signal aReset_n : std_logic;
-
-    -- AXI4-Lite Read Data vectors from the DRP endpoints in the cores
-    subtype AxiData_t is std_logic_vector(31 downto 0);
-    type AxiDataAry_t is array(natural range <>) of AxiData_t;
-    signal drp_s_axi_rdata_lane   : AxiDataAry_t(kNUM_LANES-1 downto 0);
-    signal drp_s_axi_rdata_lcl    : AxiData_t;
-
-    -- DRP Address signals
-    subtype DrpMgtAddr_t is std_logic_vector(kADDR_SIZE-1 downto 0);
-    type DrpMgtAddrAry_t is array(natural range <>) of DrpMgtAddr_t;
-    signal gtwiz_lane_drpaddr_in : DrpMgtAddrAry_t(kNUM_LANES-1 downto 0);
-
-    -- DRP Data signals
-    subtype DrpData_t is std_logic_vector(15 downto 0);
-    type DrpDataAry_t is array(natural range <>) of DrpData_t;
-    signal gtwiz_lane_drpdi_in, gtwiz_lane_drpdo_out : DrpDataAry_t(kNUM_LANES-1 downto 0);
-
-    -- AXI4-Lite Valid and Ready signal vectors
-    signal drp_s_axi_awvalid_slv, drp_s_axi_awready_slv, drp_s_axi_wvalid_slv, drp_s_axi_wready_slv,
-           drp_s_axi_bvalid_slv,  drp_s_axi_arvalid_slv, drp_s_axi_arready_slv,
-           drp_s_axi_rvalid_slv,  drp_s_axi_rready_slv,  drp_s_axi_bready_slv : std_logic_vector(kNUM_LANES-1 downto 0);
-
-    function to_StdLogic(b : boolean) return std_logic is
-    begin
-        if b then
-            return '1';
-        else
-            return '0';
-        end if;
-    end to_StdLogic;
-
-begin
-    ---------------------------------------------------------------------------
-    -- GT Wizard Channel AXI4-Lite and DRP Handlers
-    ---------------------------------------------------------------------------
-    -- Address map to go from a single AXI4-Lite bus to multiple endpoints
-    AXI4_Lite_Address_Map_drp_gtwiz_ch : entity work.PXIe659XR_AXI4_Lite_Address_Map(rtl)
-    generic map (
-        kNumEndpoints  => kNUM_LANES,
-        kAddrSelectLsb => kADDR_SIZE
-    )
-    port map (
-        s_aclk            => s_aclk,
-        aReset_n          => aReset_n,
-        s_axi_awaddr      => drp_s_axi_awaddr,
-        s_axi_awvalid     => drp_s_axi_awvalid,
-        s_axi_awready     => drp_s_axi_awready,
-        s_axi_wvalid      => drp_s_axi_wvalid,
-        s_axi_wready      => drp_s_axi_wready,
-        s_axi_bvalid      => drp_s_axi_bvalid,
-        s_axi_bready      => drp_s_axi_bready,
-        s_axi_araddr      => drp_s_axi_araddr,
-        s_axi_arvalid     => drp_s_axi_arvalid,
-        s_axi_arready     => drp_s_axi_arready,
-        s_axi_rdata       => drp_s_axi_rdata,
-        s_axi_rvalid      => drp_s_axi_rvalid,
-        s_axi_rready      => drp_s_axi_rready,
-        s_axi_awvalid_slv => drp_s_axi_awvalid_slv,
-        s_axi_awready_slv => drp_s_axi_awready_slv,
-        s_axi_wvalid_slv  => drp_s_axi_wvalid_slv,
-        s_axi_wready_slv  => drp_s_axi_wready_slv,
-        s_axi_bvalid_slv  => drp_s_axi_bvalid_slv,
-        s_axi_bready_slv  => drp_s_axi_bready_slv,
-        s_axi_arvalid_slv => drp_s_axi_arvalid_slv,
-        s_axi_arready_slv => drp_s_axi_arready_slv,
-        s_axi_rdata_in    => drp_s_axi_rdata_lcl,
-        s_axi_rvalid_slv  => drp_s_axi_rvalid_slv,
-        s_axi_rready_slv  => drp_s_axi_rready_slv
-    );
-    -- Generate statement for the AXI4-Lite to DRP lane components
-    GenGtwizAxiDrp : for i in 0 to kNUM_LANES-1 generate
-        -- Signal vectorization for GT Wizard Verilog core --
-        gtwiz_drpclk        (i) <= s_aclk;
-        gtwiz_drpaddr_in    ((i+1)*kADDR_SIZE-1 downto i*kADDR_SIZE) <= gtwiz_lane_drpaddr_in(i);
-        gtwiz_drpdi_in      ((i+1)*16-1 downto i*16) <= gtwiz_lane_drpdi_in  (i);
-        gtwiz_lane_drpdo_out(i) <= gtwiz_drpdo_out(i*16+15 downto i*16);
-        
-        AXI4_Lite_to_drp_gtwiz_i : entity work.AXI4_Lite_to_DRP(rtl)
-        generic map (
-            kADDR_SIZE => kADDR_SIZE
-        )
-        port map (
-            s_aclk            => s_aclk,
-            aReset_n          => aReset_n,
-            s_axi_awaddr      => drp_s_axi_awaddr,
-            s_axi_awvalid     => drp_s_axi_awvalid_slv(i),
-            s_axi_awready     => drp_s_axi_awready_slv(i),
-            s_axi_wdata       => drp_s_axi_wdata,
-            s_axi_wvalid      => drp_s_axi_wvalid_slv(i),
-            s_axi_wready      => drp_s_axi_wready_slv(i),
-            s_axi_bready      => drp_s_axi_bready_slv(i),
-            s_axi_bvalid      => drp_s_axi_bvalid_slv(i),
-            s_axi_araddr      => drp_s_axi_araddr,
-            s_axi_arvalid     => drp_s_axi_arvalid_slv(i),
-            s_axi_arready     => drp_s_axi_arready_slv(i),
-            s_axi_rdata       => drp_s_axi_rdata_lane(i),
-            s_axi_rready      => drp_s_axi_rready_slv(i),
-            s_axi_rvalid      => drp_s_axi_rvalid_slv(i),
-            drpaddr_in        => gtwiz_lane_drpaddr_in(i),
-            drpdi_in          => gtwiz_lane_drpdi_in(i),
-            drpdo_out         => gtwiz_lane_drpdo_out(i),
-            drprdy_out        => gtwiz_drprdy_out(i),
-            drpen_in          => gtwiz_drpen_in(i),
-            drpwe_in          => gtwiz_drpwe_in(i)
-        );
-    end generate;
-    drp_s_axi_rresp <= "00";
-    drp_s_axi_bresp <= "00";
-
-    process(drp_s_axi_rdata_lane)
-        variable drp_s_axi_rdata_temp : AxiData_t;
-    begin
-        drp_s_axi_rdata_temp := (others => '0');
-        for i in 0 to kNUM_LANES-1 loop
-            drp_s_axi_rdata_temp := drp_s_axi_rdata_temp or drp_s_axi_rdata_lane(i);
-        end loop;
-        drp_s_axi_rdata_lcl <= drp_s_axi_rdata_temp;
-    end process;
-        
-    -- Drive active low reset.
-    aReset_n <= not aResetSl;
-
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+bXcW0x1/qKj04BHjmHOtCwMC593wyTe6ir8/RWOCKG+3a43yDFkoOl1G9eeUyKXS
+dHV6a7g5whryT9kCZ6JluvLJ3w+QXhepRDwaZoyFHKkMFQbf6TOK5yz+pf4CW/AZ
+6xcHO29EWlT798v3VJYKNmkdRgnY+qUwdnwFvbaB/swsntFmLo5r0I3K8fo8f30a
+6+iW0Fc7iSSuSxE0P9mq0QtX31480wfscTuk97OejV1l6f4JOIQRKPm0SJEXF9yo
+P/M+8WCc96bNj7YDEbVwe3HJb33QjmvsKpZ7Nd889dWrR2BbZSUlKiQkba3jrmei
+INxEzsAGb9PVHvyTHX2EAg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="92hUR4t8ZCt6mH1zQFYCjBVy5vFX0kRAX1Wae7L09Bk="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+FHvbXvwhjDf8bkqkFQRHgU1jocYsx6600GmoADeuGGKP7hQt7RcgVT72eqZipJh0
+tceR/4PeBnaMZl1XTIjdDPZ9eUZH4lakjSjNEHVi8vG8Vs2pnT+X6j4VtSk9DReE
+YmRyZ6pD4kjRm5CHMn8KrNw87/9hXNgQYr5AnevqFbk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="i2QALIcAkRD0JczwYIxD6+1ciaC4qMkSMP5ppFFUA4c="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 8608 )
+`protect data_block
+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
+r54mqZsIpYvAW4GFZbRBgg==
+`protect end_protected

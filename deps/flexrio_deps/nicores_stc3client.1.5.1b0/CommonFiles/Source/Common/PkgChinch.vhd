@@ -1,1013 +1,812 @@
--------------------------------------------------------------------------------
---
--- File: PkgChinch.vhd
--- Author: Glen Sescila
--- Original Project: PCIExpress DFC
--- Date: 5 May 2008
---
--------------------------------------------------------------------------------
--- (c) 2003 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
--- This package provides types, functions, and constants used throughout the
--- Chinch source code.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-package PkgChinch is
-
-  -- The PkgChinchConfig package should provide a constant named kTargetType
-  -- of the type Target_t.  The value of this constant is used to control
-  -- technology-specific code.  RAM instantiation is the primary client of
-  -- this constant.  Note that the kTargetType constant should be set to the
-  -- appropriate target value for both simulation and synthesis.  The
-  -- Simulation value is only used during early simulation before a target
-  -- technology has been selected.
-
-  type Target_t is (Simulation, Virtex2, Virtex4, Spartan3, Stratix, Stratix2,
-                    Oki);
-
-
-
-  -- The PkgChinchConfig package should provide a constant named
-  -- kChinchConfig of the type ChinchCoreConfig_t.  The values in this record
-  -- are used to optimize the Chinch core at synthesis time.
-
-  type ChinchCoreConfig_t is record
-    TwoClocks : boolean;          -- Setting this variable to true
-                                  -- configures the core to use independant
-                                  -- clocks for the host bus and IO port
-                                  -- logic.  Setting the variable to false
-                                  -- causes the entire core to operate
-                                  -- within a single clock domain.
-
-    DMA_TYPE : natural;           -- The type of Traditional DMA
-                                  -- implemented.  legal values: 0
-
-    DMA_ChannelsLog2 : natural;   -- Log2 of number of DMA channels.  Note
-                                  -- that this also controls the number of
-                                  -- streams supported.  legal values: 0-15
-
-    LINKSZ_Log2 : natural;        -- Log2 of the maximum DMA link size
-                                  -- supported.  legal values: 5-15
-
-    IncludeInputDma : boolean;    -- Set this to true if you want Input DMA
-                                  -- to work.
-
-    IncludeOutputDma : boolean;   -- Set this to true if you want Output
-                                  -- DMA to work.
-
-    IncludeTtccr : boolean;       -- Set this to true if you want the DMA
-                                  -- Total Transfer Count Compare interrupt
-                                  -- to work.
-
-    IncludeTimer : boolean;       -- Set this to true if you want the
-                                  -- Elapsed Time Register and its
-                                  -- associated interrupt to work.
-
-    IncludeIntStatPush : boolean; -- Set this to true if you want Interrupt
-                                  -- Status Pushing to work.
-
-    IncludeMCU : boolean;         -- Set this to true to include the 8051
-                                  -- microcontroller in the ChinchCore.
-
-    ProgRomAddressWidth : natural;    -- Set the size of the 8051 program ram.
-                                      -- A value of 12 means 4K bytes
-
-    OnChipRamAddressWidth : natural;  -- Set the size of the 8051 internal data
-                                      -- memory. The IP we use only use 7 bit address
-                                      -- bus, so there's no need to have this number
-                                      -- larger than 7.
-
-    OffChipRamAddressWidth : natural; -- Set the size of the 8051 external data
-                                      -- memory.  A value of 12 means 4K bytes
-
-    RandomAccess : boolean;       -- the core logic implements the random
-                                  -- access functionality when this
-                                  -- variable is true.
-
-    IO_MPS : natural;             -- IO maximum payload size.  This is the
-                                  -- maximum size of data payload
-                                  -- supported.  legal values: powers of
-                                  -- two in the range 32-4096
-
-    HB_MPS : natural;             -- HB maximum payload size.  This is the
-                                  -- maximum size of data payload
-                                  -- supported.  legal values: powers of
-                                  -- two in the range 32-4096
-
-    IO_MSIT : natural;            -- IO maximum simultaneous transactions
-                                  -- legal values: 2-4095
-
-    HB_MSIT : natural;            -- host bus maximum simultaneous
-                                  -- transactions.  legal values: 2-4095
-
-    IORXBE_MP : natural;          -- maximum packets in IORXBE FIFO
-                                      -- legal values: 1-1024
-    IORXBE_MW : natural;          -- maximum words in IORXBE FIFO
-                                      -- legal values: 1-131072
-
-    IOTXBE_MP : natural;          -- maximum packets in IOTXBE FIFO
-                                      -- legal values: 1-1024
-    IOTXBE_MW : natural;          -- maximum words in IOTXBE FIFO
-                                      -- legal values: 1-131072
-
-    HBRXBE_MP : natural;          -- maximum packets in HBRXBE FIFO
-                                      -- legal values: 1-1024
-    HBRXBE_MW : natural;          -- maximum words in HBRXBE FIFO
-                                      -- legal values: 1-131072
-
-    HBTXBE_MP : natural;          -- maximum packets in HBTXBE FIFO
-                                      -- legal values: 1-1024
-    HBTXBE_MW : natural;          -- maximum words in HBTXBE FIFO
-                                      -- legal values: 1-131072
-
-    IO_RegProgEndian : boolean;   -- when true enables programmable
-                                  -- Endianess when accessing CHINCH
-                                  -- registers from IO Port 2.
-
-    IO_RegBigEndian : boolean;    -- when programmable Endianess is not
-                                  -- enabled this controls IO Port 2's view
-                                  -- of the CHINCH registers.  when
-                                  -- programmable Endianess is enabled this
-                                  -- is used as the default setting.
-
-    HB_RegProgEndian : boolean;   -- when true enables programmable
-                                  -- Endianess when accessing CHINCH
-                                  -- registers from the host bus.
-
-    HB_RegBigEndian : boolean;    -- when programmable Endianess is not
-                                  -- enabled this controls the host bus
-                                  -- view of the CHINCH registers.  when
-                                  -- programmable Endianess is enabled this
-                                  -- is used as the default setting.
-
-    IO_BaggageWidth : natural;    -- IO baggage width in number of bits
-
-    HB_BaggageWidth : natural;    -- HB baggage width in number of bits
-
-    IO_Windows : natural;         -- number of IO Port windows
-
-    CP_Windows : natural;         -- number of Configuration Port windows.
-                                  -- this also controls the number of chip
-                                  -- select outputs implemented on the
-                                  -- Configuration Port.
-
-    NumGpios : natural;           -- number of external GPIO pins to
-                                  -- implement.  legal values: 1-32
-  end record;
-
-
-
-  -- Each Bus Interface Module provides a signal to the Chinch core of the
-  -- type BIM_Config_t.  This record controls certain behaviors of the core.
-  -- Each field of this record could be a constant or an active signal unless
-  -- otherwise restricted in the field's comment.  When a field is driven by
-  -- the BIM with a constant value the core may be optimized at synthesis
-  -- time.
-
-  type BIM_Config_t is record
-    HBR_SIZE_Log2 : unsigned(4 downto 0);   -- defines the size of the BIM
-                                  -- register region in local address
-                                  -- space.  The size is 2 to the
-                                  -- HBR_SIZE_Log2 power bytes.  Each BIM
-                                  -- must drive this with a constant.  This
-                                  -- is unused on the IO side of the core.
-
-    HBR_BASE : unsigned(31 downto 0);   -- defines the base offset of the
-                                  -- BIM registers in local address space.
-                                  -- This must be on a boundary of the size
-                                  -- indicated by HBR_SIZE_Log2.  Each BIM
-                                  -- must drive this with a constant.  This
-                                  -- is unused on the IO side of the core.
-
-    TypeIdentification : std_logic_vector(31 downto 0);   -- this provides
-                                  -- the value for the xxTIDR register.
-
-    SingleResponse : boolean;
-
-    MaxResponseSizeLog2 : unsigned(3 downto 0);
-
-    MaxReadSizeLog2 : unsigned(3 downto 0);
-
-    MaxWriteSizeLog2 : unsigned(3 downto 0);
-
-    MaxTransacts : unsigned(11 downto 0);
-
-    ReadReqAddressBoundaryLog2 : unsigned(3 downto 0);
-
-    WriteReqAddressBoundaryLog2 : unsigned(3 downto 0);
-  end record;
-
-
-
-  -- The ChinchCore outputs a signal of the type ChinchCoreStatus_t.  This
-  -- record reports various states, error events, and programmed operating
-  -- modes.
-
-  type ChinchCoreStatus_t is record
-
-    PoscStatus : std_logic_vector(1 downto 0); -- The state of the POSC logic.
-
-    InterruptViaMessages : boolean;  -- When this mode bit is true a Host Bus
-                                     -- BIM should use ChinchCore transmitted
-                                     -- Message packets to notify the host.
-                                     -- When this bit is false the
-                                     -- sHB_Interrupt output should be used
-                                     -- instead.
-
-    InterruptTrafficClass : std_logic_vector(5 downto 0);
-
-    UnsolicitedCompletionPulse : boolean;  -- This asserts for a single state
-                                           -- to report reception of an
-                                           -- unsolicited completion.
-
-    CompletionTimeOutPulse : boolean;  -- This asserts for a single state to
-                                       -- report that we timed out waiting to
-                                       -- receive a completion from the host
-                                       -- bus.
-
-    OutstandingTransactions : boolean;  -- This signal remains true while the
-                                        -- ChinchCore is waiting to receive
-                                        -- completions for at least one
-                                        -- initiated transaction that was split
-                                        -- by the host BIM.
-
-    ApplicationSepecificMode : std_logic_vector(7 downto 0);
-
-    DebugSelect : std_logic_vector(2 downto 0);
-    DebugInfo : std_logic_vector(7 downto 0);
-  end record;
-
-
-
-  -- these types are used for the Chinch internal packet format.
-
-  subtype ChinchPacketWord_t is std_logic_vector(63 downto 0);
-
-  subtype ChinchPacketType_t is std_logic_vector(2 downto 0);
-
-  subtype ChinchPacketSpc_t is std_logic_vector(1 downto 0);
-
-  subtype ChinchPacketLabel_t is unsigned(11 downto 0);
-
-  subtype ChinchPacketLength_t is unsigned(14 downto 0);
-
-  subtype ChinchPacketAddress_t is unsigned(31 downto 0);
-
-  subtype ChinchPacketCompletionStatus_t is std_logic_vector(1 downto 0);
-
-  subtype ChinchPacketRemainingCount_t is unsigned(14 downto 0);
-
-  subtype ChinchPacketUpperAddress_t is unsigned(31 downto 0);
-
-  subtype ChinchPacketStream_t is unsigned(15 downto 0);
-
-
-
-  -- these codes are used for the Chinch Packet Type field
-
-  constant kChinchPacketTypeRequestSplitRead   : ChinchPacketType_t := "001";
-
-  constant kChinchPacketTypeResponseWrite      : ChinchPacketType_t := "010";
-
-  constant kChinchPacketTypeRequestPostedWrite : ChinchPacketType_t := "100";
-
-  constant kChinchPacketTypeRequestSplitWrite  : ChinchPacketType_t := "101";
-
-  constant kChinchPacketTypeResponseRead       : ChinchPacketType_t := "110";
-
-
-
-  -- these codes are used for the Chinch Packet Spc field
-
-  constant kChinchPacketSpcExtHeader : ChinchPacketSpc_t := "00";
-
-  constant kChinchPacketSpcMemory    : ChinchPacketSpc_t := "01";
-
-  constant kChinchPacketSpcMessage   : ChinchPacketSpc_t := "10";
-
-  constant kChinchPacketSpcStream    : ChinchPacketSpc_t := "11";
-
-
-
-  -- these codes are used for the Chinch Packet Completion Status field
-
-  constant kChinchPacketComplStatUnused  : ChinchPacketCompletionStatus_t
-                                                                 := "00";
-
-  constant kChinchPacketComplStatSuccess : ChinchPacketCompletionStatus_t
-                                                                 := "00";
-
-  constant kChinchPacketComplStatFailure : ChinchPacketCompletionStatus_t
-                                                                 := "01";
-
-  constant kChinchPacketComplStatTermCnt : ChinchPacketCompletionStatus_t
-                                                                 := "10";
-
-  constant kChinchPacketComplStatDisconn : ChinchPacketCompletionStatus_t
-                                                                 := "11";
-
-
-
-  -- these constants are convenient when the fields aren't used
-
-  constant kChinchPacketRemainingCountUnused : ChinchPacketRemainingCount_t
-                                                        := (others => '0');
-
-  constant kChinchPacketStreamUnused : ChinchPacketStream_t
-                                                        := (others => '0');
-
-
-
-  -- these codes are used for the destination bus on the receive interface
-
-  constant kChinchDestinationLocal       : std_logic_vector := "00";
-
-  constant kChinchDestinationBusSpecific : std_logic_vector := "01";
-
-  constant kChinchDestinationIdentROM    : std_logic_vector := "10";
-
-  constant kChinchDestinationFar         : std_logic_vector := "11";
-
-
-
-  -- these codes are used for the data size field of the register interface
-
-  constant kChinchDataSize64bit : std_logic_vector := "11";
-
-  constant kChinchDataSize32bit : std_logic_vector := "10";
-
-  constant kChinchDataSize16bit : std_logic_vector := "01";
-
-  constant kChinchDataSize08bit : std_logic_vector := "00";
-
-
-
-  -- This supplies the value for the CHINCH Identification Register (CHID)
-
-  constant kCHID : std_logic_vector(31 downto 0) := X"C0107AD0";
-
-  -- This supplies the value for the CHINCH Version Register (CHVERS)
-
-  constant kChinchBuildCode : std_logic_vector(31 downto 0) := X"08050513";
-
-  -- This supplies the value for the Register Map Version Register (RMVR)
-
-  constant kRMV : std_logic_vector(31 downto 0) := X"00000002";
-
-
-
-  -- used for the window registers
-
-  subtype WindowSize_t is unsigned(4 downto 0);
-
-  type WindowSizeArray_t is array(integer range<>) of WindowSize_t;
-
-  type WindowBaseArray_t is array(integer range<>) of ChinchPacketAddress_t;
-
-
-
-  -- basic utility function declarations
-
-  function Pow2(Num : integer) return integer;
-
-  function Pow2(Num : unsigned) return unsigned;
-
-  function HowManyOnes(Vec : std_logic_vector) return natural;
-
-  function AddressInWindow(WindowEnable : std_logic;
-                           WindowSize : unsigned(4 downto 0);
-                           WindowBase : unsigned(31 downto 0);
-                           Address : unsigned(31 downto 0)) return boolean;
-
-  function CropAddress(WindowSize : unsigned(4 downto 0);
-                       Address : unsigned) return unsigned;
-
-  function GetDecodeBits(WindowSize : unsigned(4 downto 0)) return unsigned;
-
-  function PageAddress(WindowSize : unsigned(4 downto 0);
-                       WindowPage : unsigned(31 downto 0);
-                       Address : unsigned(31 downto 0)) return unsigned;
-
-  function CalcSizeLimitFromAddress(Address : unsigned(15 downto 0);
-                                    AddressBoundaryLog2 : unsigned(3 downto 0);
-                                    ProgSizeLimit : unsigned(15 downto 0))
-      return unsigned;
-
-  function CalcCompletionLimit(Address : unsigned(15 downto 0);
-                               ProgSizeLimit : unsigned(3 downto 0))
-      return unsigned;
-
-
-
-  -- these functions compute the Traditional DMA register map based on the
-  -- DMA type and number of channels.
-
-  function ChinchGetDMA_SPACE_Log2(DMA_Type : natural) return natural;
-
-  function ChinchGetDMA_BASE(SpacePerLog2 : natural; NumChansLog2 : natural)
-    return unsigned;
-
-
-
-  -- these functions are used to parse and construct Chinch internal packets.
-
-  function ChinchPacketGetType(Header : ChinchPacketWord_t)
-    return ChinchPacketType_t;
-
-  function ChinchPacketGetSpc(Header : ChinchPacketWord_t)
-    return ChinchPacketSpc_t;
-
-  function ChinchPacketGetLabel(Header : ChinchPacketWord_t)
-    return ChinchPacketLabel_t;
-
-  function ChinchPacketGetLength(Header : ChinchPacketWord_t)
-    return ChinchPacketLength_t;
-
-  function ChinchPacketGetAddress(Header : ChinchPacketWord_t)
-    return ChinchPacketAddress_t;
-
-  function ChinchPacketGetCompletionStatus(Header : ChinchPacketWord_t)
-    return ChinchPacketCompletionStatus_t;
-
-  function ChinchPacketGetRemainingCount(Header : ChinchPacketWord_t)
-    return ChinchPacketRemainingCount_t;
-
-  function ChinchPacketGetUpperAddress(Header : ChinchPacketWord_t)
-    return ChinchPacketUpperAddress_t;
-
-  function ChinchPacketGetStream(Header : ChinchPacketWord_t)
-    return ChinchPacketStream_t;
-
-  function ChinchPacketBuildHeader(
-                   PktType : ChinchPacketType_t;
-                   Spc : ChinchPacketSpc_t;
-                   PktLabel : ChinchPacketLabel_t;
-                   PktLength : ChinchPacketLength_t;
-                   Address : ChinchPacketAddress_t;
-                   CompletionStatus : ChinchPacketCompletionStatus_t;
-                   RemainingCount : ChinchPacketRemainingCount_t;
-                   Stream : ChinchPacketStream_t;
-                   EndOfRecordFlag : boolean := false;
-                   DoneFlag : boolean := false
-                                  ) return ChinchPacketWord_t;
-
-  function ChinchPacketBuildExtendedHeader(
-                   Spc : ChinchPacketSpc_t;
-                   UpperAddress : ChinchPacketUpperAddress_t
-                                  ) return ChinchPacketWord_t;
-
-  function ChinchPacketPayloadWords(PktLength : ChinchPacketLength_t;
-                                    Address : unsigned;
-                                    Width : natural) return unsigned;
-
-  function ChinchPacketMaxPayloadWords(PayloadSize : natural) return natural;
-
-
-
-  -- these functions can be used to test conditions of Chinch internal
-  -- packets.
-
-  function ChinchPacketRequest(PktType : ChinchPacketType_t) return boolean;
-
-  function ChinchPacketResponse(PktType : ChinchPacketType_t) return boolean;
-
-  function ChinchPacketHeaderExtended(Spc : ChinchPacketSpc_t
-                                     ) return boolean;
-  function ChinchPacketHasPayload(Header : ChinchPacketWord_t)
-    return boolean;
-
-  function ChinchPacketIncludesPayload(PktType : ChinchPacketType_t;
-                                       PktLength : ChinchPacketLength_t
-                                      ) return boolean;
-
-  function ChinchPacketRequiresResponse(PktType : ChinchPacketType_t)
-                                                           return boolean;
-
-  function ChinchPacketReqWrite(PktType : ChinchPacketType_t)
-                                                           return boolean;
-
-  function ChinchPacketReqRead(PktType : ChinchPacketType_t)
-                                                           return boolean;
-
-  function ChinchPacketResWrite(PktType : ChinchPacketType_t)
-                                                           return boolean;
-
-  function ChinchPacketResRead(PktType : ChinchPacketType_t)
-                                                           return boolean;
-
-  function ChinchPacketEndOfRecord(Header : ChinchPacketWord_t)
-                                                           return boolean;
-
-  function ChinchPacketDoneFlag(Header : ChinchPacketWord_t)
-                                                           return boolean;
-
-end PkgChinch;
-
-package body PkgChinch is
-
-  -- raises 2 to the power passed to the function.
-  function Pow2(Num : integer) return integer is
-    variable temp, pow : integer;
-  begin
-    temp := Num;
-    pow := 1;
-    while (temp /= 0) loop
-      temp := temp - 1;
-      pow := pow * 2;
-    end loop;
-    return pow;
-  end Pow2;
-
-
-
-  -- a synthesizable power of 2 function
-  function Pow2(Num : unsigned) return unsigned is
-    variable ReturnVal : unsigned(Pow2(Num'length) - 1 downto 0);
-  begin
-    for i in ReturnVal'range loop
-      if i = to_integer(Num) then
-        ReturnVal(i) := '1';
-      else
-        ReturnVal(i) := '0';
-      end if;
-    end loop;
-    return ReturnVal;
-  end Pow2;
-
-
-
-  -- Says how many 1's are in a std_logic_vector.
-  function HowManyOnes(Vec : std_logic_vector) return natural is
-    variable ReturnVal : natural := 0;
-  begin
-    for i in Vec'range loop
-      if Vec(i) = '1' then
-        ReturnVal := ReturnVal + 1;
-      end if;
-    end loop;
-    return ReturnVal;
-  end HowManyOnes;
-
-
-
-  -- address window decoder
-  function AddressInWindow(WindowEnable : std_logic;
-                           WindowSize : unsigned(4 downto 0);
-                           WindowBase : unsigned(31 downto 0);
-                           Address : unsigned(31 downto 0)) return boolean is
-    variable SizeMask, ModAddress, ModWindowBase : unsigned(31 downto 3);
-  begin
-    for i in 31 downto 3 loop
-      if i >= to_integer(WindowSize) then
-        SizeMask(i) := '1';
-      else
-        SizeMask(i) := '0';
-      end if;
-    end loop;
-    ModAddress := Address(31 downto 3) and SizeMask;
-    ModWindowBase := WindowBase(31 downto 3) and SizeMask;
-    return (WindowEnable = '1' and
-            ModAddress = ModWindowBase);
-  end AddressInWindow;
-
-
-
-  function CropAddress(WindowSize : unsigned(4 downto 0);
-                       Address : unsigned) return unsigned is
-    variable SizeMask, ReturnVal : unsigned(Address'range);
-  begin
-    for i in SizeMask'range loop
-      if i >= to_integer(WindowSize) then
-        SizeMask(i) := '0';
-      else
-        SizeMask(i) := '1';
-      end if;
-    end loop;
-    ReturnVal := Address and SizeMask;
-    return ReturnVal;
-  end CropAddress;
-
-
-
-  function GetDecodeBits(WindowSize : unsigned(4 downto 0))
-                                           return unsigned is
-    variable SizeMask : unsigned(31 downto 0);
-  begin
-    for i in 31 downto 0 loop
-      if i >= to_integer(WindowSize) then
-        SizeMask(i) := '1';
-      else
-        SizeMask(i) := '0';
-      end if;
-    end loop;
-    return SizeMask;
-  end GetDecodeBits;
-
-
-
-  function PageAddress(WindowSize : unsigned(4 downto 0);
-                       WindowPage : unsigned(31 downto 0);
-                       Address : unsigned(31 downto 0)) return unsigned is
-    variable ReturnVal : unsigned(Address'range);
-  begin
-    for i in Address'range loop
-      if (i > 7) and (i >= to_integer(WindowSize)) then
-        ReturnVal(i) := WindowPage(i);
-      else
-        ReturnVal(i) := Address(i);
-      end if;
-    end loop;
-    return ReturnVal;
-  end PageAddress;
-
-
-
-  function CalcSizeLimitFromAddress(Address : unsigned(15 downto 0);
-                                    AddressBoundaryLog2 : unsigned(3 downto 0);
-                                    ProgSizeLimit : unsigned(15 downto 0))
-           return unsigned is
-    variable CroppedAddress : unsigned(15 downto 0);
-    variable ProgLimit, BoundLimit, ReturnVal : unsigned(15 downto 0);
-  begin
-    -- Although the Max_Payload_Size field on PCI Express is defined to limit
-    -- the number of bytes transferred in a payload what it really means is you
-    -- shouldn't transfer more than Max_Payload_Size / 4 Dwords in a packet.
-    -- With an unaligned address the CHInCh could generate a packet with one
-    -- too many Dwords even though the number of transferred bytes matched
-    -- Max_Payload_Size.  The calculation below ensures we limit ourselves to
-    -- Max_Payload_Size / 4 Dwords.
-    ProgLimit := ProgSizeLimit - resize(Address(1 downto 0), ProgLimit'length);
-    -- This calculates the maximum transfer size based on the starting address
-    -- and the allowable address boundary.  By cropping the address the result
-    -- of the subtraction is guaranteed to be positive and accurate.
-    CroppedAddress := CropAddress(resize(AddressBoundaryLog2, 5), Address);
-    BoundLimit := Pow2(AddressBoundaryLog2) - CroppedAddress;
-    if ProgLimit < BoundLimit then
-      ReturnVal := ProgLimit;
-    else
-      ReturnVal := BoundLimit;
-    end if;
-    return ReturnVal;
-  end CalcSizeLimitFromAddress;
-
-
-
-  function CalcCompletionLimit(Address : unsigned(15 downto 0);
-                               ProgSizeLimit : unsigned(3 downto 0))
-      return unsigned is
-    variable CroppedAddress, ReturnVal : unsigned(15 downto 0);
-  begin
-    CroppedAddress := CropAddress(resize(ProgSizeLimit, 5), Address);
-    ReturnVal := Pow2(ProgSizeLimit) - CroppedAddress;
-    return ReturnVal;
-  end CalcCompletionLimit;
-
-
-
-  -- computes the address space required by each Traditional DMA channel
-  -- based on the type of DMA implemented.
-  function ChinchGetDMA_SPACE_Log2(DMA_Type : natural) return natural is
-  begin
-    return 8;
-  end ChinchGetDMA_SPACE_Log2;
-
-
-
-  -- computes the base offset of the Traditional DMA register group based on
-  -- the space required by each channel and the number of channels.
-  function ChinchGetDMA_BASE(SpacePerLog2 : natural; NumChansLog2 : natural)
-    return unsigned is
-    variable ReturnVal : unsigned(31 downto 0);
-  begin
-    ReturnVal := X"00002000";
-    return ReturnVal;
-  end ChinchGetDMA_BASE;
-
-
-
-  -- Chinch Packet: extracts the Type field from the header
-  function ChinchPacketGetType(Header : ChinchPacketWord_t)
-    return ChinchPacketType_t is
-    variable ReturnVal : ChinchPacketType_t;
-  begin
-    ReturnVal := Header(2 downto 0);
-    return ReturnVal;
-  end ChinchPacketGetType;
-
-
-
-  -- Chinch Packet: extracts the Spc field from the header
-  function ChinchPacketGetSpc(Header : ChinchPacketWord_t)
-    return ChinchPacketSpc_t is
-    variable ReturnVal : ChinchPacketSpc_t;
-  begin
-    ReturnVal := Header(4 downto 3);
-    return ReturnVal;
-  end ChinchPacketGetSpc;
-
-
-
-  -- Chinch Packet: extracts the Label field from the header
-  function ChinchPacketGetLabel(Header : ChinchPacketWord_t)
-    return ChinchPacketLabel_t is
-    variable ReturnVal : ChinchPacketLabel_t;
-  begin
-    ReturnVal := unsigned(Header(16 downto 5));
-    return ReturnVal;
-  end ChinchPacketGetLabel;
-
-
-
-  -- Chinch Packet: extracts the Length field from the header
-  function ChinchPacketGetLength(Header : ChinchPacketWord_t)
-    return ChinchPacketLength_t is
-    variable ReturnVal : ChinchPacketLength_t;
-  begin
-    ReturnVal := unsigned(Header(31 downto 17));
-    return ReturnVal;
-  end ChinchPacketGetLength;
-
-
-
-  -- Chinch Packet: extracts the Address field from the header
-  function ChinchPacketGetAddress(Header : ChinchPacketWord_t)
-    return ChinchPacketAddress_t is
-    variable ReturnVal : ChinchPacketAddress_t;
-  begin
-    ReturnVal := unsigned(Header(63 downto 32));
-    return ReturnVal;
-  end ChinchPacketGetAddress;
-
-
-
-  -- Chinch Packet: extracts the Completion Status field from the header
-  function ChinchPacketGetCompletionStatus(Header : ChinchPacketWord_t)
-    return ChinchPacketCompletionStatus_t is
-    variable ReturnVal : ChinchPacketCompletionStatus_t;
-  begin
-    ReturnVal := Header(63 downto 62);
-    return ReturnVal;
-  end ChinchPacketGetCompletionStatus;
-
-
-
-  -- Chinch Packet: extracts the Remaining Count field from the header
-  function ChinchPacketGetRemainingCount(Header : ChinchPacketWord_t)
-    return ChinchPacketRemainingCount_t is
-    variable ReturnVal : ChinchPacketRemainingCount_t;
-  begin
-    ReturnVal := unsigned(Header(58 downto 44));
-    return ReturnVal;
-  end ChinchPacketGetRemainingCount;
-
-
-
-  -- Chinch Packet: extracts the Upper Address field from the extended header
-  function ChinchPacketGetUpperAddress(Header : ChinchPacketWord_t)
-    return ChinchPacketUpperAddress_t is
-    variable ReturnVal : ChinchPacketUpperAddress_t;
-  begin
-    ReturnVal := unsigned(Header(63 downto 32));
-    return ReturnVal;
-  end ChinchPacketGetUpperAddress;
-
-
-
-  -- Chinch Packet: extracts the Stream field from the header
-  function ChinchPacketGetStream(Header : ChinchPacketWord_t)
-    return ChinchPacketStream_t is
-    variable ReturnVal : ChinchPacketStream_t;
-  begin
-    ReturnVal := unsigned(Header(59 downto 44));
-    return ReturnVal;
-  end ChinchPacketGetStream;
-
-
-
-  -- Chinch Packet: build the header
-  function ChinchPacketBuildHeader(
-                   PktType : ChinchPacketType_t;
-                   Spc : ChinchPacketSpc_t;
-                   PktLabel : ChinchPacketLabel_t;
-                   PktLength : ChinchPacketLength_t;
-                   Address : ChinchPacketAddress_t;
-                   CompletionStatus : ChinchPacketCompletionStatus_t;
-                   RemainingCount : ChinchPacketRemainingCount_t;
-                   Stream : ChinchPacketStream_t;
-                   EndOfRecordFlag : boolean := false;
-                   DoneFlag : boolean := false
-                                  ) return ChinchPacketWord_t is
-    variable ReturnVal : ChinchPacketWord_t;
-  begin
-    ReturnVal := (others => '0');
-    ReturnVal(2 downto 0) := PktType;
-    ReturnVal(4 downto 3) := Spc;
-    ReturnVal(16 downto 5) := std_logic_vector(PktLabel);
-    ReturnVal(31 downto 17) := std_logic_vector(PktLength);
-    if ChinchPacketRequest(PktType) then
-      if Spc = kChinchPacketSpcStream then
-        ReturnVal(41 downto 32) :=
-                          std_logic_vector(Address(9 downto 0));
-        if DoneFlag then
-          ReturnVal(42) := '1';   -- Done Flag
-        else
-          ReturnVal(42) := '0';
-        end if;
-        if EndOfRecordFlag then
-          ReturnVal(43) := '1';   -- End Of Record
-        else
-          ReturnVal(43) := '0';
-        end if;
-        ReturnVal(59 downto 44) := std_logic_vector(Stream);
-        ReturnVal(63 downto 60) :=
-                          std_logic_vector(Address(31 downto 28));
-      else
-        ReturnVal(63 downto 32) := std_logic_vector(Address);
-      end if;
-    else
-      if Spc = kChinchPacketSpcStream then
-        ReturnVal(43 downto 32) :=
-                          std_logic_vector(Address(11 downto 0));
-        ReturnVal(59 downto 44) := std_logic_vector(Stream);
-        ReturnVal(63 downto 62) := CompletionStatus;
-      else
-        ReturnVal(43 downto 32) :=
-                          std_logic_vector(Address(11 downto 0));
-        ReturnVal(58 downto 44) := std_logic_vector(RemainingCount);
-        ReturnVal(63 downto 62) := CompletionStatus;
-      end if;
-    end if;
-    return ReturnVal;
-  end ChinchPacketBuildHeader;
-
-
-
-  -- Chinch Packet: build the extended header
-  function ChinchPacketBuildExtendedHeader(
-                   Spc : ChinchPacketSpc_t;
-                   UpperAddress : ChinchPacketUpperAddress_t
-                                          ) return ChinchPacketWord_t is
-    variable ReturnVal : ChinchPacketWord_t;
-  begin
-    ReturnVal := (others => '0');
-    ReturnVal(4 downto 3) := Spc;
-    ReturnVal(63 downto 32) := std_logic_vector(UpperAddress);
-    return ReturnVal;
-  end ChinchPacketBuildExtendedHeader;
-
-
-
-  -- compute the number of words in the data payload.  This function does not
-  -- return an accurate result for packets with a length of 0.  Packet
-  -- processing typically must take special action for length of 0 packets
-  -- anyway and this function is simplified by not supporting such packets.
-  function ChinchPacketPayloadWords(PktLength : ChinchPacketLength_t;
-                                    Address : unsigned;
-                                    Width : natural) return unsigned is
-    variable ReturnVal : unsigned(Width - 1 downto 0);
-  begin
-    ReturnVal := PktLength(Width + 2 downto 3);   -- divide by 8
-    if (PktLength(2 downto 0) /= "000") or
-       (Address(2 downto 0) /= "000") then
-      ReturnVal := ReturnVal + 1;
-    end if;
-    if (resize(PktLength(2 downto 0), 4) +
-        resize(Address(2 downto 0), 4)) > 8 then
-      ReturnVal := ReturnVal + 1;
-    end if;
-    return ReturnVal;
-  end ChinchPacketPayloadWords;
-
-
-
-  -- based on a data payload size, compute the maximum number of words in a
-  -- Chinch data payload.  This function only supports powers of two.
-  function ChinchPacketMaxPayloadWords(PayloadSize : natural)
-                                        return natural is
-  begin
-    if PayloadSize < 2 then
-      return 1;
-    elsif PayloadSize < 10 then
-      return 2;
-    else
-      return (PayloadSize / 8) + 1;
-    end if;
-  end ChinchPacketMaxPayloadWords;
-
-
-
-  -- Chinch Packet: test for any request type
-  function ChinchPacketRequest(PktType : ChinchPacketType_t)
-                                            return boolean is
-  begin
-    return (PktType(1) = '0');
-  end ChinchPacketRequest;
-
-
-
-  -- Chinch Packet: test for any response type
-  function ChinchPacketResponse(PktType : ChinchPacketType_t)
-                                            return boolean is
-  begin
-    return (PktType(1) = '1');
-  end ChinchPacketResponse;
-
-
-
-  -- Chinch Packet: test for an extended header
-  function ChinchPacketHeaderExtended(Spc : ChinchPacketSpc_t
-                                     ) return boolean is
-  begin
-    return (Spc = kChinchPacketSpcExtHeader);
-  end ChinchPacketHeaderExtended;
-
-
-  function ChinchPacketHasPayload(Header : ChinchPacketWord_t)
-    return boolean is
-  begin
-    return (ChinchPacketGetType(Header)(2) = '1' and
-            ChinchPacketGetLength(Header) > 0);
-  end ChinchPacketHasPayload;
-
-  -- Chinch Packet: test for a data payload in the packet
-  function ChinchPacketIncludesPayload(PktType : ChinchPacketType_t;
-                                       PktLength : ChinchPacketLength_t
-                                      ) return boolean is
-  begin
-    return (PktType(2) = '1' and
-            PktLength > 0);
-  end ChinchPacketIncludesPayload;
-
-
-
-  -- Chinch Packet: test if the packet will require a response
-  function ChinchPacketRequiresResponse(PktType : ChinchPacketType_t)
-                                           return boolean is
-  begin
-    return (PktType(0) = '1');
-  end ChinchPacketRequiresResponse;
-
-
-
-  -- Chinch Packet: test if a request packet is a write
-  function ChinchPacketReqWrite(PktType : ChinchPacketType_t)
-                                           return boolean is
-  begin
-    return (PktType(2) = '1');
-  end ChinchPacketReqWrite;
-
-
-
-  -- Chinch Packet: test if a request packet is a read
-  function ChinchPacketReqRead(PktType : ChinchPacketType_t)
-                                           return boolean is
-  begin
-    return (PktType(2) = '0');
-  end ChinchPacketReqRead;
-
-
-
-  -- Chinch Packet: test if a response packet is a write
-  function ChinchPacketResWrite(PktType : ChinchPacketType_t)
-                                           return boolean is
-  begin
-    return (PktType(2) = '0');
-  end ChinchPacketResWrite;
-
-
-
-  -- Chinch Packet: test if a response packet is a read
-  function ChinchPacketResRead(PktType : ChinchPacketType_t)
-                                           return boolean is
-  begin
-    return (PktType(2) = '1');
-  end ChinchPacketResRead;
-
-
-
-  -- Chinch Packet: test if a stream request packet is the end of a record
-  function ChinchPacketEndOfRecord(Header : ChinchPacketWord_t)
-                                           return boolean is
-  begin
-    return (Header(43) = '1');
-  end ChinchPacketEndOfRecord;
-
-
-
-  -- Chinch Packet: test if a stream request packet has the Done Flag set
-  function ChinchPacketDoneFlag(Header : ChinchPacketWord_t)
-                                           return boolean is
-  begin
-    return (Header(42) = '1');
-  end ChinchPacketDoneFlag;
-
-end PkgChinch;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+bXcW0x1/qKj04BHjmHOtCwMC593wyTe6ir8/RWOCKG+3a43yDFkoOl1G9eeUyKXS
+dHV6a7g5whryT9kCZ6JluvLJ3w+QXhepRDwaZoyFHKkMFQbf6TOK5yz+pf4CW/AZ
+6xcHO29EWlT798v3VJYKNmkdRgnY+qUwdnwFvbaB/swsntFmLo5r0I3K8fo8f30a
+6+iW0Fc7iSSuSxE0P9mq0QtX31480wfscTuk97OejV1l6f4JOIQRKPm0SJEXF9yo
+P/M+8WCc96bNj7YDEbVwe3HJb33QjmvsKpZ7Nd889dWrR2BbZSUlKiQkba3jrmei
+INxEzsAGb9PVHvyTHX2EAg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="92hUR4t8ZCt6mH1zQFYCjBVy5vFX0kRAX1Wae7L09Bk="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+FHvbXvwhjDf8bkqkFQRHgU1jocYsx6600GmoADeuGGKP7hQt7RcgVT72eqZipJh0
+tceR/4PeBnaMZl1XTIjdDPZ9eUZH4lakjSjNEHVi8vG8Vs2pnT+X6j4VtSk9DReE
+YmRyZ6pD4kjRm5CHMn8KrNw87/9hXNgQYr5AnevqFbk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="i2QALIcAkRD0JczwYIxD6+1ciaC4qMkSMP5ppFFUA4c="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 36704 )
+`protect data_block
+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
+`protect end_protected

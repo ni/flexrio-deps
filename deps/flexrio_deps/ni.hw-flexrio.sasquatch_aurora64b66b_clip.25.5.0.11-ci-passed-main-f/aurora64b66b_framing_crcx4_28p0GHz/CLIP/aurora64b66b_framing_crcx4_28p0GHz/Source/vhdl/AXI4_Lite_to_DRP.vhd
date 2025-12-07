@@ -1,166 +1,162 @@
--- ? 2012 National Instruments Corporation.
--------------------------------------------------------------------------------
---
--- File: AXI4_Lite_to_DRP.vhd
--- Author: National Instruments
--- Original Project:
--- Date: 16 December 2015
---
--------------------------------------------------------------------------------
--- (c) 2015 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose: This component does a simple translation from the AXI4-Lite bus
---          to the Xilinx DRP bus. It holds all of the read and write 'ready'
---          signals high constantly. The DRP address and data lines are only
---          updated when the corresponding valid bits are asserted. The
---          DRP read data is only updated when DRPRDY is asserted. The
---          AXI4-Lite read data valid and write response valid signals are both
---          driven by DRPRDY. This component simply translates between the two
---          buses and assumes that the AXI4-Lite master is always ready in
---          response to an issued read or write.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-entity AXI4_Lite_to_DRP is
-generic(
-    kADDR_SIZE : integer := 9
-);
-port(
-    -- AXI4-Lite Clock
-    s_aclk            : in  std_logic;
-
-    -- AXI Reset, active-Low
-    aReset_n          : in  std_logic;
-
-    -- AXI4-Lite Interface for DRP access
-    s_axi_awaddr  : in  std_logic_vector(31 downto 0);
-    s_axi_awvalid : in  std_logic;
-    s_axi_awready : out std_logic;
-    s_axi_wdata   : in  std_logic_vector(31 downto 0);
-    s_axi_wvalid  : in  std_logic;
-    s_axi_wready  : out std_logic;
-    s_axi_bready  : in  std_logic;
-    s_axi_bvalid  : out std_logic;
-    s_axi_araddr  : in  std_logic_vector(31 downto 0);
-    s_axi_arvalid : in  std_logic;
-    s_axi_arready : out std_logic;
-    s_axi_rdata   : out std_logic_vector(31 downto 0) := (others => '0');
-    s_axi_rready  : in  std_logic;
-    s_axi_rvalid  : out std_logic;
-
-    -- DRP Interface
-    drpaddr_in    : out std_logic_vector(kADDR_SIZE-1 downto 0);
-    drpdi_in      : out std_logic_vector(15 downto 0);
-    drpdo_out     : in  std_logic_vector(15 downto 0);
-    drprdy_out    : in  std_logic;
-    drpen_in      : out std_logic;
-    drpwe_in      : out std_logic
-  );
-end AXI4_Lite_to_DRP;
-
-architecture rtl of AXI4_Lite_to_DRP is
-
-  type AccessState_t is (Idle, IssueResponse);
-  signal sReadState, sWriteState : AccessState_t;
-
-  signal s_axi_rvalid_i, s_axi_bvalid_i : std_logic;
-  signal sDrpWriteEn, sDrpReadEn : std_logic;
-
-begin
-
-  -- Mux in the appropriate address and data signals
-  drpaddr_in <= s_axi_awaddr(kADDR_SIZE-1 downto 0) when sDrpWriteEn = '1' else
-                s_axi_araddr(kADDR_SIZE-1 downto 0) when sDrpReadEn = '1' else
-                (others => '0');
-
-  drpdi_in <= s_axi_wdata(15 downto 0) when sDrpWriteEn = '1' else
-              (others => '0');
-
-  drpen_in <= sDrpWriteEn or sDrpReadEn;
-  drpwe_in <= sDrpWriteEn;
-
-  s_axi_rvalid <= s_axi_rvalid_i;
-  s_axi_bvalid <= s_axi_bvalid_i;
-
-  -- Write Access FSM
-  -- This FSM is responsible for processing AXI4-Lite write accesses.
-  WriteAccessFsm: process(aReset_n, s_aclk) is
-  begin
-    if aReset_n = '0' then
-      sWriteState    <= Idle;
-      s_axi_awready  <= '0';
-      s_axi_wready   <= '0';
-      s_axi_bvalid_i <= '0';
-      sDrpWriteEn    <= '0';
-    elsif rising_edge(s_aclk) then
-      s_axi_awready  <= '0';
-      s_axi_wready   <= '0';
-      sDrpWriteEn    <= '0';
-
-      case sWriteState is
-        when Idle =>
-          s_axi_bvalid_i <= '0';
-          if s_axi_awvalid = '1' and s_axi_wvalid = '1' then
-            sWriteState   <= IssueResponse;
-            s_axi_awready <= '1';
-            s_axi_wready  <= '1';
-            sDrpWriteEn   <= '1';
-          end if;
-
-        when IssueResponse =>
-          if drprdy_out = '1' then
-            s_axi_bvalid_i <= '1';
-          end if;
-          if s_axi_bready = '1' and s_axi_bvalid_i = '1' then
-            sWriteState    <= Idle;
-            s_axi_bvalid_i <= '0';
-          end if;
-      end case;
-    end if;
-  end process WriteAccessFsm;
-
-  -- Read Access FSM
-  -- This FSM is responsible for processing AXI4-Lite read accesses.
-  ReadAccessFsm: process(aReset_n, s_aclk) is
-  begin
-    if aReset_n = '0' then
-      sReadState <= Idle;
-      s_axi_arready  <= '0';
-      s_axi_rvalid_i <= '0';
-      s_axi_rdata    <= (others => '0');
-      sDrpReadEn     <= '0';
-    elsif rising_edge(s_aclk) then
-      s_axi_arready     <= '0';
-      sDrpReadEn     <= '0';
-
-      case sReadState is
-        when Idle =>
-          s_axi_rvalid_i <= '0';
-          s_axi_rdata    <= (others => '0');
-          if s_axi_arvalid = '1' then
-            sReadState    <= IssueResponse;
-            s_axi_arready <= '1';
-            sDrpReadEn    <= '1';
-          end if;
-
-        when IssueResponse =>
-          if drprdy_out = '1' then
-            s_axi_rvalid_i <= '1';
-            s_axi_rdata(15 downto 0) <= drpdo_out;
-          end if;
-          if s_axi_rready = '1' and s_axi_rvalid_i = '1' then
-            sReadState     <= Idle;
-            s_axi_rdata    <= (others => '0');
-            s_axi_rvalid_i <= '0';
-          end if;
-      end case;
-    end if;
-  end process ReadAccessFsm;
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+bXcW0x1/qKj04BHjmHOtCwMC593wyTe6ir8/RWOCKG+3a43yDFkoOl1G9eeUyKXS
+dHV6a7g5whryT9kCZ6JluvLJ3w+QXhepRDwaZoyFHKkMFQbf6TOK5yz+pf4CW/AZ
+6xcHO29EWlT798v3VJYKNmkdRgnY+qUwdnwFvbaB/swsntFmLo5r0I3K8fo8f30a
+6+iW0Fc7iSSuSxE0P9mq0QtX31480wfscTuk97OejV1l6f4JOIQRKPm0SJEXF9yo
+P/M+8WCc96bNj7YDEbVwe3HJb33QjmvsKpZ7Nd889dWrR2BbZSUlKiQkba3jrmei
+INxEzsAGb9PVHvyTHX2EAg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="92hUR4t8ZCt6mH1zQFYCjBVy5vFX0kRAX1Wae7L09Bk="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+FHvbXvwhjDf8bkqkFQRHgU1jocYsx6600GmoADeuGGKP7hQt7RcgVT72eqZipJh0
+tceR/4PeBnaMZl1XTIjdDPZ9eUZH4lakjSjNEHVi8vG8Vs2pnT+X6j4VtSk9DReE
+YmRyZ6pD4kjRm5CHMn8KrNw87/9hXNgQYr5AnevqFbk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="i2QALIcAkRD0JczwYIxD6+1ciaC4qMkSMP5ppFFUA4c="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 5488 )
+`protect data_block
+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
+HjQeFVD4Qxl056CHy/tmUQ==
+`protect end_protected

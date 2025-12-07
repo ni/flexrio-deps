@@ -1,249 +1,322 @@
--------------------------------------------------------------------------------
--- File: AxiLiteToMgtDrp.vhd
--- Author: Minghui Zhang
--- Workspace: Sasquatch
--- Date: 25 August 2022
--------------------------------------------------------------------------------
--- Copyright (c) 2025 National Instruments Corporation
--- 
--- SPDX-License-Identifier: MIT
--------------------------------------------------------------------------------
--- Purpose: This component wraps AXI Lite interface to MGT's DRP interface
--- with AXI cross clock domain.
--------------------------------------------------------------------------------
---
--- githubvisibledep=true
---
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-entity AxiLiteToMgtDrp is
-  generic (
-    kNumLanes         : integer := 4;
-    kAddrSize         : integer := 10
-  );
-  port (
-    aResetSl          : in std_logic;
-    -------------------------------------------------------------------------------------
-    -- AXI Lite Interface
-    -------------------------------------------------------------------------------------
-    SAxiAClk          : in std_logic;
-    sAxiAWaddr        : in std_logic_vector(31 downto 0);
-    sAxiAWValid       : in std_logic;
-    sAxiAWReady       : out std_logic;
-    sAxiWData         : in std_logic_vector(31 downto 0);
-    sAxiWStrb         : in std_logic_vector(3 downto 0);
-    sAxiWValid        : in std_logic;
-    sAxiWReady        : out std_logic;
-    sAxiBResp         : out std_logic_vector(1 downto 0);
-    sAxiBValid        : out std_logic;
-    sAxiBReady        : in std_logic;
-    sAxiARAddr        : in std_logic_vector(31 downto 0);
-    sAxiARValid       : in std_logic;
-    sAxiARReady       : out std_logic;
-    sAxiRData         : out std_logic_vector(31 downto 0);
-    sAxiRResp         : out std_logic_vector(1 downto 0);
-    sAxiRValid        : out std_logic;
-    sAxiRReady        : in std_logic;
-    -------------------------------------------------------------------------------------
-    -- DRP interface to GT core
-    -------------------------------------------------------------------------------------
-    InitClk           : in  std_logic;
-    iGtwizDrpClk      : out std_logic_vector(kNumLanes-1 downto 0);
-    iGtwizDrpAddrIn   : out std_logic_vector(kNumLanes*kAddrSize-1 downto 0);
-    iGtwizDrpDiIn     : out std_logic_vector(kNumLanes*16-1 downto 0);
-    iGtwizDrpDoOut    : in  std_logic_vector(kNumLanes*16-1 downto 0);
-    iGtwizDrpEnIn     : out std_logic_vector(kNumLanes-1 downto 0);
-    iGtwizDrpWeIn     : out std_logic_vector(kNumLanes-1 downto 0);
-    iGtwizDrpRdyOut   : in  std_logic_vector(kNumLanes-1 downto 0)
-  );
-end AxiLiteToMgtDrp;
-
-architecture rtl of AxiLiteToMgtDrp is
-
-  component MgtTest_DRP_bridge
-    generic (
-      kNUM_LANES : integer := 4;
-      kADDR_SIZE : integer := 9);
-    port (
-      aResetSl          : in  std_logic;
-      gtwiz_drpclk      : out std_logic_vector(kNUM_LANES-1 downto 0);
-      gtwiz_drpaddr_in  : out std_logic_vector(kNUM_LANES*kADDR_SIZE-1 downto 0);
-      gtwiz_drpdi_in    : out std_logic_vector(kNUM_LANES*16-1 downto 0);
-      gtwiz_drpdo_out   : in  std_logic_vector(kNUM_LANES*16-1 downto 0);
-      gtwiz_drpen_in    : out std_logic_vector(kNUM_LANES-1 downto 0);
-      gtwiz_drpwe_in    : out std_logic_vector(kNUM_LANES-1 downto 0);
-      gtwiz_drprdy_out  : in  std_logic_vector(kNUM_LANES-1 downto 0);
-      s_aclk            : in  std_logic;
-      drp_s_axi_awaddr  : in  std_logic_vector(31 downto 0);
-      drp_s_axi_awvalid : in  std_logic;
-      drp_s_axi_awready : out std_logic;
-      drp_s_axi_wdata   : in  std_logic_vector(31 downto 0);
-      drp_s_axi_wstrb   : in  std_logic_vector(3 downto 0);
-      drp_s_axi_wvalid  : in  std_logic;
-      drp_s_axi_wready  : out std_logic;
-      drp_s_axi_bresp   : out std_logic_vector(1 downto 0);
-      drp_s_axi_bvalid  : out std_logic;
-      drp_s_axi_bready  : in  std_logic;
-      drp_s_axi_araddr  : in  std_logic_vector(31 downto 0);
-      drp_s_axi_arvalid : in  std_logic;
-      drp_s_axi_arready : out std_logic;
-      drp_s_axi_rdata   : out std_logic_vector(31 downto 0);
-      drp_s_axi_rresp   : out std_logic_vector(1 downto 0);
-      drp_s_axi_rvalid  : out std_logic;
-      drp_s_axi_rready  : in  std_logic);
-  end component;
-  component AxiLiteClockConverterWrapper
-    port (
-      aReset      : in  STD_LOGIC;
-      SAxiAClk    : in  STD_LOGIC;
-      sAxiAWaddr  : in  STD_LOGIC_VECTOR(31 downto 0);
-      sAxiAWValid : in  STD_LOGIC;
-      sAxiAWReady : out STD_LOGIC;
-      sAxiWData   : in  STD_LOGIC_VECTOR(31 downto 0);
-      sAxiWStrb   : in  STD_LOGIC_VECTOR(3 downto 0);
-      sAxiWValid  : in  STD_LOGIC;
-      sAxiWReady  : out STD_LOGIC;
-      sAxiBResp   : out STD_LOGIC_VECTOR(1 downto 0);
-      sAxiBValid  : out STD_LOGIC;
-      sAxiBReady  : in  STD_LOGIC;
-      sAxiARAddr  : in  STD_LOGIC_VECTOR(31 downto 0);
-      sAxiARValid : in  STD_LOGIC;
-      sAxiARReady : out STD_LOGIC;
-      sAxiRData   : out STD_LOGIC_VECTOR(31 downto 0);
-      sAxiRResp   : out STD_LOGIC_VECTOR(1 downto 0);
-      sAxiRValid  : out STD_LOGIC;
-      sAxiRReady  : in  STD_LOGIC;
-      MAxiAClk    : in  STD_LOGIC;
-      mAxiAWaddr  : out STD_LOGIC_VECTOR(31 downto 0);
-      mAxiAWvalid : out STD_LOGIC;
-      mAxiAWready : in  STD_LOGIC;
-      mAxiWData   : out STD_LOGIC_VECTOR(31 downto 0);
-      mAxiWStrb   : out STD_LOGIC_VECTOR(3 downto 0);
-      mAxiWValid  : out STD_LOGIC;
-      mAxiWReady  : in  STD_LOGIC;
-      mAxiBResp   : in  STD_LOGIC_VECTOR(1 downto 0);
-      mAxiBValid  : in  STD_LOGIC;
-      mAxiBReady  : out STD_LOGIC;
-      mAxiARaddr  : out STD_LOGIC_VECTOR(31 downto 0);
-      mAxiARvalid : out STD_LOGIC;
-      mAxiARready : in  STD_LOGIC;
-      mAxiRData   : in  STD_LOGIC_VECTOR(31 downto 0);
-      mAxiRResp   : in  STD_LOGIC_VECTOR(1 downto 0);
-      mAxiRValid  : in  STD_LOGIC;
-      mAxiRReady  : out STD_LOGIC);
-  end component;
-
-  --vhook_sigstart
-  signal iAxiaraddr: std_logic_vector(31 downto 0);
-  signal iAxiarready: std_logic;
-  signal iAxiarvalid: std_logic;
-  signal iAxiawaddr: std_logic_vector(31 downto 0);
-  signal iAxiawready: std_logic;
-  signal iAxiawvalid: std_logic;
-  signal iAxibready: std_logic;
-  signal iAxibresp: std_logic_vector(1 downto 0);
-  signal iAxibvalid: std_logic;
-  signal iAxirdata: std_logic_vector(31 downto 0);
-  signal iAxirready: std_logic;
-  signal iAxirresp: std_logic_vector(1 downto 0);
-  signal iAxirvalid: std_logic;
-  signal iAxiwdata: std_logic_vector(31 downto 0);
-  signal iAxiwready: std_logic;
-  signal iAxiwstrb: std_logic_vector(3 downto 0);
-  signal iAxiwvalid: std_logic;
-  --vhook_sigend
-
-begin
-
-  --vhook AxiLiteClockConverterWrapper
-  --vhook_a aReset aResetSl
-  --vhook_a {mAxi(.*)} iAxi$1
-  --vhook_a MAxiAClk InitClk
-  AxiLiteClockConverterWrapperx: AxiLiteClockConverterWrapper
-    port map (
-      aReset      => aResetSl,     --in  STD_LOGIC
-      SAxiAClk    => SAxiAClk,     --in  STD_LOGIC
-      sAxiAWaddr  => sAxiAWaddr,   --in  STD_LOGIC_VECTOR(31:0)
-      sAxiAWValid => sAxiAWValid,  --in  STD_LOGIC
-      sAxiAWReady => sAxiAWReady,  --out STD_LOGIC
-      sAxiWData   => sAxiWData,    --in  STD_LOGIC_VECTOR(31:0)
-      sAxiWStrb   => sAxiWStrb,    --in  STD_LOGIC_VECTOR(3:0)
-      sAxiWValid  => sAxiWValid,   --in  STD_LOGIC
-      sAxiWReady  => sAxiWReady,   --out STD_LOGIC
-      sAxiBResp   => sAxiBResp,    --out STD_LOGIC_VECTOR(1:0)
-      sAxiBValid  => sAxiBValid,   --out STD_LOGIC
-      sAxiBReady  => sAxiBReady,   --in  STD_LOGIC
-      sAxiARAddr  => sAxiARAddr,   --in  STD_LOGIC_VECTOR(31:0)
-      sAxiARValid => sAxiARValid,  --in  STD_LOGIC
-      sAxiARReady => sAxiARReady,  --out STD_LOGIC
-      sAxiRData   => sAxiRData,    --out STD_LOGIC_VECTOR(31:0)
-      sAxiRResp   => sAxiRResp,    --out STD_LOGIC_VECTOR(1:0)
-      sAxiRValid  => sAxiRValid,   --out STD_LOGIC
-      sAxiRReady  => sAxiRReady,   --in  STD_LOGIC
-      MAxiAClk    => InitClk,      --in  STD_LOGIC
-      mAxiAWaddr  => iAxiAWaddr,   --out STD_LOGIC_VECTOR(31:0)
-      mAxiAWvalid => iAxiAWvalid,  --out STD_LOGIC
-      mAxiAWready => iAxiAWready,  --in  STD_LOGIC
-      mAxiWData   => iAxiWData,    --out STD_LOGIC_VECTOR(31:0)
-      mAxiWStrb   => iAxiWStrb,    --out STD_LOGIC_VECTOR(3:0)
-      mAxiWValid  => iAxiWValid,   --out STD_LOGIC
-      mAxiWReady  => iAxiWReady,   --in  STD_LOGIC
-      mAxiBResp   => iAxiBResp,    --in  STD_LOGIC_VECTOR(1:0)
-      mAxiBValid  => iAxiBValid,   --in  STD_LOGIC
-      mAxiBReady  => iAxiBReady,   --out STD_LOGIC
-      mAxiARaddr  => iAxiARaddr,   --out STD_LOGIC_VECTOR(31:0)
-      mAxiARvalid => iAxiARvalid,  --out STD_LOGIC
-      mAxiARready => iAxiARready,  --in  STD_LOGIC
-      mAxiRData   => iAxiRData,    --in  STD_LOGIC_VECTOR(31:0)
-      mAxiRResp   => iAxiRResp,    --in  STD_LOGIC_VECTOR(1:0)
-      mAxiRValid  => iAxiRValid,   --in  STD_LOGIC
-      mAxiRReady  => iAxiRReady);  --out STD_LOGIC
-
-  --vhook MgtTest_DRP_bridge
-  --vhook_a kNUM_LANES kNumLanes
-  --vhook_a kADDR_SIZE kAddrSize
-  --vhook_a s_aclk     InitClk
-  --vhook_a {drp_s_axi_(.*)} iAxi$1
-  --vhook_a gtwiz_drpclk       iGtwizDrpClk   (1*kNumLanes-1    downto 0*kNumLanes)
-  --vhook_a gtwiz_drpaddr_in   iGtwizDrpAddrIn(1*kNumLanes*kAddrSize-1 downto 0*kNumLanes*kAddrSize)
-  --vhook_a gtwiz_drpdi_in     iGtwizDrpDiIn  (1*kNumLanes*16-1 downto 0*kNumLanes*16)
-  --vhook_a gtwiz_drpdo_out    iGtwizDrpDoOut (1*kNumLanes*16-1 downto 0*kNumLanes*16)
-  --vhook_a gtwiz_drpen_in     iGtwizDrpEnIn  (1*kNumLanes-1    downto 0*kNumLanes)
-  --vhook_a gtwiz_drpwe_in     iGtwizDrpWeIn  (1*kNumLanes-1    downto 0*kNumLanes)
-  --vhook_a gtwiz_drprdy_out   iGtwizDrpRdyOut(1*kNumLanes-1    downto 0*kNumLanes)
-  MgtTest_DRP_bridgex: MgtTest_DRP_bridge
-    generic map (
-      kNUM_LANES => kNumLanes,  --integer:=4
-      kADDR_SIZE => kAddrSize)  --integer:=9
-    port map (
-      aResetSl          => aResetSl,                                                               --in  std_logic
-      gtwiz_drpclk      => iGtwizDrpClk (1*kNumLanes-1 downto 0*kNumLanes),                        --out std_logic_vector(kNUM_LANES-1:0)
-      gtwiz_drpaddr_in  => iGtwizDrpAddrIn(1*kNumLanes*kAddrSize-1 downto 0*kNumLanes*kAddrSize),  --out std_logic_vector(kNUM_LANES*kADDR_SIZE-1:0)
-      gtwiz_drpdi_in    => iGtwizDrpDiIn (1*kNumLanes*16-1 downto 0*kNumLanes*16),                 --out std_logic_vector(kNUM_LANES*16-1:0)
-      gtwiz_drpdo_out   => iGtwizDrpDoOut (1*kNumLanes*16-1 downto 0*kNumLanes*16),                --in  std_logic_vector(kNUM_LANES*16-1:0)
-      gtwiz_drpen_in    => iGtwizDrpEnIn (1*kNumLanes-1 downto 0*kNumLanes),                       --out std_logic_vector(kNUM_LANES-1:0)
-      gtwiz_drpwe_in    => iGtwizDrpWeIn (1*kNumLanes-1 downto 0*kNumLanes),                       --out std_logic_vector(kNUM_LANES-1:0)
-      gtwiz_drprdy_out  => iGtwizDrpRdyOut(1*kNumLanes-1 downto 0*kNumLanes),                      --in  std_logic_vector(kNUM_LANES-1:0)
-      s_aclk            => InitClk,                                                                --in  std_logic
-      drp_s_axi_awaddr  => iAxiawaddr,                                                             --in  std_logic_vector(31:0)
-      drp_s_axi_awvalid => iAxiawvalid,                                                            --in  std_logic
-      drp_s_axi_awready => iAxiawready,                                                            --out std_logic
-      drp_s_axi_wdata   => iAxiwdata,                                                              --in  std_logic_vector(31:0)
-      drp_s_axi_wstrb   => iAxiwstrb,                                                              --in  std_logic_vector(3:0)
-      drp_s_axi_wvalid  => iAxiwvalid,                                                             --in  std_logic
-      drp_s_axi_wready  => iAxiwready,                                                             --out std_logic
-      drp_s_axi_bresp   => iAxibresp,                                                              --out std_logic_vector(1:0)
-      drp_s_axi_bvalid  => iAxibvalid,                                                             --out std_logic
-      drp_s_axi_bready  => iAxibready,                                                             --in  std_logic
-      drp_s_axi_araddr  => iAxiaraddr,                                                             --in  std_logic_vector(31:0)
-      drp_s_axi_arvalid => iAxiarvalid,                                                            --in  std_logic
-      drp_s_axi_arready => iAxiarready,                                                            --out std_logic
-      drp_s_axi_rdata   => iAxirdata,                                                              --out std_logic_vector(31:0)
-      drp_s_axi_rresp   => iAxirresp,                                                              --out std_logic_vector(1:0)
-      drp_s_axi_rvalid  => iAxirvalid,                                                             --out std_logic
-      drp_s_axi_rready  => iAxirready);                                                            --in  std_logic
-
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+bXcW0x1/qKj04BHjmHOtCwMC593wyTe6ir8/RWOCKG+3a43yDFkoOl1G9eeUyKXS
+dHV6a7g5whryT9kCZ6JluvLJ3w+QXhepRDwaZoyFHKkMFQbf6TOK5yz+pf4CW/AZ
+6xcHO29EWlT798v3VJYKNmkdRgnY+qUwdnwFvbaB/swsntFmLo5r0I3K8fo8f30a
+6+iW0Fc7iSSuSxE0P9mq0QtX31480wfscTuk97OejV1l6f4JOIQRKPm0SJEXF9yo
+P/M+8WCc96bNj7YDEbVwe3HJb33QjmvsKpZ7Nd889dWrR2BbZSUlKiQkba3jrmei
+INxEzsAGb9PVHvyTHX2EAg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="92hUR4t8ZCt6mH1zQFYCjBVy5vFX0kRAX1Wae7L09Bk="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+FHvbXvwhjDf8bkqkFQRHgU1jocYsx6600GmoADeuGGKP7hQt7RcgVT72eqZipJh0
+tceR/4PeBnaMZl1XTIjdDPZ9eUZH4lakjSjNEHVi8vG8Vs2pnT+X6j4VtSk9DReE
+YmRyZ6pD4kjRm5CHMn8KrNw87/9hXNgQYr5AnevqFbk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="i2QALIcAkRD0JczwYIxD6+1ciaC4qMkSMP5ppFFUA4c="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 13168 )
+`protect data_block
+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
+PKyIu+xrnGaXe61f5CcaSfIPj1BPEYQAt8B8GLq1okJflUCKB0n6i8yQq5NfysMN
+qy53HYeBhK++MbuXJAsBKQudNKQfstAsMP6KWakVcTU+DPdCOVc62FxvipS8nvVZ
+s+NEk6jopjSb8XsrWTnL4WLDzP/ZaMvvRythm4A2erEpsSr0ZM2MxFRXeYr4TbOa
+n9DMmIEN0WmFfNWdm+XTpn8/6S4Z6StXkpry2aX/jqWGXp2SbXfpKqtH+pH9mX7P
+djGSsan70JYylMk3iatQ8i9HP0Px5HmY9CmbVq85SzVyhBl/ogTshKyzmLXB21GN
+LjREtuI6IekloEmI8Krjjlt7D9i/QVdlk3ZjuvlV7sBJQ0etn5we0FHTzV6zeQe4
+Z40hJyRxfZsFOo+N9RVNYFXpuH0yZp9uHZ7TyUjozg5vug2aoGSLGutyjx2EqWMY
+p8amjIeHngnIAYwQExOt79sQ0g1f7ig+WXJc6FO3y/L/NvocRfacI2GM4R5y8Ccz
+Tl6NBLsaaGnvH7jYn4lGEo5/cDR16geNPVxq3zvAdymwewHvXOxQ7J2LITy+zEPw
+ZqqKRAJXHd4L+WcKsc4UMLiiRpJL+D5yjK/+RPkICQNY/H734GlW9PHgAzQgwG94
+YQpvHFYWtYWmoSuiakpltpukbyDKpgbJ3Ovj3ogy5m16f3WX5q35w7iC/mX3zSfQ
+2MtS1k9hVvCQo8iH6CBPPr6AEYlci2gOZAH06cJ73LK+BvrGcGtkcqu2ky9gB1iA
+NvX3jCgcLP96Upzg99jmTLW+XRz2g5tGHRdxwbV9n5oFMV1W21iMfkLi/rIxd2Or
+yjlRwgt8/3Ixa7pMl0BdW7IlcKVqey8KEw1VOFUtzBijDxHu0CSt1VSYO5F49LFS
+D2Uvp53rOoky5hw1S/7503MlG3tdgJnOACRRbUV+4yrRp5Bwd3Y7MHa6LXqV3Un7
+966nNl5LUhWFzsTpnw86w4lS1m2rx2zATx032nlnlpM2Lvuhc2Q6XgPgw3qOTra0
+jjp55LpI/Ygn3Ec3slvSsVEltJ4lcsuhyLVBNF2OZC5MUmJ6+7Ig49aaJUposW1a
+A6vlta5Z09ygXI7kUyTETy3sfAcpMAL8CA9XeholDJn4hD7ocpzmvoXm1YrDqmjD
+LMa+8oPnOJf6tBkGvLBdMqMUmmxQloRbHU7HiHujYUb/2CnqFSN/TjVf6Z7+9Mge
+icTaCkzVdf9k9dXe2SmdwNVQBmk7pvX0YZnlzd38rzvCC5SJiFdrTgt9Dp6jP8Yo
+Bdv+vqzCsjBI5wDVkUzJMI88Xz8T7ln3iI1JGuPQZ2LHOXys2UCDK2PxmqrOumFL
+Xr39fAfJ0c2p91XhOB9wMWqd8pG9jWpcNv3z0Wm4NuA65Nz5FvTm8LrW0OkinxWR
+gPhAz55EpAh58ky1pGhC3u7yBUU4ZNCsG1TJQkLj2E9zhZQwro9VtCEAbAaD43Ox
+XULtElEK5PdjyOR4/Lm24ehQbhGv8r0BBgr2nInnuI+jzby+ICVHSqlbo6WML6NS
+sdUm8pIsYSehwrLxoYqqCnmV+GJCuA50RsU8hjQ5ZWmiOcFpwIZnyXNhe4cOVL+r
+rmeJIS7ADgcEM9n7GwKHjJKQ/QUFM+woX7pqhMIc1XTe84d/WEyLee5Oo99TKJoc
+l8Xm5xwVuVYH3izOXU4CkrX3LFlVkNm5vVrep3vuaM7L/tK7gtSy5JbNWftl7eDs
+Htct3GvqoZOcnzTG8K/fsSyAogyc8qfzt/vSBEF9Q5cw34M0lGM2/v/TUaGy8WuG
+lxBcVrzJk8jMgGb3Bqps7lrecorkWgURmeXng++PEWM4y+6GSIywiZ7YQ+wYe0VU
+KiT1cPYZ7lcVgMkC7p5v6MEaKXZqbGr8sznuNAbKeY4Saklu8QBdR/1AiClFUXB3
+JO5vSemc28JWgVqTL5pMxIhvCoVZWaervpJN4V6YrYkYouRikBzuifK0vwnlROST
+9Y9uUNWaldHfNEFJcoTcprV7e4qe+Fo7JTRsdcAXFZhlNCEFqb1GbMJpgTErwPmV
+x5C4bU1SijiJtKMr8h993bEyrZX9jXO7R6bMlTxBFOvvoiJRgAkUDoywxBJq7Zhh
+Q8ESB/CdQT+WpxRk/pzOwYyY9+5V2DK6DYI30tix6xc/bmTxVzxLcnf587gCPYq/
+etCpjxHw114tiJtSA5GtE4I4V2plQX6x9S/4iEFC3mf7dWHVa+nGuaWFHEfB2W4X
+jJi5mQPmY8RytYp2H79tP8SNp+D9tzPYtd5mFVZxcEOduv0M0UiYbxBiNK+2jzlL
+FudkuePlNqbG3+269v/fMQ8b1IfDDpZQhDcYsydJMrq/QJmVxaVxoAyWipXkajTu
+mTa67WVq938s/Xyr3heuGbxT0vpHcGCzoPJhDuQ/Mfh80V0q93dtCloKs9s7IWj9
+yPMU5W+BgFF7P//55BLmI9EOpwiRyp4S1CQLZbxNLLOjpW8CyDikoVAChUlYck+G
+ko5mkIwtOHJ19B+wQlzXeOEz1jMcJcGQSqiuPnJp4D/esjy/689kNWXP++fRmCTy
+GZP9uJ5isKZVNwZuJTVKoWxEbbs7NxyNQ5LMUtLfG2ein7e3rBa+CmUW/S7xPv5k
+BSE2d4DcAVQL0Law1dsS3sGsFpgZjLkc8jd5uMybQyVOjma0dqNeUROKcd5idD4q
+sz1XgCYJYzyaBGu5ZxI6fm+zorVpOvW7rTucBNel08JHgO0EapZnlbVQTRyuMslf
+4XPjJGJmEaWCflmruAJhfIvUU6VTxHU6rKV6raUY47pJjvRX2DlKuGe7TsdqnTKM
+HBxBGV7G7uR6R8sGpEH+M6I+srfTE+mzErzJW2rlwH3wgvVDVgHhlc5ZdKy6dnh4
+imC/2ZCSxjpf+edYoIKiROwo5k855T5t1BO8arOjQREsUXHpJuN+TAARPex0Dl4A
+5fpxWuhuxK1zG2LI2G4ZW880xwd+3oQNe9pe5N04o7+X5be3LnfGIDkQ4I1vcOpy
+/9EPqHjZTCwBAzdWF1xft+Q9BX04MbWOnYrejFNtQ2NJtWYa//SXOVNtlYTZxdIE
+uLVCokznmb+VxvV/LWL/iDzo1gJuOtM3c6ASkIsjxn6yLKspIXs3DTopz9UKlTUa
+HJA/McoKc4FDLMBNe6RS9EMeCaApj4RtihTYsrdhq2QKzSVNYkm9VWr9hTcrozsR
+xqA9n1GCSU8Fg4eOJXaZGCpOVQRFQGTy4bloxozJX2Zj7PJ8taPggE/cbWZJvbUb
+PYyDo68qilRLskvf7pMyF+ZhdO4N12fS2uYPyFdKec+PFJax6gqau9AxCna5B7eK
+cG7Ke+9AbBL8aJKRHzcBzpk8F9S8WsXDz0GBkXEmZHe+WLscIlT3wlIegst5keuk
+qb8JLSkyE9JikwiT4wHvziove59PVDkgVIe5nvaJoHiYTza8e3Z76c0/7OpbNsbn
+7f376zrrjGlLoX7IQMNOgUZvAh6GjATOUmMZJA/GHOcbfrCFtlc8wZQeA+XEYECP
+cZkeadkLDpJiPBWDwE2UNmS7ixvqfrrC4M95bXi1LRC3RfcKa0bPTfTuKrWzFKbr
+GErqJuX9bf4YRv3v02eJT1tkF4eOwfZtntRp1HsF882BniOMNe3xsH+iZW3sw5gw
+6UgGN/GlssPL4zGBt0RFP2YnhH4K6vy5QX06sb46+ZFaz7PF34CEaxyanRuDyLJS
+jwl3E/DE7VwT3fZUMzkRvJ469YqqxLZw+z6rew+YUTNGHfpt0EIWOqt9SkvYZ3Sh
+l2yvcCUQAMoPLK5wf3DkZTlInarFpbvlcfqJ5C5nveZgnXIHUjKUaZRRcPUhQqEQ
+EFqT+ag8huBc+noQdWpeGnQrx67L1upA12IT4dczV1NX8DrYg3d+SSTzhm6OcOXU
+G+BTTYE73z8Ge9D+aPXMjd1qmxF/ym9pDnEkEBrgaW/2EDC+bBNt6TA1BcCUC2cP
+Ieg0XDXbgURofQNaHQAUdETRDmjKIKs2+c65fRJoIdmOB8Ym8czEHku+xqsDwitv
+d0frjw4sMZptHT1hAJVk6Jc8PWMKnaPZniWAUO3HfK+IWdH5AWw3PGhy+g/hm9aB
+iydi06sXc1as4uyO4ukX4/oaLd6N5Rnm86oDAuPxkkdBkVOnF3kyFeV9ObdVTEXD
+rsfvtF28FI68ERF1PJNUyF0XuHtSodXi1LQewEJuk8Foj+6X8aCCyChZQPU+r3pc
+OTCS/a8IeDQCTgTsT+9nA+XUWo/rhcMQSmJ5gbXaDGgkMX9uWcPzlQhwL05Vo6EN
+neK8/1izLf3Q1DixJE9J1rj+V098H0xjgPNbht2+2mQ23rRIPlrRCrU8zDur7u50
+H5lFcPxZvslmNiOPLIjaILKYH/obrdPPx63xwE0yxYMTbzLkYZg8/0FcfqmRz5ST
+dlJqSqA9NtowhleF5e0htQl4PcVbdkQafpNJ3eEEdz4Hw07gftfdRd0a7yw52/LT
+98uerkM+PFPTVNkevV16FnwJLlZkYrpaz+UpudnWjdb16I0V48oIYS8caKlKEL17
+/TpnU/zilcaztiCtykaDt8FOLk1Mrf0U1jUTGfKiwQb9vJ9yl2dg2erGjTG2tUgr
+JG6/4CzRGGWp6sZlxW3MSJG2z2xToKo6rHbRAj5WKlLVWm/Ubo8f4yIqmOw/ZWXo
+oWhlsCZ9gyb/rOVvdPdWWEW7DZrN8V7sbEW76/Qz4NHixDz0BMzZ1JiInQSnkUco
+6G1cYFl7tXcvvnV0r0MLU7uUsqn5mxe48wbkNX65MXMUEeutE2uu5fmFrgOqOSma
+TJ/XVxjm5Zep9SUau7KsAYimehV4BGJqIOl8l9aOQHmFIhILKMt8cT+CKNV7aBT2
+tds/nMdeCIuLYRzyIF2RqdkLOTWzpBeh93pKKZnjAMPj5FMvJGw5pDM6SjXTpXdw
+9OuSbkVHH2fzEJWfQKftNseHi7Vnu//ozrSNydSjOnsd2pAxs4V86OH8wyAdlb06
+vIqUgL7VVRGYw+GY7TheQFc/Rm7Dwd36qcQTTSdM6IUXzbJYiJFI2cAgrgDiIucw
+gTe0818Oz20tL8nnUELP0XtwrZ9ldcaknrgpNVukOlqpghAHHUhouAeI+vYd0J4E
+cpx4APbyM18tMJYFZVoNBkUSHuLW1LkfW1YEITExgJw0DK2NUA9ym2piBpyMDLb4
+nQIm2bNxBOrzZK9WU96c23LfBj/5KMaivce+2MvCgpE2xJ/MQmUoJhIYrx7FVwBG
+4pFA299VMaWOmEfCBG7snL3pG0Y3fCVwVQwBUO/TSaaoVYWpLfu/+8UeSSVzEQv6
+mvnDWQ0Ns3tMiirJHMpcBpeRd5TpxZ3L//JvnNFHQUvjt6OXmuzNc2vBxxK905eG
+4EsPKQdVvbDTzIvg6s6Tiryq77BtzM+stv/1ZdpHhAgg6VMQ+134wJJWdWh+k0V4
+1CgR0dlZcXKB0Zyl+73i/UI+suTWCQftU+MgDmE4nX9If+O6sz90uLYgsmO3J3ws
+Qq/I8n97JjkYtsbmEe7KB9VL8WSTsU9OkxgJhcsQlz9P+I7H5LlXFx2JlZIQddOo
+tMQQbHteOSrUgEDlBtXnIaRFzDBqQPgU3riLoEHp+o/JIFzsjbjAecw6wFALAoW/
+u/QhHXV9r+ajFok4unu03K83oKm9nLMrwUl3oLg89hE9N3E2dxCnoRM+Xk7QNuXq
+5C68Swrro5PKdE/VQeTQCm+1FsElFOJDs/7S0lB712MbE5kNSyBOoulplVpC1CTy
+HHRjg6dEpZ2w/hmWWkWpVbUsPIoSwGO1qrajJFQTo9+EryOMNczME89ahDNz0PD/
+5DutUKDDe3Fv9KPE7rWlrSdXo/R/3jM8hT+EJf4l3lXfiZEac9po42wkIqJUur1J
+LrDo2s/t+Nb0q0q8Y8s79cKUUNQZJ3F8xBN/hsFJZHKkpWwMV5LOEiCoIZMJ0Pk+
+JTkGmJM6wu2DJmufUlfs/O+hwzyrSNAKvLxC24JP/MkTgcd5XeE+vN5g6nDI40NP
+kZXlFSNB0kWrBb6wCDlJ4sOZQojDnQAhH24IqRImEEv99Ll8Zryudy+C52tVaTZb
+WDdSL3cJVpzUGF2jdDrImOIPvb3Wqo9eB9sU5FLkRK0BMypfjvgepMNOKDRzZIuj
+JhKVisUDcvpG0g2GmjJp1iYGKb/A4mFqC39zvUcP2FhWr3dgrdyMA3gcBULclHVN
+pHUDkO4H3Yqp/EmFpLenVcz/KL+QJqEHFl8QNxmjzooFGr1VKi8ruwRlh3RYzQ3x
+jFebluyxUK8nEkWeCCd80A1GX8kHcQlfXds3H/M27MPIFpDdWL3mRPL4yM0E5wRO
+CeIRuahpyidPd/XXAPghw9B7cLrrYUnN/6rGB81QJVs5K/5PCa62HCWr9XkitCiC
+YgDXQnZRaO+boWtsZIMIKmYsAq3cy15WslDzq+S21SdFxYNYNQCYBsCFw3caAU/w
+YUNK+ElYSHRnFzl2guSVKlDJUUNAIrPFLC8Fs8XzgCF1kHFXIwGXx1cRwvnLqr4n
+sK9mfxATroI3wm2MA7JcWNeXy5Qcilft5uElYVXL/CxsMsgN1reaDD2ArpdyZsIU
+NOFqh5276mRPvH4zGEivsdMEM9Ejvah0djYDLlwelXAJ4jpEIZuyR+I1TzzpZ3lM
+CvltTXvw1RXCnYlonrLfijAKKZgDbZmdEqFf+EtRPka/vC3PaHjzOUWkzQ1Af/vL
+O3t8RfdFdAI18JrxJB/+Hjo/yChjjU3OuouZLFsu6MjCL9h+d/fxG4QsFtE1jsRy
+kCgM1KGL3NbNPH0hUo0Obg+I7nlrhV5tUxivIUFL4gNZ6vuWdEx0nkJ4n5wga7Zn
+9keRYVK4QLehblEFR0yqZx2j5/at8FiI554JTCZ2vqjP/WVE83DlVHwhJvqOyU7Y
+bthRGhvzmg4GHujTv/20Xzqyvr5LaBc5jG6iw+eUFNtgqVbVQ0bX8aD3sjWV0V36
+/icQQYzlq/J2JQf/cJExJXOVifV30vDc3v0hME3CofE0NqNzXWp1dE1SSBxjByVs
+gwnleeQlzvI2NtYWsyDgx6yT2kvNVJb0FPaU9yW7W3d/Uu75YhuHAL363MoZgOO2
+oQbUHYswaH0f3+sBFxWN0giQlJ5Fz9ZRkFtUx7Ruw6CPlZJ3iBI3Broxn9/2IQYT
+jRAxJ6mf1c1liOy+OCLAPJr4Un+Z3032e7UylETelncH1rDEjDgreSDTwVRKJsCb
+p/X+rIIlzJ2x4beiFLwZNUHj0W3kSshyl4TVQg4yDcs6exOL/0K8c4vpG5zBXxui
+I7K9gt0KS3zWGrHC6rTSCA2RqAm1ZAGo7Zt3u5CRavn4mXIrhuGoAEciYWvHH/XB
+chpxScr7fb82PJS9rEAD2DbravbBQI0fXTLSoI/MjpP+/jj8Sr8rXEKMwmVP4GxU
+2iMQJRTR8NWgVUptaow8bCLFOGE8vuknRCancdzCapTaysntYb26IkaYP7Dapoje
+dQOun3FF6v9wbkcngJAVw+L4tdkTv3000U+9WCdfFiNgljAN9v+fwvBpgNknd8eV
+yYbRTg70A0X8AtC9/x4PWmF2k2n1v7YCvQdHo/3Mp+9BrX8PFnnT1Pb7Deg7bLpA
+T9X4AmS6OQcKdLTLHXUUVMCh03vw8qmxoKEsMmAVblfZNpNMez189s9lIpuPK2oB
+lq1SGHTUJVThs8d1FXl89ic8ndXBHMfuLhyAnrlh6tcg2bGaJqkgKaXS0S8573Ie
+TKLjcZ3owxeH+VouCvSV+uLRA7uFFD0KfxZKV7DH4V0zLn4tqqEljsjevpK2YWA3
+wZf2wf6PhbsSQ9C8iKsTzJET0fDZQ2+QAZnx/XWFGbuLwp0doYZZiXMjy5o4l6PU
+srKb75+horo+66ijBwMefSoGNotoBPBbh1WbXgiWcij6m3cp2bkeGMsky1GT7aO4
+kLCQIRaY4hiRbCW/N/OhqYmqumQV/F0JnwIwVm/ijCi9tTl1OtL7P/pRKnfuqICT
+3YJliFJwSHhB62V5RF9OjEYvMbKi5p/ZUb6zmBW4WUvfv4C4epk+/LDNBCXzYRyE
+SAYXUtj9s5VarTKi4eSFbG+uBklytlYVxvPD4NsJQvGyRpy7IxsVGbStJ8bAaqNZ
+CRaqn5yQMvE41EmzqwWtHi/LIGsXxsl5+gqMhdr1QxWWylmdzMIroGbWOll7QdDJ
+CnekYyql1iSIY/lucvHHyU3opeSSqVVvoL0po4/xbuFq7J7JL1e5RZZC2p5IPH19
+aQ7RsMfX9euUgNmIMZpjMwCnve7HG0D3n5ajrbIWmy+rGkrfZhp7iIuBpfh/VLAu
+BdabEpOyIPl001UZOwIqnQpi53BwI+ZokuD2vLVAxDiUAE2gjGq1KY6vrGyZs1tl
+rWjHJI5rTZuipV8cxhzoQEV7oM/YEcPAIaZN1EbLNyQgSALohDJ0WVcee21AAj4L
+wHFaK8XekgMLmjXqYSvZSncXYL1MvfKVYog1tGLO1ON5T3KejKCClIaNO5nd9yGY
+nJ4ZPqiAQHcMC3fBPLp+MpxSYK92TrcJeVLAyUnm9avfV7Ba8W/Nkv96XSA2AN/b
+dWI0V3lxgRXpAMNBlGNORprWyH/WmJcFrdiYdy6JXpwQIw0SHSgLsR4jmucpfIq7
+jfNwAuoF+jRp5oPNarj56UnbLNCKVQ8v8Gx2TROljHKkwpKAbOurliAYUUBBLrLA
+0LzWYC2J31xY9bPKm16NUvvN5JrNT3S19fFlb3Y/WyoWnd84Y3MG0fzerkM/roci
+bO8oFjFAKHYk9lq1L3YDOetffvtweWJyj3LWMO+mXTIY0k5S7+CEdq0LWNIuKQKH
+N/Lf2PRU7bS707DJxc3E1ZMoBmKA1WfXIvBxmav5SbnH8540+hCjDbvGln/M4Kfw
+NavO5B2TmzYp1mLnBkF15THuP4/kyBVHHJhnnzi9Npitwce5O2DuH+OTfiX8Mtrs
+DZS2zNSTrGPUqk+S9wAXB/q97E9bVj9F+fkxCHMiceJoDoU+sCIGvp6NeweTrfOC
+NZBoNsUWR+Ya5GuNsgkPSnJ/mTJxJr+7/JuqHEy4L0gCoZKDu1z+lO8TVZaVsj2C
+p/YkaVJ7C4JN2FR19PMvgAdt4S14yarvtQSgZfaB4QjYn7+JMm9c5vdifgOHXOPi
+7ZB4Qdd8yDlReYRvmwRg0t5G/k3AGcqbVxpfpIy/CCV4dizyMQ4m0W3gk6kD/YXS
+vvQ63o9VM4wBmIFr3St5S4jGxGWMgZQTBnnw26mq68TulP52C01/+tMtAFO0qkzZ
+TENK4DtCE+jRngizUZQUilLLvu4/+Ufah63Zq/p4TOFOSoNdhvj96i1cnglWMGr3
+tmJf1SdbP0j1sE3zplAJlermBVKs4+LyZ88PLZ0/KR7xHFd0CW/ntz4pFsM0jwH/
+ApAJBZUVPdGOgNcAAidpsG7weGLYalCL2bq1oU4Vpm4zCsT1SrbosB7//jpEw72h
+9+hRo2TLLltNVv4CxT3E1+J9FCqkaARIwt8tUdKiJ/coG1M1OGrQ0r4geX/sk8aX
+PzliEg3uKWY8m4ALL6drABe5U8AA3ee7f8VYGj03GCJXCJ9BUcpPCZcYhrYCTy0d
+Uitys5plqHSWvwY9lxJ8AYrv4dyTZNvHW0xTMDCvKWk46OWj5lBn0fab9iWVMgUw
+Myc+H6uXnavudQQfkR/qln69YKOPr0KnPPVxbBZ/Jj7z0jICAd6iSRpvgTnNZuez
+74NWMcLnhWZHoj3aj4w9GQmsmV45p9xGgSo2E4KIfmzTVJfECox2BYaLLXlViULn
+X1C9Fccc/pjtNS2gM/j8vbkzeKELa/O+8xWS49RKFz+8inS1wIkkb3S3wrDOinit
+i6Ze/EYQVLrKdtT0n3C2x/j3yjcgciPTuo7bkutVOsyy5WmuT47xHIipWCNOyqXv
+A3cQpGdCfLINUB/HyVDKvqzczLkmoRWW8Ek67VXv8lNkrcYIK5TrNk21TOD3FNXy
+SFyDcLgwVypfwh31qL8Z4+xG51a4iEoEf72z6O1GwNMJB9p21eml7e4+idV+zsbU
+TB0AJYXURSxnori6U7YHVKh63EKY1V9HnTvqQFK/H4kyhNkW8AB3QfFJfDi0SiPc
+57jSoalcjYTccELGxfhHd9oXejYF80xWyjCeD/RY+uioScFxfTD97JyXoX/vgTxw
+pszZdNhy33i9UNQ60Z6FleuJ+X+ihXu+uG/7gjGAtkoTNO+ja52rnXocJnEMs+XG
+vsYeHmaV0GDMXIXz5fWO3n79xyTC582tJ+XDhuQ5w0mV/lf/9JcJHen2M5FH19W3
+ZNUXlLYaKHaFpO+sPqoVDKDEe1ARRsa2HYt/0KzprCG2crrMcVlnth6elPauRJQy
+fxnRMXXb9+l9fi9dTiVqa37m6EA8dg1w+GOIvgetGAk3D+8paLp3pEl9W7172wan
+XMfNCfdMrfBs4TfB0Mf+spmX9Nj5rGwOPnPpHgoXoJVRRwkXqdni2oQVcSZUzfMQ
+FiRUJ8SHMnQ9q5FxhFeBRcEP140aM+D4G99Vobr4MEZtKG5JNYaWj9Lq5x8rC5Dw
+CFlZNjVKpL2ntEDB2XpGrJTbe4Uh8j6aymqR2GEx6glktcA95pm7Y8tVwBOMaSLM
+zDUrVRRPWWwyJe5H/24oLQMZzkrKNSXA5GZVjwKFpGYFhtEYQfWNyc7D9T83aYze
+MLPzbuAihVDtBlCsxVQUvYH6xKMwqQ3l6dUwdS1EZl+DVAz4WZ6WZ03tS5ijA3E+
+PH5cHQW+aE2TJl8UfN5xyGdECIBUhRNrCOcLWrLl2LYGhjq+wbv9GXvq/f6BAhHd
++CiP5fLXft+I7dfjTGBTKOc5iScWhu5ems6IgMiA+XIa949S8FYHVz1/KmiN4ea0
+XFB7UH+CH6nA9mbr/NHtzYi8UvwOEaMWCCjAHEfykB15AwwWoxseZZI3GE9DqMEY
+jBZIiOAVhoPOkhi2TXW8owYu/srfGN2gI4sjMojSN4tkGT+TUQ8FUU3yNoPkM+KI
+I0+nPn+EgbDU4c5depx5iiopXrL7V9dknqqtePTpn9jFe9MQoyuGhqWMyHXOtlVz
+i75hua7khJkgtEdWvZC/ty4Sg1hjpuT36UH+2T0k2yq9dnPiSlhPbvIJQroJVcSX
+O0H6TF/FwD5uyyq230/pobsACLFWmBKdNfYw38rEcvmkZr+Ufuu35k0yQizVPXGW
+RIfqB3MALiAHuEDicoqi+FW55F4GxUCqvKZRmpN8ubOqts842C4X9HUVHLEs/7+V
+ydpmF7s12ebc+QXewKcG7bISV+F15sUck+YFnzqBcfD0e+WxL0ds6hqtRc4/+DXM
+1GGrsqYRzXQ1AXBSIRPsUy7ce0QffRlRWof5ZDWBPQxfOIZIHCV2xjW3l8SJfemk
+XGS/LP5WbE1yGU+i4D3UJTa7ahbexm6qt2A+btQ+9CoWF0K0cL2LtpWBcBU5A2xZ
+dipPvfeiKrKwbXSwKg5D+g==
+`protect end_protected

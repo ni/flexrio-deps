@@ -1,67 +1,90 @@
--------------------------------------------------------------------------------
---
--- File: DFlopSLV.vhd
--- Author: Craig Conway
--- Original Project: SMC4
--- Date: 28 November 2006
---
--------------------------------------------------------------------------------
--- (c) 2006 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---    Instantiates an array flip-flops with a "hard" syn_hier attribute so
--- that the enable logic won't get merged with the D logic.
---    This file does not synthesize under XST in ISE 10.1 or earlier
--- because of a bug where XST does not support using the 'length attribute
--- of a generic.  You can use DFlopSlvResetVal for XST instead.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-
-entity DFlopSLV is
-  generic (kResetVal : std_logic_vector;
-           kAsyncReg : string := "false");
-  port (
-    aReset, cEn  : in boolean;
-    Clk : in std_logic;
-    cD   : in std_logic_vector(kResetVal'length-1 downto 0);
-    cQ   : out std_logic_vector(kResetVal'length-1 downto 0) := kResetVal
-  );
-end DFlopSLV;
-
-architecture rtl of DFlopSLV is
-
-  constant kRstVec : std_logic_vector(kResetVal'length-1 downto 0) := kResetVal;
-
-begin
-
-  GenFlops: for i in 0 to kResetVal'length-1 generate
-
-    --vhook_e DFlop
-    --vhook_a kResetVal kRstVec(i)
-    --vhook_a cD cD(i)
-    --vhook_a cQ cQ(i)
-    DFlopx: entity work.DFlop (rtl)
-      generic map (
-        kResetVal => kRstVec(i),
-        kAsyncReg => kAsyncReg)
-      port map (
-        aReset => aReset,
-        cEn    => cEn,
-        Clk    => Clk,
-        cD     => cD(i),
-        cQ     => cQ(i));
-
-  end generate;
-
-end rtl;
-
--- The following comment is a checksum VScan uses to determine whether this
--- file has been modified.  Please don't try to get around it.  It's there
--- for a reason.
---VScan_CS 5302020
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+bXcW0x1/qKj04BHjmHOtCwMC593wyTe6ir8/RWOCKG+3a43yDFkoOl1G9eeUyKXS
+dHV6a7g5whryT9kCZ6JluvLJ3w+QXhepRDwaZoyFHKkMFQbf6TOK5yz+pf4CW/AZ
+6xcHO29EWlT798v3VJYKNmkdRgnY+qUwdnwFvbaB/swsntFmLo5r0I3K8fo8f30a
+6+iW0Fc7iSSuSxE0P9mq0QtX31480wfscTuk97OejV1l6f4JOIQRKPm0SJEXF9yo
+P/M+8WCc96bNj7YDEbVwe3HJb33QjmvsKpZ7Nd889dWrR2BbZSUlKiQkba3jrmei
+INxEzsAGb9PVHvyTHX2EAg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="92hUR4t8ZCt6mH1zQFYCjBVy5vFX0kRAX1Wae7L09Bk="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+FHvbXvwhjDf8bkqkFQRHgU1jocYsx6600GmoADeuGGKP7hQt7RcgVT72eqZipJh0
+tceR/4PeBnaMZl1XTIjdDPZ9eUZH4lakjSjNEHVi8vG8Vs2pnT+X6j4VtSk9DReE
+YmRyZ6pD4kjRm5CHMn8KrNw87/9hXNgQYr5AnevqFbk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="i2QALIcAkRD0JczwYIxD6+1ciaC4qMkSMP5ppFFUA4c="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2048 )
+`protect data_block
+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
+`protect end_protected
