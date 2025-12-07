@@ -2,4 +2,4 @@
 
 from importlib.metadata import version
 
-__version__ = version("flexrio-dependencies")
+__version__ = version("flexrio-deps")
