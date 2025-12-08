@@ -1,71 +1,92 @@
--------------------------------------------------------------------------------
---
--- File: GenDataValid.vhd
--- Author: Craig Conway
--- Original Project: NI Cores
--- Date: 25 February 2009
---
--------------------------------------------------------------------------------
--- (c) 2009 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---   This module creates a delay of the oDataValid signal so that it
--- asserts when data should be captured from the RAM
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-
-entity GenDataValid is
-  generic (
-    kRamReadLatency,
-    kFifoAdditiveLatency : natural
-  );
-  port(
-    aReset : in boolean;
-    Clk : in std_logic;
-    cRead,
-    cReset,
-    cClkEn : in boolean;
-    cDataValid : out boolean
-  );
-end GenDataValid;
-
-architecture rtl of GenDataValid is
-
-  constant kFifoReadLatency : positive := kRamReadLatency + kFifoAdditiveLatency;
-  signal cD, cQ : BooleanVector(kFifoReadLatency+2 downto 1);
-  constant kResetVal : BooleanVector(kFifoReadLatency+2 downto 1) := (others => false);
-
-begin
-
-  assert kFifoReadLatency>0
-    report "The sum of kRamReadLatency and kFifoAdditiveLatency must be > 0"
-    severity error;
-
-  cD(1) <= cRead and not cReset;
-  cD(cD'high downto 2) <= (others => false) when cReset else cQ(cD'high-1 downto 1);
-
-  --vhook_e DFlopBoolVec
-  --vhook_a cEn cClkEn
-  DFlopBoolVecx: entity work.DFlopBoolVec (rtl)
-    generic map (
-      kResetVal => kResetVal)  -- in  BooleanVector
-    port map (
-      aReset => aReset,  -- in  boolean
-      cEn    => cClkEn,  -- in  boolean
-      Clk    => Clk,     -- in  std_logic
-      cD     => cD,      -- in  BooleanVector(kResetVal'length-1 downto 0)
-      cQ     => cQ);     -- out BooleanVector(kResetVal'length-1 downto 0) := kResetVal
-
-  cDataValid <= cD(kFifoReadLatency);
-
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+DwCP0UbyAlcaqD7JxsL/xFYNxZuxjmzs4Ad8jZVJmgloJn3v42k+yR8WDSI8xkrE
+nqr/iCSauezNuwEVexI73Q0T6FjLIIACgDiQjtbitnssc3ZWxBdPke7IygNKvyub
+tJPEkDIHapIvCrVIF90ZZT3DJLCAW0lVEfEkZ8GjALA+8YY+UuMrW+ghUPnkJwp4
+lVVIXRmo3She0ZGP7vH5s6taGrgkEfWtY19PP9ZN1mMu+FqzCOG9oFIyXw023wWI
+5Z/twK2+O33xtncdhAo142j8NkALT6RDPatxxYJoz+JyZCSGbPABDMbohDt3jl5x
+N7036+/hqDz+++oGkRjcVw==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="4tld7AsBO7siZRtkpH7X/PH2ZiuQAluwt+ORZOWptIQ="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+AXClCdlTdFT4fg7ewrah0SzYOkZfmyzu09XZywJ+l5TxOrY7yG5GEsayUg19hpJl
+XSWiXOFVmnKxmdbAYGf/tbG/2tvkDVjpDlS8PlgCeidCSuf7mEHnLThG34t0eSQB
+assRMXplllBmmt/++9q0WxvtZ19Pk+hCyPk7aaSLzVE=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="yKYLzsEawC2uc+z9qIazqPmu1Nqc4XWNYKwXpt11A6Q="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2128 )
+`protect data_block
+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
+oZo9X6vHJTZf3u/fCTr94A==
+`protect end_protected
