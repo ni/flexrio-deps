@@ -1,84 +1,53 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-DwCP0UbyAlcaqD7JxsL/xFYNxZuxjmzs4Ad8jZVJmgloJn3v42k+yR8WDSI8xkrE
-nqr/iCSauezNuwEVexI73Q0T6FjLIIACgDiQjtbitnssc3ZWxBdPke7IygNKvyub
-tJPEkDIHapIvCrVIF90ZZT3DJLCAW0lVEfEkZ8GjALA+8YY+UuMrW+ghUPnkJwp4
-lVVIXRmo3She0ZGP7vH5s6taGrgkEfWtY19PP9ZN1mMu+FqzCOG9oFIyXw023wWI
-5Z/twK2+O33xtncdhAo142j8NkALT6RDPatxxYJoz+JyZCSGbPABDMbohDt3jl5x
-N7036+/hqDz+++oGkRjcVw==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="4tld7AsBO7siZRtkpH7X/PH2ZiuQAluwt+ORZOWptIQ="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-AXClCdlTdFT4fg7ewrah0SzYOkZfmyzu09XZywJ+l5TxOrY7yG5GEsayUg19hpJl
-XSWiXOFVmnKxmdbAYGf/tbG/2tvkDVjpDlS8PlgCeidCSuf7mEHnLThG34t0eSQB
-assRMXplllBmmt/++9q0WxvtZ19Pk+hCyPk7aaSLzVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="yKYLzsEawC2uc+z9qIazqPmu1Nqc4XWNYKwXpt11A6Q="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 1744 )
-`protect data_block
-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
-phYpAfKtoByYVb7gGgQInA==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgLvFpgaConst.vhd
+-- Author: David Cabrera
+-- Original Project: Puma K7
+-- Date: 22 July 2013
+--
+-------------------------------------------------------------------------------
+-- (c) 2025 Copyright National Instruments Corporation
+-- 
+-- SPDX-License-Identifier: MIT
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--  This file will be generated by LV FPGA to set constants required for
+--  Puma K7 compilation.
+--
+-------------------------------------------------------------------------------
+--
+-- githubvisible=true
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+package PkgLvFpgaConst is
+
+  -----------------------------------------------------------------------------
+  -- LV FPGA generated constants
+  -----------------------------------------------------------------------------
+
+  constant kExpectedTbId   : std_logic_vector(31 downto 0) := X"D00FD00F";
+  constant kExpectDumbTb   : std_logic := '1';
+  constant kEnableFamClockSync : std_logic := '0';
+  constant kFamClockSrcSel  : std_logic := '0';
+  constant kInsertBank0Mig  : boolean := false;
+  constant kInsertBank1Mig  : boolean := false;
+  constant kAuxDioDefaultVoltage : natural := 3300;
+  constant kAuxMgtClipPresent : boolean := false;
+  constant kCfgSubsysId : std_logic_vector(15 downto 0) := X"78F9";  
+
+  -- Required for HMB
+  constant kDram2DPBaseAddress : natural := 16#20000#;
+  constant kInsertHostMemoryBufferMig : boolean := false;
+  constant kInsertLowLatencyBufferMig : boolean := false;
+
+end PkgLvFpgaConst;
+
+package body PkgLvFpgaConst is
+
+  
+end PkgLvFpgaConst;
+

@@ -1,137 +1,131 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-DwCP0UbyAlcaqD7JxsL/xFYNxZuxjmzs4Ad8jZVJmgloJn3v42k+yR8WDSI8xkrE
-nqr/iCSauezNuwEVexI73Q0T6FjLIIACgDiQjtbitnssc3ZWxBdPke7IygNKvyub
-tJPEkDIHapIvCrVIF90ZZT3DJLCAW0lVEfEkZ8GjALA+8YY+UuMrW+ghUPnkJwp4
-lVVIXRmo3She0ZGP7vH5s6taGrgkEfWtY19PP9ZN1mMu+FqzCOG9oFIyXw023wWI
-5Z/twK2+O33xtncdhAo142j8NkALT6RDPatxxYJoz+JyZCSGbPABDMbohDt3jl5x
-N7036+/hqDz+++oGkRjcVw==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="4tld7AsBO7siZRtkpH7X/PH2ZiuQAluwt+ORZOWptIQ="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-AXClCdlTdFT4fg7ewrah0SzYOkZfmyzu09XZywJ+l5TxOrY7yG5GEsayUg19hpJl
-XSWiXOFVmnKxmdbAYGf/tbG/2tvkDVjpDlS8PlgCeidCSuf7mEHnLThG34t0eSQB
-assRMXplllBmmt/++9q0WxvtZ19Pk+hCyPk7aaSLzVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="yKYLzsEawC2uc+z9qIazqPmu1Nqc4XWNYKwXpt11A6Q="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 4320 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgDmaPortCommIfcArbiter.vhd
+-- Author: Haider Khan
+-- Original Project: LV FPGA Chinch Interface
+-- Date: 24 September 2007
+--
+-------------------------------------------------------------------------------
+-- (c) 2007 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+--   This package file implements utilities used by the Dma Port interface 
+-- arbiter components.
+--
+-------------------------------------------------------------------------------
+
+library IEEE;
+  use IEEE.std_logic_1164.all;
+  use IEEE.numeric_std.all;
+
+Package PkgDmaPortCommIfcArbiter is
+
+  -----------------------------------------------------------------------------
+  -- ArbVecMSB
+  --
+  -- This function returns the highest index of an arbiter vector based on the
+  -- number of streams.  Normally, this could simply be done along the lines of
+  -- ArrayType_t(NumOfStrms - 1 downto 0), but the length needs to be a minimum
+  -- of size 1, even though that one element will be unused.  Therefore, this
+  -- function just returns NumOfStrms-1, unless there are 0 streams, in which
+  -- case we return 0 instead of -1.
+  -- 
+  --
+  -- Inputs:
+  --
+  --   NumOfStrms : The number of streams requesting arbiter access.
+  --
+  --
+  -- Outputs:
+  --
+  --   Vector MSB : The highest end of the range for the vector or array
+  --                associated with the streams.
+  --
+  -----------------------------------------------------------------------------
+  function ArbVecMSB(NumOfStrms : natural) return natural;
+  
+  -- The number of streams to allocate for each sub arbiter for the in and out
+  -- stream arbiters.
+  constant kNumStreamsPerSubArbiter : natural := 4;
+
+  type NiDmaArbReq_t is record
+    NormalReq : std_logic;
+    EmergencyReq : std_logic;
+    DoneStrb : std_logic;
+  end record;
+  constant kNiDmaArbReqZero : NiDmaArbReq_t := (others => '0');
+
+  type NiDmaArbReqArray_t is array ( natural range<> ) of NiDmaArbReq_t;
+
+  -- These functions extract an array of one field of the record. These 
+  -- are mostly to simplify the update from separate arrays to an array 
+  -- of records.
+  function GetNormalReq ( val : NiDmaArbReqArray_t ) return std_logic_vector;
+  function GetEmergencyReq ( val : NiDmaArbReqArray_t ) return std_logic_vector;
+  function GetDoneStrb ( val : NiDmaArbReqArray_t ) return std_logic_vector;
+
+  type NiDmaArbGrant_t is record
+    Grant : std_logic;
+  end record;
+  constant kNiDmaArbGrantZero : NiDmaArbGrant_t := (others => '0');
+
+  type NiDmaArbGrantArray_t is array ( natural range<> ) of NiDmaArbGrant_t;
+
+  function to_NiDmaArbGrantArray_t ( val : std_logic_vector ) return NiDmaArbGrantArray_t;
+
+end Package PkgDmaPortCommIfcArbiter;
+
+Package body PkgDmaPortCommIfcArbiter is
+
+  function ArbVecMSB (NumOfStrms : natural) return natural is  
+  begin
+    if NumOfStrms=0 then
+      return 0;
+    else 
+      return NumOfStrms-1;
+    end if;
+  end function;
+
+  function to_NiDmaArbGrantArray_t ( val : std_logic_vector ) return NiDmaArbGrantArray_t is
+    variable rval : NiDmaArbGrantArray_t (val'range);
+  begin
+    for i in val'range loop
+      rval ( i ) := (Grant => val ( i ));
+    end loop;
+
+    return rval;
+  end function to_NiDmaArbGrantArray_t;
+
+  function GetNormalReq ( val : NiDmaArbReqArray_t ) return std_logic_vector is
+    variable rval : std_logic_vector ( val'range );
+  begin
+    for i in val'range loop
+      rval ( i ) := val ( i ).NormalReq;
+    end loop;
+    return rval;
+  end function GetNormalReq;
+
+  function GetEmergencyReq ( val : NiDmaArbReqArray_t ) return std_logic_vector is
+    variable rval : std_logic_vector ( val'range );
+  begin
+    for i in val'range loop
+      rval ( i ) := val ( i ).EmergencyReq;
+    end loop;
+    return rval;
+  end function GetEmergencyReq;
+
+  function GetDoneStrb ( val : NiDmaArbReqArray_t ) return std_logic_vector is
+    variable rval : std_logic_vector ( val'range );
+  begin
+    for i in val'range loop
+      rval ( i ) := val ( i ).DoneStrb;
+    end loop;
+    return rval;
+  end function GetDoneStrb;
+
+end Package body PkgDmaPortCommIfcArbiter;
+

@@ -1,167 +1,150 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-DwCP0UbyAlcaqD7JxsL/xFYNxZuxjmzs4Ad8jZVJmgloJn3v42k+yR8WDSI8xkrE
-nqr/iCSauezNuwEVexI73Q0T6FjLIIACgDiQjtbitnssc3ZWxBdPke7IygNKvyub
-tJPEkDIHapIvCrVIF90ZZT3DJLCAW0lVEfEkZ8GjALA+8YY+UuMrW+ghUPnkJwp4
-lVVIXRmo3She0ZGP7vH5s6taGrgkEfWtY19PP9ZN1mMu+FqzCOG9oFIyXw023wWI
-5Z/twK2+O33xtncdhAo142j8NkALT6RDPatxxYJoz+JyZCSGbPABDMbohDt3jl5x
-N7036+/hqDz+++oGkRjcVw==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="4tld7AsBO7siZRtkpH7X/PH2ZiuQAluwt+ORZOWptIQ="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-AXClCdlTdFT4fg7ewrah0SzYOkZfmyzu09XZywJ+l5TxOrY7yG5GEsayUg19hpJl
-XSWiXOFVmnKxmdbAYGf/tbG/2tvkDVjpDlS8PlgCeidCSuf7mEHnLThG34t0eSQB
-assRMXplllBmmt/++9q0WxvtZ19Pk+hCyPk7aaSLzVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="yKYLzsEawC2uc+z9qIazqPmu1Nqc4XWNYKwXpt11A6Q="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 5744 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgDmaPortCommIfcInputDataControl.vhd
+-- Author: Claudiu CHIRAP
+-- Original Project: LV FPGA Chinch Interface
+-- Date: 15 September 2011
+--
+-------------------------------------------------------------------------------
+-- (c) 2011 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+--   This package file implements utilities used by the Dma Port interface 
+-- data control components.
+--
+-------------------------------------------------------------------------------
+
+library IEEE;
+  use IEEE.std_logic_1164.all;
+  use IEEE.numeric_std.all;
+ 
+library work;
+  use work.PkgNiDmaConfig.all;
+  use work.PkgCommIntConfiguration.all;
+
+Package PkgDmaPortCommIfcInputDataControl is
+
+  type NiDmaMuxCountArray_t is array (natural range <>) of natural;
+
+  -- DmaPortCommIfcSinkDataControl uses an elaborate calculation to 
+  -- determine the amount of pipelining required for the data 
+  -- multiplexor. The number of channels passed to these functions must 
+  -- be chosen so that the number of pipeline stages adds the amount of 
+  -- delay expected by the DMA IP.
+  function GetNumberOfMuxLevels(NumOfChannels : natural;
+                                ExtraLastStage : boolean := false) return natural;
+  function GetNumberOfMuxes(NumOfChannels : natural) return natural;
+  function GetNumberOfMuxesForLevel(NumOfChannels : natural) return NiDmaMuxCountArray_t;
+  function GetOffsetForLevel(NumOfChannels : natural) return NiDmaMuxCountArray_t;
+
+  -- kInputDataDelay is the amount of delay to be added to the data path 
+  -- in DmaPortCommIfcInputDataControl. The multiplexor in that 
+  -- component can be pipelined to any extent that delays the data no 
+  -- more than this amount, but the total delay on the data path in that 
+  -- component must be exactly kInputDataDelay stages. The DMA IP (the 
+  -- Chinch or Inchworm) must be configured to expect a corresponding 
+  -- data delay.
+  constant kInputDataDelay : natural := 1;
+
+end Package PkgDmaPortCommIfcInputDataControl;
+
+Package body PkgDmaPortCommIfcInputDataControl is
+
+  -- The function computes the number of levels needed for multiplexing the
+  -- NumOfChannels by using a tree of kNiDmaMaxMuxWidth:1 MUXs. Each level
+  -- denotes a pipeline stage. In case the output of the last stage needs to 
+  -- be registered ExtraLastStage must be asserted.
+  function GetNumberOfMuxLevels (NumOfChannels : natural;
+                                 ExtraLastStage : boolean := false) return natural is
+  variable rval, remainder, quotient : natural;
+  begin
+    rval := 0;
+    quotient := NumOfChannels;
+    while quotient > kNiDmaMaxMuxWidth loop
+      rval := rval + 1;
+      remainder := quotient mod kNiDmaMaxMuxWidth;
+      if remainder = 0 then
+        quotient := quotient / kNiDmaMaxMuxWidth;
+      else
+        quotient := quotient / kNiDmaMaxMuxWidth + 1;
+      end if;
+    end loop;
+    if ExtraLastStage then
+      rval := rval + 1; --Extra Register after last MUX
+    end if;
+    return rval;
+  end function GetNumberOfMuxLevels;
+  
+  -- The function computes the number of kNiDmaMaxMuxWidth:1 MUXs necessary 
+  -- for building the larger component.
+  function GetNumberOfMuxes (NumOfChannels : natural) return natural is
+  variable rval, remainder, quotient : natural;
+  begin
+    rval := 0;
+    quotient := NumOfChannels;
+    while quotient > kNiDmaMaxMuxWidth loop
+      remainder := quotient mod kNiDmaMaxMuxWidth;
+      if remainder = 0 then
+        quotient := quotient / kNiDmaMaxMuxWidth;
+      else
+        quotient := quotient / kNiDmaMaxMuxWidth + 1;
+      end if;
+      rval := rval + quotient;
+    end loop;
+    rval := rval + 1; --For the last MUX
+    return rval;
+  end function GetNumberOfMuxes;
+  
+  -- The function returns an array of natural numbers which represent the
+  -- number of MUXs needed on each level. This will be used when constructing
+  -- the data flow in InputDataControl.
+  function GetNumberOfMuxesForLevel (NumOfChannels : natural) return NiDmaMuxCountArray_t is
+  variable rval : NiDmaMuxCountArray_t(GetNumberOfMuxLevels(NumOfChannels) downto 0);
+  variable remainder, quotient, pointer : natural;
+  begin
+    pointer := 0;
+    quotient := NumOfChannels;
+    while quotient > kNiDmaMaxMuxWidth loop
+      remainder := quotient mod kNiDmaMaxMuxWidth;
+      if remainder = 0 then
+        quotient := quotient / kNiDmaMaxMuxWidth;
+      else
+        quotient := quotient / kNiDmaMaxMuxWidth + 1;
+      end if;
+      rval(pointer) := quotient;
+      pointer := pointer + 1;
+    end loop;
+    rval(pointer) := 1;
+    return rval;
+  end function GetNumberOfMuxesForLevel;
+  
+  -- The value computes the offsets for iterating through the MUXs based on
+  -- the number of MUXs previously used.
+  function GetOffsetForLevel (NumOfChannels : natural) return NiDmaMuxCountArray_t is
+  variable rval : NiDmaMuxCountArray_t(GetNumberOfMuxLevels(NumOfChannels) downto 0);
+  variable remainder, quotient, pointer, acc : natural;
+  begin
+    pointer := 0;
+    acc := 0;
+    quotient := NumOfChannels;
+    while quotient > kNiDmaMaxMuxWidth loop
+      rval(pointer) := acc;
+      remainder := quotient mod kNiDmaMaxMuxWidth;
+      if remainder = 0 then
+        quotient := quotient / kNiDmaMaxMuxWidth;
+      else
+        quotient := quotient / kNiDmaMaxMuxWidth + 1;
+      end if;
+      acc := acc + quotient;
+      pointer := pointer + 1;
+    end loop;
+    rval(pointer) := acc;
+    return rval;
+  end function GetOffsetForLevel;
+
+end Package body PkgDmaPortCommIfcInputDataControl;
+

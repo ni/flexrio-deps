@@ -1,277 +1,278 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-DwCP0UbyAlcaqD7JxsL/xFYNxZuxjmzs4Ad8jZVJmgloJn3v42k+yR8WDSI8xkrE
-nqr/iCSauezNuwEVexI73Q0T6FjLIIACgDiQjtbitnssc3ZWxBdPke7IygNKvyub
-tJPEkDIHapIvCrVIF90ZZT3DJLCAW0lVEfEkZ8GjALA+8YY+UuMrW+ghUPnkJwp4
-lVVIXRmo3She0ZGP7vH5s6taGrgkEfWtY19PP9ZN1mMu+FqzCOG9oFIyXw023wWI
-5Z/twK2+O33xtncdhAo142j8NkALT6RDPatxxYJoz+JyZCSGbPABDMbohDt3jl5x
-N7036+/hqDz+++oGkRjcVw==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="4tld7AsBO7siZRtkpH7X/PH2ZiuQAluwt+ORZOWptIQ="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-AXClCdlTdFT4fg7ewrah0SzYOkZfmyzu09XZywJ+l5TxOrY7yG5GEsayUg19hpJl
-XSWiXOFVmnKxmdbAYGf/tbG/2tvkDVjpDlS8PlgCeidCSuf7mEHnLThG34t0eSQB
-assRMXplllBmmt/++9q0WxvtZ19Pk+hCyPk7aaSLzVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="yKYLzsEawC2uc+z9qIazqPmu1Nqc4XWNYKwXpt11A6Q="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 11040 )
-`protect data_block
-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
-`protect end_protected
+------------------------------------------------------------------------------------------
+--
+-- File: PkgInstructionFifo.vhd
+-- Author: Rolando Ortega
+-- Original Project: Instruction FIFO for SDIs
+-- Date: 15 May 2015
+--
+------------------------------------------------------------------------------------------
+-- (c) 2015 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+------------------------------------------------------------------------------------------
+--
+-- Purpose: Types, definitions, and type-changing functions for the InstructionFifo. A
+-- user implementing an InstructionFifo is *not* expected to modify the contents of this
+-- package. PkgInstructionFifoConfig should be branched and modified instead.
+------------------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.PkgNiUtilities.all;
+use work.PkgInstructionFifoConfig.all;
+use work.PkgNiDmaConfig.all;
+
+package PkgInstructionFifo is
+
+  ---------------------------------------------------------------------------------------
+  -- Write Side
+  ---------------------------------------------------------------------------------------
+  constant kIFifoWriteDataWidth : positive := kIFifoWriteDataWidthBytes * 8;
+
+  subtype IFifoWriteData_t is std_logic_vector(kIFifoWriteDataWidth-1 downto 0);
+  constant kIFifoWriteDataZero : IFifoWriteData_t := (others => '0');
+  type IFifoWriteDataAry_t is array (natural range <>) of IFifoWriteData_t;
+
+  ---------------------------------------------------------------------------------------
+  -- Read Side
+  ---------------------------------------------------------------------------------------
+  -- Main Data Type
+  constant kIFifoReadDataWidth : positive        := kIFifoReadDataWidthBytes * 8;
+  subtype IFifoReadData_t is std_logic_vector(kIFifoReadDataWidth-1 downto 0);
+  constant kIFifoReadDataZero  : IFifoReadData_t := (others => '0');
+  type IFifoReadDataAry_t is array (natural range <>) of IFifoReadData_t;
+
+  constant kIFifoSentinelWidth : positive             := kIFifoSentinelWidthBytes * 8;
+  subtype IFifoSentinel_t is unsigned(kIFifoSentinelWidth-1 downto 0);
+  constant kIFifoSentinelZero  : IFifoSentinel_t := (others => '0');
+  type IFifoSentinelAry_t is array (natural range <>) of IFifoSentinel_t;
+
+  -- Status is currently defined as a single byte, which we will optionally return or
+  -- not.
+  constant kIFifoReturnsStatus : boolean := kIFIfoReadStatusWidthBytes > 0;
+  --But within that byte we actually only use a couple bits.
+  type IFifoReadStatus_t is record
+    IsError : boolean;
+    Last    : boolean;
+  end record IFifoReadStatus_t;
+
+  constant kIFifoReadStatusZero : IFifoReadStatus_t :=
+    (IsError => false, Last => false);
+
+  type IFifoReadStatusAry_t is array (natural range <>) of IFifoReadStatus_t;
+
+  -- Note that in the case of kIFIfoReadStatusWidthBytes being set to 0, the flattened
+  -- version of the status will be a null vector. That's ok.
+  --vhook_nowarn id=CP7
+  constant kIFifoReadStatusWidth : natural := kIFifoReadStatusWidthBytes * 8;
+  subtype FlatIFifoReadStatus_t is std_logic_vector(kIFifoReadStatusWidth-1 downto 0);
+  constant kFlatIFifoReadStatusZero : FlatIFifoReadStatus_t := (others => '0');
+
+  -- Bit indexes within the vector.
+  constant kIFifoReadStatusErrorIndex : natural := 0;
+  constant kIFifoReadStatusLastIndex : natural := 1;
+
+  function Unflatten (
+    slv : FlatIFifoReadStatus_t)
+    return IFifoReadStatus_t;
+
+  function Flatten (
+    val : IFifoReadStatus_t)
+    return FlatIFifoReadStatus_t;
+
+  -- A "read" includes the actual read data, status, and sentinel.
+  type IFifoRead_t is record
+    Data     : IFifoReadData_t;
+    Status   : IFifoReadStatus_t;
+    Sentinel : IFifoSentinel_t;
+  end record IFifoRead_t;
+
+  constant kIFifoReadZero : IFifoRead_t :=
+    (Data => kIFifoReadDataZero,
+     Status => kIFifoReadStatusZero,
+     Sentinel => kIFifoSentinelZero);
+
+  constant kIFifoReadWidthBytes : positive := kIFifoReadDataWidthBytes +
+                                              kIFifoReadStatusWidthBytes +
+                                              kIFifoSentinelWidthBytes;
+  constant kIFifoReadWidth : positive := kIFifoReadWidthBytes * 8;
+
+  subtype FlatIFifoRead_t is std_logic_vector(kIFifoReadWidth-1 downto 0);
+  type FlatIFifoReadAry_t is array (natural range <>) of FlatIFifoRead_t;
+
+  function Unflatten (
+    slv : FlatIFifoRead_t)
+    return IFifoRead_t;
+
+  function Flatten (
+    val : IFifoRead_t)
+    return FlatIFifoRead_t;
+
+  ---------------------------------------------------------------------------------------
+  -- Configuration
+  ---------------------------------------------------------------------------------------
+  -- Type used to add or remove credits
+  subtype IFifoCredits_t is signed(kIFifoElementsLog2 downto 0);
+  constant kIFifoCreditsZero : IFifoCredits_t := (others => '0');
+
+  type IFifoCreditsAry_t is array (natural range <>) of IFifoCredits_t;
+
+  ---------------------------------------------------------------------------------------
+  -- Other
+  ---------------------------------------------------------------------------------------
+  -- One of the internal fifos is sized in terms of bus (Dma) words (which can be 64, 128,
+  -- or 256 bits) rather than Instructions. This implies an increase (if the Dma words are
+  -- smaller than the instructions) or reduction (if the instructions are smaller than the
+  -- Dma words) in the size of the Fifo relative to the number of Instructions. This
+  -- function returns the number of bits that must be added to the Instruction Fifo Width
+  -- to create the DmaWord Fifo Width. Note that the returned value can be negative.
+  function GetAddressWidthModifier (
+    constant kDmaWidth         :    natural;
+    constant kInstructionWidth : in natural)
+    return integer;
+
+  -- This probably shouldn't go here, but we'll put it in until there's a better place.
+  -- We just need to have a way to create an array of (something close to) NiDmaAddress_t.
+  type NiDmaAddressAry_t is array (natural range <>) of
+    unsigned(kNiDmaAddressWidth-1 downto 0);
+
+  ---------------------------------------------------------------------------------------
+  -- Ranges
+  ---------------------------------------------------------------------------------------
+
+  -- I've never quite understood why these range things work, but they do:
+  subtype AxiStreamRange_t is natural range 0 to kNumAxiStreamFifos-1;
+  subtype LvFpgaRange_t is natural range kNumAxiStreamFifos to kNumAxiStreamFifos + kNumLvFpgaFifos -1;
+  subtype IFifoRange_t is natural range 0 to kIFifoNrFifos-1;
+
+end package PkgInstructionFifo;
+
+package body PkgInstructionFifo is
+
+  ---------------------------------------------------------------------------------------
+  -- Status
+  ---------------------------------------------------------------------------------------
+
+  function Unflatten (
+    slv : FlatIFifoReadStatus_t)
+    return IFifoReadStatus_t is
+    alias slvLcl : std_logic_vector(slv'length-1 downto 0) is slv;
+    variable retVal : IFifoReadStatus_t;
+  begin  -- function Unflatten
+
+    -- Default empty assignment. Will override as appropriate.
+    retVal := kIFifoReadStatusZero;
+
+    if kIFifoReturnsStatus then
+      retVal.IsError := to_Boolean(slvLcl(kIFifoReadStatusErrorIndex));
+      retVal.Last := to_Boolean(slvLcl(kIFifoReadStatusLastIndex));
+    end if;
+
+    return retVal;
+
+  end function Unflatten;
+
+  function Flatten (
+    val : IFifoReadStatus_t)
+    return FlatIFifoReadStatus_t is
+    variable retVal : FlatIFifoReadStatus_t;
+  begin  -- function Flatten
+    retval := (others => '0');
+    if kIFifoReturnsStatus then
+      retVal(kIFifoReadStatusErrorIndex) := to_StdLogic(val.IsError);
+      retVal(kIFifoReadStatusLastIndex) := to_StdLogic(val.Last);
+    end if;
+
+    return retVal;
+  end function Flatten;
+
+  ---------------------------------------------------------------------------------------
+  -- Read
+  ---------------------------------------------------------------------------------------
+
+  function Unflatten (
+    slv : FlatIFifoRead_t)
+    return IFifoRead_t is
+    alias slvLcl        : std_logic_vector(slv'length-1 downto 0) is slv;
+    variable retVal     : IFifoRead_t;
+    variable goingIndex : natural := 0;
+  begin  -- function Unflatten
+
+    -- Data
+    retVal.Data := slvLcl(kIFifoReadDataWidth-1 downto 0);
+    goingIndex  := kIFifoReadDataWidth;
+
+    -- Status. This default assignment and the following conditional avoids awkward
+    -- assignment of stuff that may not be there.
+    retVal.Status := kIFifoReadStatusZero;
+    if kIFifoReturnsStatus then
+      retVal.Status := Unflatten(slvLcl(goingIndex + kIFifoReadStatusWidth -1 downto
+                                        goingIndex));
+      goingIndex := goingIndex + kIFifoReadStatusWidth;
+    end if;
+
+    -- Sentinel
+    retVal.Sentinel := unsigned(slvLcl(goingIndex + kIFifoSentinelWidth- 1
+                                       downto goingIndex));
+
+    return retVal;
+  end function Unflatten;
+
+  function Flatten (
+    val : IFifoRead_t)
+    return FlatIFifoRead_t is
+    variable retVal : FlatIFifoRead_t;
+  begin  -- function Flatten
+
+    -- This conditional prevents awkward null assignments.
+    if kIFifoReturnsStatus then
+      retVal := std_logic_vector(val.Sentinel) & Flatten(val.Status) & std_logic_vector(val.Data);
+    else
+      retVal := std_logic_vector(val.Sentinel) & std_logic_vector(val.Data);
+    end if;
+    return retVal;
+  end function Flatten;
+
+  ---------------------------------------------------------------------------------------
+  -- Other
+  ---------------------------------------------------------------------------------------
+
+  function GetAddressWidthModifier (
+    constant kDmaWidth         :    natural;
+    constant kInstructionWidth : in natural)
+    return integer is
+  begin  -- function GetAddressWidthModifier
+
+    -- We get around the fact that we are using integer division and logarithms by
+    -- distinguishing between the cases where DmaWidth is bigger and the case where
+    -- kInstructionWidth is larger.
+    --
+    -- GetAddressWidthModifier may not work correctly if kDmaWidth and
+    -- kInstructionWidth are relative primes, so we add in checks for that.
+    if kDmaWidth > kInstructionWidth then
+
+      --synthesis translate_off
+      assert kDmaWidth mod kInstructionWidth = 0
+        report "kInstructionWidth is not a divisor of kDmaWidth."
+        severity error;
+      --synthesis translate_on
+
+      return 0 - Log2(kDmaWidth / kInstructionWidth);
+
+    else
+
+      --synthesis translate_off
+      assert kInstructionWidth mod kDmaWidth = 0
+        report "kDmaWidth is not a divisor of kInstructionWidth."
+        severity error;
+      --synthesis translate_on
+
+      return Log2(kInstructionWidth / kDmaWidth);
+
+    end if;
+  end function GetAddressWidthModifier;
+
+end package body PkgInstructionFifo;
