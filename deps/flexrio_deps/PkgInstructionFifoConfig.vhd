@@ -1,118 +1,178 @@
-------------------------------------------------------------------------------------------
---
--- File: PkgInstructionFifoConfig.vhd
--- Author: Rolando Ortega
--- Original Project: The Macallan (Next FlexRIO)
--- Date: 16 September 2016
---
-------------------------------------------------------------------------------------------
--- (c) 2016 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
-------------------------------------------------------------------------------------------
---
--- Purpose: This package, in the same spirit as packages such as PkgNiDmaConfig, defines
--- some basic sizes and configurations for a given instantiation of the Instruction Fifo.
--- It's expected to be branched to your own target and modified as appropriate to match
--- your design.
---
--- Read carefully through all the options and make sure they've been configured correctly,
--- since you're in for many troubles otherwise.
-------------------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-use work.PkgNiUtilities.all;
-
-package PkgInstructionFifoConfig is
-
-  ---------------------------------------------------------------------------------------
-  -- IFifo Window Sizes and Offsets
-  ---------------------------------------------------------------------------------------
-  -- This aligns with the bottom address for the High-Speed Sink. This is because
-  -- High-Speed-Sink addresses are assigned "top-to-bottom", i.e. P2P channel 0 gets the
-  -- last addresses of the HighSpeedSink Window. Since we're using the very last P2P
-  -- channel, we sit at the bottom of the address space.
-  constant kIFifoWindowGlobalOffset : natural :=16#80000#;
-
-  -- This is the size, in bytes, of the write window assigned to each IFifo. It must
-  -- always be a power of 2. All write windows are contiguous. Note that if there are `n`
-  -- IFifos, then kIFifoHssWindowSize*n >= IFifoGlobalHssWindowSize, where
-  -- IFifoGlobalHssWindowSize is the Window assigned to each HighSpeedSink (P2P channel),
-  -- which is conventionally 4kB.
-  --
-  -- There's no good reason to change this value. It's currently sized so that the
-  -- standard 4kB window will fit our maximum of 8 IFifos. There's no point in making it
-  -- bigger.
-  constant kIFifoWindowSize : natural := 16#200#;
-
-  -- This is the offset for the IFifo Register Window, i.e. the offset at which the IFifo
-  -- RegMap will be based (relative to BAR0) in this particular instantiation. This is
-  -- expected to be modified for every target.
-  constant kIFifoRegMapOffset : natural := 16#11000#;
-  ---------------------------------------------------------------------------------------
-  -- Number of Fifos and their Sizes
-  ---------------------------------------------------------------------------------------
-  -- Modifying this value involves a lot of work. This is the max amount of total IFifos
-  -- (of all kinds combined) that are supported (not necessarily implemented, see below).
-  constant kIFifoMaxNrFifos : positive := 8;
-
-  -- Number of Instruction Fifos of each type to be instantiated.
-  constant kNumAxiStreamFifos : natural := 2;
-  constant kNumLvFpgaFifos    : natural := 1;
-
-  -- This number you don't really need to calculate yourself.
-  constant kIFifoNrFifos : positive range 1 to kIFifoMaxNrFifos :=
-    kNumAxiStreamFifos + kNumLvFpgaFifos;
-
-  -- Log2 of the number of elements in the FIFO. Default is 7, implying 128 Instructions
-  -- inside the FIFO.
-  constant kIFifoElementsLog2 : positive range 1 to 10 := 7;
-
-  -- !NOT YET IMPLEMENTED! Number of "Mailboxes" (read destinations) that each Instruction
-  -- Fifo's read path can have.
-  --constant kIFifoNrMailboxes : positive range 1 to 4 := 1;
-
-  -- Number of credits that will be requested by reading the RequestCredits register
-  constant kIFifoCreditsToReq : positive range 1 to 2**kIFifoElementsLog2-1 := 127;
-
-  -- Number of Mailboxes supported per IFifo. Note that, at this time, the only valid
-  -- value is "1".
-  constant kIFifoNrMailboxes : positive range 1 to 1 := 1;
-
-  ---------------------------------------------------------------------------------------
-  -- DMA Channel used
-  ---------------------------------------------------------------------------------------
-  -- We need to reserve Master Port IDs and DMA Channels to use with the IFifo. Reserved
-  -- channels are taken from the "end" of the available range. That is, if there are 64
-  -- DMA channels and we reserve 2, then we get #63 and #62. But in Inchworm-based
-  -- designs, the last Master Port ID is used up by the Status Pushing functionality.
-  -- Additionally, in designs that use the Link Interface Bridge for streaming, the
-  -- second-to-last Master Port ID (and associated DMA Channel) is assigned to the LIB.
-  -- Because Macallan doesn't use the Link Interface Bridge for streaming, we can use this
-  -- second-to-last DmaChannel (#62) for the IFifo.
-  constant kIFifoDmaChannel : natural := 62;
-
-  ---------------------------------------------------------------------------------------
-  -- Size of Instructions and Reads
-  ---------------------------------------------------------------------------------------
-  -- !WARNING! It's technically valid to change these sizes. But you probably don't want
-  -- to, as bad things will probably happen.
-  --
-  -- Also, there's an !ASSUMPTION! built into how we size the LVFPGA FIFOs that underly
-  -- the InstructionFifo, and it's in effect a requirement that kIFifoWriteDataWidth and
-  -- kIFifoReadDataWidth must be a multiple of 8 bits. Therefore the sizes can only be
-  -- modified in multiples of bytes.
-  constant kIFifoWriteDataWidthBytes : positive := 8;
-  constant kIFifoReadDataWidthBytes  : positive := 8;
-  -- We optionally return a 1 byte "status" word alongside the ReadData and Sentinel. A
-  -- value of 0 means there's no status word.
-  constant kIFifoReadStatusWidthBytes : natural range 0 to 1 := 1;
-  -- We will use a counter as a sentinel in the read path. It is also expected to be an
-  -- integer number of bytes long.
-  constant kIFifoSentinelWidthBytes  : positive := 1;
-
-end package PkgInstructionFifoConfig;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+ETPPCP8WWhaVlDeW0DpQWwLTQOOfTo7PuaZk82hmyE94x9WvgjcmL/iKP+TbI89T
+iw6cGZAgMIwZaDJv228gyiF7FfkyRfHf8j7xvtxNTIM+ZVcjqUgE+ShVWSKtfJyO
+wHzSc4MLYG8fLfrYzB0Lz9qr+NEBma2VlSb+ukRFEujazpv1/jjt9Gmj5XYE6yhx
+DijsNVTf1T8jnBe+utUIQglg9R6lALMsq/m7kKXG079uOYb/lb9v4NJEl+Ar7d5S
+JJOyOQGauiIhMm9uTuWMU0GFWJIFKJkrw+8jybBBnYB0/42+MBuhPYj2rLdf8RmT
+CcK0iQZgt8o4XPcMfLirhA==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="ZfZ6yIkkjxQuXoHqmsuN08j2CbZACJkyDn2f3hb0HgE="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+I225DGkqmjyudGVZEGAi8GhJx3TEfbJoYUuv2f6QNNNU4B7+g0yqWlWxPiUpaF1F
+yeeeiLjrA/W/CbfJe/BRAjjCiPjjLEZFo+Dr5/qBgs+p//3GMnD1XibQhpCK+Ff/
+usBbFcrFXD8BvZ/7N8JeHvW6O8CVqlzupQI+oW/cnCk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="uo7KrgMMOIrfLbOlBu3lom43cdWd1MA21jMwUlf/hUQ="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 6272 )
+`protect data_block
+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
+`protect end_protected
