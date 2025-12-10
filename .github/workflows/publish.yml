@@ -90,3 +90,16 @@ jobs:
         uses: ni/python-actions/setup-poetry@f0276f7f58868ec0d0d1a86377287c9e6fe0c6e7 # v0.5.0
       - name: Update project version
         uses: ni/python-actions/update-project-version@f0276f7f58868ec0d0d1a86377287c9e6fe0c6e7 # v0.5.0
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git diff --exit-code pyproject.toml || echo "changed=true" >> $GITHUB_OUTPUT
+      - name: Commit and push version update
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add pyproject.toml
+          VERSION=$(poetry version -s)
+          git commit -m "chore: bump version to $VERSION"
+          git push
