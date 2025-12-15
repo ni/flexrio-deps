@@ -1,293 +1,352 @@
-------------------------------------------------------------------------------------------
---
--- File: SasquatchDramWrapper.vhd
--- Author: Rolando Ortega
--- Original Project: Macallan PXIe FlexRIO Carrier
--- Date: 15 October 2015
---
-------------------------------------------------------------------------------------------
--- Copyright (c) 2025 National Instruments Corporation
--- 
--- SPDX-License-Identifier: MIT
-------------------------------------------------------------------------------------------
---
--- Purpose: This is a wrapper to prettify the signals coming from the UltrascaleDdr4
--- block.
---
--- There are two sets of signals in here:
---
--- - The dr* signals can be considered synchronous to the (outgoing) DramClk, though DRAM
---   timing is of course more complicated than that. But ultimately they are all
---   connected to the physical DRAM chips on the board.
---
--- - The du* signals are internal to the chip, are synchronous to DramClkUser, and are
---   connected to the LVFPGA Window. Minor adaptations are done in this module to match
---   the interface that LV expects.
-------------------------------------------------------------------------------------------
---
--- githubvisible=true
---
--- vreview_group SasquatchDram
--- vreview_closed http://review-board.natinst.com/r/313047/
--- vreview_reviewers kygreen dhearn esalinas hrubio lboughal rcastro
---
-------------------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-library unisim;
-use unisim.vcomponents.all;
-
-entity SasquatchDramWrapper is
-
-  port (
-    -------------------------------------------------------------------------------------
-    -- System Reset and reference Clock
-    -------------------------------------------------------------------------------------
-    aDramPonResetSl      : in    std_logic;
-    DramRefClk_p         : in    std_logic;
-    DramRefClk_n         : in    std_logic;
-    -------------------------------------------------------------------------------------
-    -- Outgoing Clock
-    -------------------------------------------------------------------------------------
-    DramClk_p            : out   std_logic;
-    DramClk_n            : out   std_logic;
-    -------------------------------------------------------------------------------------
-    -- Chip Interface
-    -------------------------------------------------------------------------------------
-    drDramCs_n           : out   std_logic;
-    drDramAct_n          : out   std_logic;
-    drDramAddr           : out   std_logic_vector (16 downto 0);
-    drDramBankAddr       : out   std_logic_vector (1 downto 0);
-    drDramBg             : out   std_logic_vector (0 downto 0);
-    drDramClkEn          : out   std_logic;
-    drDramOdt            : out   std_logic;
-    drDramReset_n        : out   std_logic;
-    drDramDmDbi_n        : inout std_logic_vector (9 downto 0);
-    drDramDq             : inout std_logic_vector (79 downto 0);
-    drDramDqs_p          : inout std_logic_vector (9 downto 0);
-    drDramDqs_n          : inout std_logic_vector (9 downto 0);
-    drDramTestMode       : out   std_logic;
-    -------------------------------------------------------------------------------------
-    -- User Interface
-    -------------------------------------------------------------------------------------
-    -- Clocks and Resets
-    DramClkUserLcl       : out   std_logic;
-    aduReset             : out   std_logic;
-    -- Status
-    duDramPhyInitDone    : out   std_logic;
-    -- Address Fifo
-    duDramAddrFifoFull   : out   std_logic;
-    duDramAddrFifoAddr   : in    std_logic_vector (29 downto 0);
-    duDramAddrFifoCmd    : in    std_logic_vector (2 downto 0);
-    duDramAddrFifoWrEn   : in    std_logic;
-    -- Write Fifo
-    duDramWrFifoFull     : out   std_logic;
-    duDramWrFifoWrEn     : in    std_logic;
-    duDramWrFifoDataIn   : in    std_logic_vector (639 downto 0);
-    duDramWrFifoMaskData : in    std_logic_vector (79 downto 0);
-    -- Read Fifo
-    duDramRdDataValid    : out   std_logic;
-    duDramRdFifoDataOut  : out   std_logic_vector (639 downto 0)
-    );
-
-end entity SasquatchDramWrapper;
-
-architecture struct of SasquatchDramWrapper is
-
-  component ddr4_0
-    port (
-      sys_rst                   : in  STD_LOGIC;
-      c0_sys_clk_i              : in  STD_LOGIC;
-      c0_ddr4_act_n             : out STD_LOGIC;
-      c0_ddr4_adr               : out STD_LOGIC_VECTOR(16 downto 0);
-      c0_ddr4_ba                : out STD_LOGIC_VECTOR(1 downto 0);
-      c0_ddr4_bg                : out STD_LOGIC_VECTOR(0 to 0);
-      c0_ddr4_cke               : out STD_LOGIC_VECTOR(0 to 0);
-      c0_ddr4_odt               : out STD_LOGIC_VECTOR(0 to 0);
-      c0_ddr4_cs_n              : out STD_LOGIC_VECTOR(0 to 0);
-      c0_ddr4_ck_t              : out STD_LOGIC_VECTOR(0 to 0);
-      c0_ddr4_ck_c              : out STD_LOGIC_VECTOR(0 to 0);
-      c0_ddr4_reset_n           : out STD_LOGIC;
-      c0_ddr4_dm_dbi_n          : inout STD_LOGIC_VECTOR(9 downto 0);
-      c0_ddr4_dq                : inout STD_LOGIC_VECTOR(79 downto 0);
-      c0_ddr4_dqs_c             : inout STD_LOGIC_VECTOR(9 downto 0);
-      c0_ddr4_dqs_t             : inout STD_LOGIC_VECTOR(9 downto 0);
-      c0_init_calib_complete    : out STD_LOGIC;
-      c0_ddr4_ui_clk            : out STD_LOGIC;
-      c0_ddr4_ui_clk_sync_rst   : out STD_LOGIC;
-      dbg_clk                   : out STD_LOGIC;
-      c0_ddr4_app_addr          : in  STD_LOGIC_VECTOR(29 downto 0);
-      c0_ddr4_app_cmd           : in  STD_LOGIC_VECTOR(2 downto 0);
-      c0_ddr4_app_en            : in  STD_LOGIC;
-      c0_ddr4_app_hi_pri        : in  STD_LOGIC;
-      c0_ddr4_app_wdf_data      : in  STD_LOGIC_VECTOR(639 downto 0);
-      c0_ddr4_app_wdf_end       : in  STD_LOGIC;
-      c0_ddr4_app_wdf_mask      : in  STD_LOGIC_VECTOR(79 downto 0);
-      c0_ddr4_app_wdf_wren      : in  STD_LOGIC;
-      c0_ddr4_app_rd_data       : out STD_LOGIC_VECTOR(639 downto 0);
-      c0_ddr4_app_rd_data_end   : out STD_LOGIC;
-      c0_ddr4_app_rd_data_valid : out STD_LOGIC;
-      c0_ddr4_app_rdy           : out STD_LOGIC;
-      c0_ddr4_app_wdf_rdy       : out STD_LOGIC;
-      dbg_bus                   : out STD_LOGIC_VECTOR(511 downto 0));
-  end component;
-
-  --vhook_sigstart
-  signal DramClkSlv_n: STD_LOGIC_VECTOR(0 to 0);
-  signal DramClkSlv_p: STD_LOGIC_VECTOR(0 to 0);
-  signal DramRefClk: std_ulogic;
-  signal DramRefClkPin: std_ulogic;
-  signal drDramClkEnSlv: STD_LOGIC_VECTOR(0 to 0);
-  signal drDramCsSlv_n: STD_LOGIC_VECTOR(0 to 0);
-  signal drDramOdtSlv: STD_LOGIC_VECTOR(0 to 0);
-  signal duDramCtrlReady: STD_LOGIC;
-  signal duDramWrReady: STD_LOGIC;
-  --vhook_sigend
-
-begin  -- architecture struct
-
-  ---------------------------------------------------------------------------------------
-  -- Clock Buffers
-  ---------------------------------------------------------------------------------------
-
-  --vhook_i IBUFDS              DramRefClkIbuf hidegeneric=open
-  --vhook_g IBUF_LOW_PWR        false
-  --vhook_g DIFF_TERM           false
-  --vhook_g *                   open
-  --vhook_a I                   DramRefClk_p
-  --vhook_a IB                  DramRefClk_n
-  --vhook_a O                   DramRefClkPin
-  DramRefClkIbuf: IBUFDS
-    generic map (
-      DIFF_TERM    => false,  --boolean:=FALSE
-      IBUF_LOW_PWR => false)  --boolean:=TRUE
-    port map (
-      O  => DramRefClkPin,  --out std_ulogic
-      I  => DramRefClk_p,   --in  std_ulogic
-      IB => DramRefClk_n);  --in  std_ulogic
-
-
-  --vhook_i BUFG        DramRefClkBufg
-  --vhook_a I           DramRefClkPin
-  --vhook_a O           DramRefClk
-  DramRefClkBufg: BUFG
-    port map (
-      O => DramRefClk,     --out std_ulogic
-      I => DramRefClkPin); --in  std_ulogic
-
-  ---------------------------------------------------------------------------------------
-  -- MIG instantiation
-  ---------------------------------------------------------------------------------------
-
-  --vhook   ddr4_0
-  --vhook_a sys_rst                     aDramPonResetSl
-  --vhook_a c0_sys_clk_i                DramRefClk
-  --vhook_a *cs_n                       drDramCsSlv_n
-  --vhook_a *act_n                      drDramAct_n
-  --vhook_a *adr                        drDramAddr
-  --vhook_a *ba                         drDramBankAddr
-  --vhook_a *bg                         drDramBg
-  --vhook_a *cke                        drDramClkEnSlv
-  --vhook_a *odt                        drDramOdtSlv
-  --vhook_a *ck_t                       DramClkSlv_p
-  --vhook_a *ck_c                       DramClkSlv_n
-  --vhook_a *reset_n                    drDramReset_n
-  --vhook_a *dm_dbi_n                   drDramDmDbi_n
-  --vhook_a *dq                         drDramDq
-  --vhook_a *dqs_c                      drDramDqs_n
-  --vhook_a *dqs_t                      drDramDqs_p
-  --vhook_a *init_calib_complete        duDramPhyInitDone
-  --vhook_a *ui_clk                     DramClkUserLcl
-  --vhook_a *ui_clk_sync_rst            aduReset
-  --vhook_a *app_addr                   duDramAddrFifoAddr
-  --vhook_a *app_cmd                    duDramAddrFifoCmd
-  --vhook_a *app_en                     duDramAddrFifoWrEn
-  --vhook_a *app_wdf_data               duDramWrFifoDataIn
-  --vhook_a *app_wdf_mask               duDramWrFifoMaskData
-  --vhook_# *app_wdf_end and *app_wdf_wren both tied to WrEn because the LV memory
-  --vhook_# interface doesn't use packetizing (each word is always the end of a write
-  --vhook_# packet).
-  --vhook_a *app_wdf_end                duDramWrFifoWrEn
-  --vhook_a *app_wdf_wren               duDramWrFifoWrEn
-  --vhook_a *app_rd_data                duDramRdFifoDataOut
-  --vhook_# *rd_data_end is left open because we don't care about packetizing.
-  --vhook_# We only care when data is valid and when it isn't.
-  --vhook_a *app_rd_data_end            open
-  --vhook_a *app_rd_data_valid          duDramRdDataValid
-  --vhook_a *app_rdy                    duDramCtrlReady
-  --vhook_a *app_wdf_rdy                duDramWrReady
-  --vhook_# *app_hi_pri tied to '0' as per PG150
-  --vhook_c *app_hi_pri                 '0'
-  --vhook_a dbg_bus                     open
-  --vhook_# dbg_clk is left open as specified in PG150 (pg 337 for v1.1, Nov 2015).
-  --vhook_# Vivado will hook up this connection appropriately if necessary.
-  --vhook_a dbg_clk                     open
-  ddr4_0x: ddr4_0
-    port map (
-      sys_rst                   => aDramPonResetSl,       --in  STD_LOGIC
-      c0_sys_clk_i              => DramRefClk,            --in  STD_LOGIC
-      c0_ddr4_act_n             => drDramAct_n,           --out STD_LOGIC
-      c0_ddr4_adr               => drDramAddr,            --out STD_LOGIC_VECTOR(16:0)
-      c0_ddr4_ba                => drDramBankAddr,        --out STD_LOGIC_VECTOR(1:0)
-      c0_ddr4_bg                => drDramBg,              --out STD_LOGIC_VECTOR(0:0)
-      c0_ddr4_cke               => drDramClkEnSlv,        --out STD_LOGIC_VECTOR(0:0)
-      c0_ddr4_odt               => drDramOdtSlv,          --out STD_LOGIC_VECTOR(0:0)
-      c0_ddr4_cs_n              => drDramCsSlv_n,         --out STD_LOGIC_VECTOR(0:0)
-      c0_ddr4_ck_t              => DramClkSlv_p,          --out STD_LOGIC_VECTOR(0:0)
-      c0_ddr4_ck_c              => DramClkSlv_n,          --out STD_LOGIC_VECTOR(0:0)
-      c0_ddr4_reset_n           => drDramReset_n,         --out STD_LOGIC
-      c0_ddr4_dm_dbi_n          => drDramDmDbi_n,         --inout STD_LOGIC_VECTOR(9:0)
-      c0_ddr4_dq                => drDramDq,              --inout STD_LOGIC_VECTOR(79:0)
-      c0_ddr4_dqs_c             => drDramDqs_n,           --inout STD_LOGIC_VECTOR(9:0)
-      c0_ddr4_dqs_t             => drDramDqs_p,           --inout STD_LOGIC_VECTOR(9:0)
-      c0_init_calib_complete    => duDramPhyInitDone,     --out STD_LOGIC
-      c0_ddr4_ui_clk            => DramClkUserLcl,        --out STD_LOGIC
-      c0_ddr4_ui_clk_sync_rst   => aduReset,              --out STD_LOGIC
-      dbg_clk                   => open,                  --out STD_LOGIC
-      c0_ddr4_app_addr          => duDramAddrFifoAddr,    --in  STD_LOGIC_VECTOR(29:0)
-      c0_ddr4_app_cmd           => duDramAddrFifoCmd,     --in  STD_LOGIC_VECTOR(2:0)
-      c0_ddr4_app_en            => duDramAddrFifoWrEn,    --in  STD_LOGIC
-      c0_ddr4_app_hi_pri        => '0',                   --in  STD_LOGIC
-      c0_ddr4_app_wdf_data      => duDramWrFifoDataIn,    --in  STD_LOGIC_VECTOR(639:0)
-      c0_ddr4_app_wdf_end       => duDramWrFifoWrEn,      --in  STD_LOGIC
-      c0_ddr4_app_wdf_mask      => duDramWrFifoMaskData,  --in  STD_LOGIC_VECTOR(79:0)
-      c0_ddr4_app_wdf_wren      => duDramWrFifoWrEn,      --in  STD_LOGIC
-      c0_ddr4_app_rd_data       => duDramRdFifoDataOut,   --out STD_LOGIC_VECTOR(639:0)
-      c0_ddr4_app_rd_data_end   => open,                  --out STD_LOGIC
-      c0_ddr4_app_rd_data_valid => duDramRdDataValid,     --out STD_LOGIC
-      c0_ddr4_app_rdy           => duDramCtrlReady,       --out STD_LOGIC
-      c0_ddr4_app_wdf_rdy       => duDramWrReady,         --out STD_LOGIC
-      dbg_bus                   => open);                 --out STD_LOGIC_VECTOR(511:0)
-
-  ---------------------------------------------------------------------------------------
-  -- SLV -> SL
-  ---------------------------------------------------------------------------------------
-  -- These signals are (0 downto 0) standard_logic_vectors. We will extract the single
-  -- signal in them and pass out a "normal" standard_logic;
-  -- Clock
-  DramClk_p   <= DramClkSlv_p(0);
-  DramClk_n   <= DramClkSlv_n(0);
-  -- Other control signals
-  drDramClkEn <= drDramClkEnSlv(0);
-  drDramOdt   <= drDramOdtSlv(0);
-  drDramCs_n  <= drDramCsSlv_n(0);
-
-  ---------------------------------------------------------------------------------------
-  -- Ready -> FifoFull
-  ---------------------------------------------------------------------------------------
-  -- Map "Ready" signals from MIG to "Full" signals form LV FPGA interface, as done in
-  -- 7Series devices before.
-  duDramAddrFifoFull <= not duDramCtrlReady;
-  duDramWrFifoFull   <= not duDramWrReady;
-
-  ---------------------------------------------------------------------------------------
-  -- DRAM Test Mode
-  ---------------------------------------------------------------------------------------
-  -- Regardless of whether we generate the memory controller or not, the Test Enable (TEN)
-  -- pin on the DRAM needs to be tied to '0' so it doesn't go into test mode. We'll set it
-  -- to 1 only during boundary scan testing.
-  drDramTestMode <= '0';
-
-end architecture struct;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+KxmftWdALweaxC05AH1xMMC77AxUXmLLSZ4OLs38LoAyRAfiS+yjM426gWTMm6uf
+4op+pGUsnzZQh9rN/4DcQBPJzESWr6bFg5jHtBXMffrU0jT/qgyXJk2Vyj4xEMHk
+nyRnky+CcoGDTBUYAewIrLv+dwLw7DROWIxib81tR6n7ecJB1m2v9l+iD8j7Hzen
+eXyPlLt8pSL3uHaS1teqGFiKChwcBOWuFx5jhvWkxia0MYzyepVxHR1mkUaNhmXN
+iwJQ0uqFmQJ7IKCrRWdM3nOMJMMfV9LX9WFjBAv1tiAgiuhRTJWCWOQ8RUk5Go/7
+Ria7U9f1OwawJRAozID1Wg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="tVYfsBy7mhKWW/+TxJAv+PODTW6buYxQyF8/oq8BbMQ="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+bJWdeNSWbmvvVaWE8Hj8MKY9WBRXHl3INc6nD8cdD1ZoHjV7id8VhYtyH0babydq
+225j37vz6iI7XPlcReKgoosWNfUyPbs/L7YmNuIgj/Hl8e+MiVrsy/a6XFnCY7qM
+/M8W+32UsBWsVVJYpALTp9nQS7I4B/TGIt8B/IWJvLk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="3zYdMDzewI/yaBD8EMo72URFOqMPsE8ajqr7WCriVeg="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 14608 )
+`protect data_block
+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
+u25+HGrFJAszYDH5YMqgcw==
+`protect end_protected
