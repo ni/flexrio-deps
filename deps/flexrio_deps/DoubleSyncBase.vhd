@@ -1,126 +1,109 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-Jm2uGAVYfY7w9Y5qKstopObZuZAEY3b/Io3MSEcWLhjjnKulVhCBBYAEQrAzzGsT
-vMbffkdZgjdXQUg8jOLJXSHZ0Dgbnob2vlppjZs3bgyHCF7MoJ35E+LOsaLimUA7
-hlqStcK49hR1hdeBPr/OwfT3UeVrRtQyq0eJXQ1UksinX1G9Pz3/CmcGfTZ/C72x
-p9icpt0bkY4/1I4GBvNCsA6FFKH947JqH27OPACiQQRW/K7JToQn+1uhWr3LA1od
-lbVrWu8PdZi7zW9gK3jiW5GaPjwbYQGqeGFs3bTKBILjb7sYHxfxw7eDLVMAIu5D
-W+OTIN4JiHiE1gCnNEvkSQ==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="pm+c2fYA/4JT1uhlJGVUubML8hZi8lME4xPobg/m8uM="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-nBaXksR//iZ9fraC7WMJWWSrjqRXHxmM1Y0+KKN3b10NElDzVNMlR76DLrcnamFd
-2n7uzsxWqhhJR5LBl98SXO3Y90J6BMbw+OBG/MFM/zUulxh2Si5YK5G9GCrG9gvZ
-5JomxuZFDu9CzlWGTuRUt6FsE4Lr6sOL1P+hraQDpMk=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="M8TXDiNa0BVMX1P60yIvW2WA9jKGGy8GtbuPknDnC9I="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 3792 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DoubleSyncBase.vhd
+-- Author: Craig Conway
+-- Original Project: NICores
+-- Date: 13 September 2002
+--
+-------------------------------------------------------------------------------
+-- (c) 2002 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--    This module transfers a std_logic signal from one clock domain to
+--  another using a double synchronizer.  It also uses clock enables.
+--    It takes the signal in using a single flip-flop from the original clock
+--  domain and then transfers it to the new clock domain with two flip-flops.
+--    It also includes two asynchronous resets, allowing VScan to consider
+--  this a safe reset crossing as well as a safe clock crossing.
+--    The first flip-flop isn't strictly necessary, but it confines the
+--  clock boundary crossing to be completely within this module, making it
+--  easier to prove correctness.
+--    This module can be conveniently used for registers writes.  Connect
+--  the register write signal to iClkEn and the data line to iSigIn.  iSigOut
+--  is the readable bit for the register.  oSig is that same signal transferred
+--  to OClk's clock domain.
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+entity DoubleSyncBase is
+  generic (
+    kResetVal : std_logic := '0'
+  );
+  port (
+    aIReset: in  boolean;
+    IClk:    in  std_logic;
+    iClkEn:  in  boolean;
+    iSigIn:  in  std_logic;
+    iSigOut: out std_logic;
+
+    aOReset: in  boolean;
+    OClk:    in  std_logic;
+    oClkEn:  in  boolean;
+    oSig:    out std_logic
+  );
+end DoubleSyncBase;
+
+architecture behavior of DoubleSyncBase is
+
+  signal iDlySig : std_logic;
+
+  -- The keep is designed to prevent the signal renaming of iDlySig that would
+  -- invalidate timing constraints.
+  attribute keep : string;
+  attribute keep of iDlySig : signal is "true";
+
+begin
+
+  -- Bring in iSig into this module and reclock it to its
+  -- original clock domain.  This accomplishes two things:
+  -- First, it ensures that the clock boundary crossing remains
+  -- completely within this module.  Second, it keeps the
+  -- user from having to worry about whether iSig is a
+  -- a glitchy signal or not.
+
+  --vhook_e DFlop iDlySigx
+  --vhook_a kAsyncReg "false"
+  --vhook_a aReset aIReset
+  --vhook_a Clk IClk
+  --vhook_a cEn iClkEn
+  --vhook_a cD iSigIn
+  --vhook_a cQ iDlySig
+  iDlySigx: entity work.DFlop (rtl)
+    generic map (
+      kResetVal => kResetVal,  --std_logic:='0'
+      kAsyncReg => "false")    --string:="false"
+    port map (
+      aReset => aIReset,  --in  boolean
+      cEn    => iClkEn,   --in  boolean
+      Clk    => IClk,     --in  std_logic
+      cD     => iSigIn,   --in  std_logic
+      cQ     => iDlySig); --out std_logic:=kResetVal
+
+  iSigOut <= iDlySig;
+
+  --!CLOCK BOUNDARY CROSSING!  iDlySig is being double synchronized here
+
+  --vhook_e DoubleSyncAsyncInBase
+  --vhook_a aSig iDlySig
+  DoubleSyncAsyncInBasex: entity work.DoubleSyncAsyncInBase (rtl)
+    generic map (kResetVal => kResetVal)  --std_logic:='0'
+    port map (
+      aSig    => iDlySig,  --in  std_logic
+      aOReset => aOReset,  --in  boolean
+      OClk    => OClk,     --in  std_logic
+      oClkEn  => oClkEn,   --in  boolean:=true
+      oSig    => oSig);    --out std_logic:=kResetVal
+
+
+end behavior;
+
+-- The following comment is a checksum VScan uses to determine whether this
+-- file has been modified.  Please don't try to get around it.  It's there
+-- for a reason.
+--VScan_CS 490124

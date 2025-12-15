@@ -1,78 +1,36 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-Jm2uGAVYfY7w9Y5qKstopObZuZAEY3b/Io3MSEcWLhjjnKulVhCBBYAEQrAzzGsT
-vMbffkdZgjdXQUg8jOLJXSHZ0Dgbnob2vlppjZs3bgyHCF7MoJ35E+LOsaLimUA7
-hlqStcK49hR1hdeBPr/OwfT3UeVrRtQyq0eJXQ1UksinX1G9Pz3/CmcGfTZ/C72x
-p9icpt0bkY4/1I4GBvNCsA6FFKH947JqH27OPACiQQRW/K7JToQn+1uhWr3LA1od
-lbVrWu8PdZi7zW9gK3jiW5GaPjwbYQGqeGFs3bTKBILjb7sYHxfxw7eDLVMAIu5D
-W+OTIN4JiHiE1gCnNEvkSQ==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="pm+c2fYA/4JT1uhlJGVUubML8hZi8lME4xPobg/m8uM="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-nBaXksR//iZ9fraC7WMJWWSrjqRXHxmM1Y0+KKN3b10NElDzVNMlR76DLrcnamFd
-2n7uzsxWqhhJR5LBl98SXO3Y90J6BMbw+OBG/MFM/zUulxh2Si5YK5G9GCrG9gvZ
-5JomxuZFDu9CzlWGTuRUt6FsE4Lr6sOL1P+hraQDpMk=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="M8TXDiNa0BVMX1P60yIvW2WA9jKGGy8GtbuPknDnC9I="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 1456 )
-`protect data_block
-/5TNZvs8Nu0G+mfp7M8H+iVAGG3Mh5DYZ0Gn3rRNhV8b5CcJKgjQajrRoGl/gSxp
-rBAhtT8Vd5eelHgtvBjpvFBA/EBUrRH6CG6pqRt9r2qUDt4UernbZbxC3BC14KYF
-7oZRrPJAnF1VRQm36Ql88zw/TItxk25OcdAnDqZwqVHf4mGoyp+NFDbKWVOdiEgd
-tvOwaHIkwh7pz2EVZktYqrW+UhTmyKFw/HQbaDUfOjlVm+XmcqxXwjGd1DQX648J
-4HfoP0cTp2PYkWjNfe7C+EXTMD4fFyYhqoJAH97kBLmvI5Otpn7Q870hK+mN/CSx
-9Qz1yrF7c0PiAhtYVzq8lC1bfNwT0ju6pUbVsQiZk81/yQKZoEfESEw6+mgrNQkY
-W3cRamoVAPdwnWPePM4k7c9gL/1fFyvOrdn8QiSPGCKkKpBQdbb9zBiZWAhmBp39
-eg/dQdVGkVz0ZZEPejivCe5evibGsGJJf35mIfOKnQkNFf71RQXG7gtplPT3RpuV
-uw/CLC5TM71y9H2Fu2qwh1FUPkUV3rJ5qeKZhVBIGUmShJeQn3P1wiwn4YyuRjd9
-h9sQNlLvwFr2Ox6DaIv5pGBxpcKhN0Oj6WSgleSiWaTnlyMfAwU7lW0pQXOFbb74
-s2YyfZb7uIDqeiVVbjIOve58YCuMxGtY/CsOg5UDHWmbmPINfIE/mhPQoysKsQPP
-MKLXmvS8kaDrhkzv1YWLl0FQeKov4XTIFKxPUSVU/B+nKuUs4Nh89MD14BW28xna
-K8+HcjzTrZriGhD5LJZW/tNpVFL9zBWVvtmxwrEF34tAqrUZfrpJgPb5IspnNXqf
-G8QzdK42V8s1JAgJG+ifY14pqMwcft+Ms7nhbjvkv44xtmQRTA4oKKJ6s0WluObO
-OvCxBdogQv560x9eONVPaS9jY7JIdVbAIsfmXkgf8ieTLE/SdmS8yTlL0BqbYn9z
-F/JjzmkVnewWoTGpX8UKvHdkx0KBlbJUBEbfCuj33rsZrGpRx8pdsdPIbe/LDadD
-ZBXJlOG8REdNnE5IRzF8tXpzGoU8Jhejb+MOzfCHxvf0VG/Zlzs72NqT03PS8Rp5
-iOgDoC3DFTm+7mkYsK1E2L1+R7x1lExTEJ0sTd15FIppR1zmJXSo8Z/SWx2DDoBe
-oxiS10pnREgPvSMnvzHPk4aOfReQNcvj1iVkSehK8TzcjRpXojFiZd4kgAtVcYaH
-pWxQDhTbViSzcMpe+2VTrkZ/hFaIXWUfY7RFziDXRKCl2Osz/V5sY5UsYtR1USWX
-yc26ViXfYqIYgvNhRwnJuSYGY0s8bcMdf8npivz1sZKf3FJZiBaqAACOwxWmnyqM
-S70M2pHfuJI6fvskjG976urlMv5Jsgyr5fT25aroRaccaLoIRZGiwAu6pAtOn+d8
-lgMSlGQKuLj388yPAzOopd2cnMAdN3MVaSUcEgCMnYMJaE6jH0icYRlRer2K2INR
-Kv5AjSWDQLdzR6Tx5zKNYJby1+ipACWj2sn0jMoV5bokypFyG7zDaMXQfuzxLbuE
-MtfzJehbBQo+ap1M5g12tKAmFMWmyEDNfg9q5I/4i2myiIwNCyGc1iRoUQBWSc/E
-a/KWj4jxcDXxIX2pkOsHbz+KleK3KDRHTq+Ko4iBsX41E3J4vBmT1YfdaZHlL/fs
-K+viXuqQHdSkqlhOVFnkik9fvuGbLFnPfcUKoMgVVZvTcPcxvv9JdJiHKMj/Y8TZ
-AKTLebgE7WX97XPsowelWFdHiYBOTxH44dcsMlvbgXzaBJIf9ZUEmYfyxoMsugwL
-7VT4FNK7acIdXDeTZkLcBDCuDkNBUlAwA66aFO9qXBw5EIDf88GoSQ9QRFAwkcNK
-6dugUgpjTJAvaA57OmVW94NcHG+kX+BoDh6EETDoH7l0ctUSv81oOkcsmk1LX44c
-NyaK67zdGpWzx6r7/13Tfw==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgBaRegPortConfig.vhd
+-- Author: James Gorman
+-- Original Project: NI DMA IP
+-- Date: 11 Feburary 2015
+--
+-------------------------------------------------------------------------------
+-- (c) 2015 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+-- Configures the with of the address and data on Reg Port.
+-- Each design will modify this package based on the application requirements.
+-------------------------------------------------------------------------------
+--
+-- vreview_group CommonFixedLogic
+-- vreview_closed http://review-board.natinst.com/r/313040/
+-- vreview_reviewers kygreen dhearn esalinas hrubio lboughal rcastro
+--
+------------------------------------------------------------------------------------------
+
+package PkgBaRegPortConfig is
+
+  --Allowing BaRegport to see the whole Local address space, including the
+  -- ConfigMemoryWindow which has visibility of the whole configuration flash without
+  -- windowing.
+
+  -- The setting of 28 matches (at the time of this writing) the configuration for the
+  -- Gen3 InchWorm.
+  constant kBaRegPortAddressWidthConfig : natural := 28;
+  constant kBaRegPortDataWidthConfig    : natural := 64;
+
+end PkgBaRegPortConfig;

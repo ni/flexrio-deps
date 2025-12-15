@@ -1,374 +1,324 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-Jm2uGAVYfY7w9Y5qKstopObZuZAEY3b/Io3MSEcWLhjjnKulVhCBBYAEQrAzzGsT
-vMbffkdZgjdXQUg8jOLJXSHZ0Dgbnob2vlppjZs3bgyHCF7MoJ35E+LOsaLimUA7
-hlqStcK49hR1hdeBPr/OwfT3UeVrRtQyq0eJXQ1UksinX1G9Pz3/CmcGfTZ/C72x
-p9icpt0bkY4/1I4GBvNCsA6FFKH947JqH27OPACiQQRW/K7JToQn+1uhWr3LA1od
-lbVrWu8PdZi7zW9gK3jiW5GaPjwbYQGqeGFs3bTKBILjb7sYHxfxw7eDLVMAIu5D
-W+OTIN4JiHiE1gCnNEvkSQ==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="pm+c2fYA/4JT1uhlJGVUubML8hZi8lME4xPobg/m8uM="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-nBaXksR//iZ9fraC7WMJWWSrjqRXHxmM1Y0+KKN3b10NElDzVNMlR76DLrcnamFd
-2n7uzsxWqhhJR5LBl98SXO3Y90J6BMbw+OBG/MFM/zUulxh2Si5YK5G9GCrG9gvZ
-5JomxuZFDu9CzlWGTuRUt6FsE4Lr6sOL1P+hraQDpMk=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="M8TXDiNa0BVMX1P60yIvW2WA9jKGGy8GtbuPknDnC9I="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 15664 )
-`protect data_block
-/5TNZvs8Nu0G+mfp7M8H+iVAGG3Mh5DYZ0Gn3rRNhV8b5CcJKgjQajrRoGl/gSxp
-rBAhtT8Vd5eelHgtvBjpvFBA/EBUrRH6CG6pqRt9r2qUDt4UernbZbxC3BC14KYF
-uTWOLC/d5Ruad8g2qo0MpNsGDmuEd1hNNO8N8C1iUXPyYLOkcXCq9wouFBsZk06Q
-VEMB5WBRzlw5Sv/7YHFcZlUFWQM8UBRVBF5tlUVBZb234vG6PPdfclVwWHSL0HAQ
-nsym+4n2WFAkDFk+Dn+Tx/Q2adFqvNK7RN5qxOG4qm9x1iPwft/GRPBimAHvTdNO
-43NZptyM0q7va9lsT2VybCIxwy6FEfPPCCkpsiauGMEHUl6eNFLnJULkDRdlk+QB
-zTg+lXJCMlalhaYKUihZaoH1cVZy3JP5IOUNln5U7B2KLtlqsD1iBoDQUi0+6TKT
-MHQqBcXqrg+ZvTGd7CHm2V5Cl1gigpZnWK0stdSX1XNUgVx5ZFaG94Xbwui9B4lH
-u2pWBALkIQ+WMgc5VMVlv/1lCjfAHYEv89qjOq3UBL65ILDiJXbGuvTmZFPgBP7m
-7PZcVzySZFK5jijIBoEF6/vD6Uk67oddyaxLLGn39pXMvmA6/V7UBRJEcBOVp+2G
-UOU2nfJMu2k5QUR6HIJItawzNdRTqgW5g1LlqEo0ZquQD1fKngDEZbXS3r8YDLci
-QMCfDky06ThW4QsAh4FbqjsSlqH0ShZvVc7NWSdsTufO779PfkR4Fv5JUsvlSIuV
-O9OCQIqigHqiQCgW6hdzdFnzkpgFSfxFeqGqVKcRLWoOQkMRU1l+ZbJ5hO0bTtYA
-9hYTwllxc2FyOEuJFgOp1joGdDxYKsMwtE7ZNRl7/dM5RXyiY4AThaaGUuLbqVtZ
-ondQW8ZO8p/3/vmttrXM6wB8qRp0EDuVzj0lpajG5DqpLQheS/np7gkbGFzz+DJE
-kaHjXevxssCSQSO/E7IW1THyPnddjidNrj9vqvzB7UXF4ei+7b2olpX1hqb3EZ02
-vyE4H0LEutdV5Ia/kYX/NlOSaGrgarTdLXIPCJU2DNhIleqM6SaB5nMkJNaDT0C8
-Gf9nE0tWq0Mlz37/hQMtPlqoh2BM1vqNtTGWRXF37iwEsatbT7FK/yMB4L6R3DsW
-0x3xycSqP7Ti1GDy724IiFbm3gRb0+RkgN8BwcISi+Ph+vPw4pF5hBAVEa/QGLv6
-l8qL2tUkWRNY+LYJJ1UYkpj4kbxuxmAvSLlWpJWAEjN1xgF5sdkweeBA2/isQWr9
-GebG6xnlOx/egRZ6TCh0uytqND65KN8tJtcGzhSgoTAlRkG/WN9H3EAB580DEJso
-DF7yQm7f5GzuKlwgA5UdgrU/bkC7K+DfOOFlD0RZEhbIvAZ70TsASCWoYTFTldjC
-yqGvR9xeKLygKiwiMP4P50z0bMpd7Dfi/LzCqv7jb8a+qNSUKLyzHSBVSsdsTztH
-8UNPQJ8IyT+4mr/SZQWuSN25BoblZ3/lgSw5TEhOViZrEVZa+P6d5m797/U8cxxL
-QM0f+E5YsonAiZ9Ow3l257W+L+TdHaY++g84KKFvu1Rqy06JHa0XxFuSEisGKy+M
-syF0KWoARhg+qtE0DhLH4dPeAVauH2gvUh+AGqwmbVoB7ySHRhtF7PBunLn9GuLG
-VlZKjj9xYqdZUq4KMotZI/XifMj19JlJqjqBLAeQokOMMGpU0Ss3qBsNcUYMSz3e
-ahAYQetitE1F7+Qt/IOyVHGOMeJ1LMocHMr0W2QG0Rfofge1jfQT9btGhbkyg+GS
-NZ7HabjCHB7v29rMn5I136p9X16AFjz91599ML2AMconpkcMH0jQ988FSmtGGXI5
-EvVnSgf92EYjmEioVwZn8Iz3LdaxWfVoFz1k5erJrqmMPEUKOgVFPjOTCfZVGMuM
-vtDMQRdLfxbxpr5/HKRT7q19i+CQq1qxpEuUioqFMakj/G8P5mr3zFhJAUBxBCN6
-++Lg9DRX3IrW9wkyQVTMLNURY3w/J9xppOW4uhxGt3kNEG+/GVQ/+oepypc1gXuN
-AuYEjW7QnuHSFHy94ashnEI3V1mUmY6/LmPNkHKNHp3Cq6E7GJHU8aRPv6b+mIo7
-7VDQeHfoGu2jA0NGW71XgDwZcN44Vd2uluXb71GsNmX9K9niVy5qPpbbuW7vmJ5X
-dwc+3zsLeMV/LM24fjex2i3utyWYzzLaIuMmoCyOd+bxiscEsX/ey+4LARslcVC/
-1g9H3yqPbM5j6K11OqfqvR0AQfyTXVF/stfIG/BYbvoEXzK6/bvD66qFawx9EgVE
-uTBRe3mNZp+jQAjiIEqmPFqlkSwZDemgOp1wfG3cgELyn+uKrpYEsE+v6s9MGYU4
-zsh1xaaD4FPuW4zrpmGOZA9RtxtrhwZu2sR8XlhJ6lG2qRHZ4tI9xgNAj8xXTjw3
-TDCKFfdgAKopDVygvFd5CLKNP84bcpvYUXdL0V/6ABbcF3t+K9N/svivEhyOCQ6C
-vTcIS843BWJ9NxvkYP+GhGaVTAzZEw0ODEEwMCGqo2JQzcX6qyi6pGoP71JI2/Us
-r51jZjDWKMXMCgpcMiFzlsyvW/LDPDk7azC2/X6D76jasPKMxny8f3m7nVEMmH8q
-JcSqqr5jHaSKB8h/pogYo5QqpXrAemVRryrwXxGtlrzpYaO7VpNNvL4V3r7NDmQh
-gTZEovn4pw6OZZunfTHn8owAEOF25WjdkmJthU+8jxC1mNoFeCbO2W8TVGcVblcj
-dluaqP73gXanjIJ697XCnLvlKAOGPMamfsg9R4lDnKJrEazy9C5uQ5bcRR8aD6Ze
-WSjixrRPFkUAswzEhY9WaYx+t3HRdoI9/2+Cqg7CY6FqrocK6ARH5FEVMpnQSaH3
-yygFXuXuWmlMUVvu8uaC//D5Ihr0r1InxECN82pQsKsm/D4w5Eq5MZb5Hv2zfGhZ
-cw5eF4vYLlh0cCya1Jth6wg0vyANOvki3d9z6gT6Rr/evfP7tqTlXrsBOVndmzUf
-GwgRQ3W6iScdaWpZK3WqVCJRySuNq0ZBPFCvsroRUl0H5wOkok1JD8xzxd7h/gBZ
-tLaAjJEBD1KqZLHn9F/lc49rYTowDMnt2XvRRt5qj0jM+pbo3ZoIGYp1Mdcv1Gkx
-hX6mFd7R4cecLI1VxWjbG+DxZpirQ9jd2sCoCK6iAvxVwWraSbklIjc/o2vsTsmF
-wh7RaBQEbwlOsjqbTSRcDtckkHSx166Ty2SX6q7NM1l/ToecOexL+eMosBwpXF9r
-brkz/V2Es4mWPS+8bmUwFlZTlOpDath0y/FS18XviK3cygtausH9MHXoRedvZ3PY
-a6NPm4b/8DSMdpr9q7UUyw+3PJWMZCZshWPAGBm0bZsmP56TlCcXBrX9yMI4g3tF
-fy/LZHtCPHx+nxhlQXZyhm/qDqKHoyzLB/Z6m3TeL1M9AfTje7tpUVGH12NRJKBX
-BTjxCWeSbQKImQ9fIblsSV5n/DDowmmik9SHWULNL1H+Mk8UFqXcNQ5Ypj/5X+3e
-lwwiFMbR/jXxpFe8xBZnbN4qanO4PHWeBmumbqlWzrEIyqMzjeXMZzvkUtdpS0/3
-3vTGDEHZYGooUDK/zhePhPmj3I2KfKwPaQS3MglENBfPGZQMIPqlR7lGWT2GtShO
-xxBvOwPsZ+3eUktMYF5CRGTzcwa8+HV5DPsa2JonLvWyAGdqO9FeG8izCJXxstZa
-vyt+DgCT1paj+XDcVX21nY4tg5ylWvZCImprglC7FsAlhiewbBpOnmXGwHAPFczl
-l6G7Vo4KJmbeipB+zK0dixd0HwxDGZfubTf6ekkM2LRD1X5JRTB7993nkIkRFjKd
-gG4bL7VvcLfTbGHWnvMd1LooAkLFHPlCF6xg7sO5BCpKCNrQA0yfaFnXs5HWbvcZ
-eUrzZsGFOWsAKDj+CWc1YNDYFUeGTtWV+aoYwyLdLwuK0csxyAqrVhtJGPKlNIoi
-uBeLyc546BcTkVVT9fUdxGO34aNbc+HWrC4F2RoIvns8J7NzE5AUmcMNw/unHcUL
-oTOhWcr+ZjT5cL8anunCqUabm1YCLJlpPuMISCnkPip9lLCfHcJmQaxrTYyM3SbJ
-cDruAzopum12j4Kxy4q+9P8988TM1fkMWU6xJNZKdOJdEWMiW2F85oehqEpF3OWu
-1utOO6Y49D77mqCo6mcpUqhXRfCIX97L0IhFWfIR33WvHxZEn1WmxOojxLpIHWEI
-K43iPrKLQ8huFrOLSoUo6rf8CH8BFUdOdD3/R1TVbMTYVcma1vVCDTij5NjFs6K9
-lASZ4sXkDhfjGy7FCZs/Hoim5MivSrosQlTifujL7wlYp6NwF2aayp5l2DxfG1fp
-+MMM9PgJIwl05UAHcv6kG5PURqRVu3/vXbxboLzsYaiCALWnDBJem13BiLdF1A0i
-RjycTGmYR1GBttFf1zhyMBuoMyVACQ6mP1N81D0l9LuV6DnXNcyLfBQnVWKwLjP3
-H8NHGdk1/C4aTGHnjpb4i82g5dvKmWzUsPINGTkyInS5D1il5fDPOK3Qpb7iXnyc
-Y367Az883EGYbJ+dmvjqhJv2DjgwfHWtMQ5Mb1nK+nKdPWLBzQ511SJE0BN3ctJ9
-y10rGhaTq9L3XjkNRfpgfR6rIM7InlCg9QooZq7y+D2fHozxCIJYjpbdE7eF0eyG
-SWzRPE9aoujWdJQrCt0jaWhK3adDzFSYVbNDDzss7qgHijDbENaQ8gE0tKHHLnYk
-CYfpr5m2+e+4K3oQa3onqu0w7tetLudMPdu+W3C0CCvlN8B1FO+A1HOP5aV949Fn
-+nf3+cWVQc1mB8L3uPCmqQgTSJP14OSeywdrCVnCtrQ9YppXs8GBIT+dLwR0urLt
-qIOSHJnNTHeWegerOLQWchfDsocwCyupgxV8jrwK56eAwlIq+Boi0SKWKd91QC/y
-NSUWZ6xfAovCtRBBhZuDegYOgF6BphwJQYZJ/wWf5K69e1aGGB+GDjR7LRfNxN69
-OoHOADH2aMOuw9PDz0YAaq6YZqd3unIVTBsW/unzNqMpZgmORFVc/WPGI8S7Vn0+
-O109qwCNfLxFofwaymso/tK0CVryhE/PsGZXF14jhffqiWLEVRJ5VwIS+d0kEGXA
-siGqebGgnFLnKe8W6lCCN9pFb5EYIeph/Es06+va9FCK4YzalSvkiJ3V/YPWt845
-RSWcHwz1LS84mAytKrOnTJDt1eDAwV0vYzr1y5V9X20OdnEG2NK9qhsfMg9ou++j
-h1/WBsUl2VS0Sb9VWbyH7xfnoG0ci8GR2iVCgPaObBwy3qeX949WsEp2RZX4A141
-OTXWlqR69epa1VNxNndV+bKf5m2KgVIhy/38xqFuhlakM+9dyLbtGRhKtvLi8Ubu
-P5kOfaARM4eYZ8vqDmLj/BGuD0xzUxX3Xp+eT3yyZ8S3z1cf9GWemD0H8dZ3D+1v
-nE1g/F+n+a4JKKr26c2c4fd9OcpKaQS3x0PZ/oisT2IoYYJ7OQ3+q4hO/ag/jtik
-t5l/dAGrPepL+8EpWnuQaZoOuA/nJMDHAVrUzsOu4PpT31ZJU3BGfVk6Q93H2VPf
-soyZHLThmBG/rQ2Di8zvlOhr+RKK74tz8UzSZc3tMv7DMYxzDkLHgADp+gAZ28DR
-2d7epNpF8IgcqChk62j9W5Xt5ueKitLmX6bUbNSVbObO73Y4ZH6H96pnvQ7uDHEq
-U5rk5m75KPnnintyO/Otrp6b78/Nhr3bt1Hb8Mxu9a/OBwEmcq54GvyWFwF8iC9v
-yN+tqJiqAZUG6XmecYZ5hhXheM1OGp50kxZg85EGioJVKbnX0cI5JIF6tcUwwsTZ
-XntM/sNebXGovKnP/Jdu1nmUQtb2NdYaMI6rQ5bh7bmwGat4cI2SxqHlU9KB1ElB
-quyTMBeZLomP7vihEDAEQXyDmaPIhgBJg6TvELUY8Qpn49uHkMIcAoTgNU3fyoPs
-+4bE6SQ8zCKNRKz7DyH70PikkpVyZ/Yl1r3rm1acISQstQOdrooHiPaFRh98DA1I
-8iCp+h7AJJp3GfGY3++rCnFf36JuDNyvIEAd0Xt/V5jthElGlPF95K5paeKwsqb0
-+noSfNC4J25WyiCc4Sh/+N8PcJbN3QTSlnGQFaf0AzWWOsJczQQOwyqEDnYZ0La0
-PDU2rxTrZjltusD+fADJiw4vUXsCppiPEk8Ced9qzYgpAtZaWZg6XMGMQQzyq/P6
-bpEEcq4gHCVKoaakop/Qgol1I6nwFOTRLJ36UI64X4OWej4EZr1n71wHyKjRLLz/
-RMCDVqvRCdnja9otkiBnEEWIY0CDHn7jbJkxNzoSpe7FVb0DWQ6ginsImr1Ronho
-40nDfuhhhkwd949C3iiAyrpK4PfUEUH4vgTvhic4+cVtaPbDKt91kR0Mr0TF8//8
-3ymZXmwUPgciScdsaRX6EpGm+s+dveaFMa5H51bmJPUcueQnZ644cGsypje7cnFG
-9StnHxUVBHVZk6doVZYr0S4XKv2q39C0HKAdGbx+oQfx2IpfRc1/u2cCia24LuPf
-sdUS7BzVmr4TEhb1EwFqPsrzCYpWCJZzxe2tqKN6xtuFNUstJwyETEgLeNEk8Efz
-hZRNFhMk1AbxoiBXWET7rivgfsc6OOAod1bLdEYyFZvVBHp7Q+MwouX9MieOAku7
-IELcFEQ9ZMO8Ug4t/HJgb2UdCN+M/9WB9B3/B4OTVA0YcwZsJL2z2o2f0a0XxBzn
-+vzaBuTYaihcJbB34BCJISGTw2+lTyhSJn6ObZK6EDetkwKmERo31Eb+XC3Dhm1k
-qWkAlhEZV+9cVNY52qbcd0iLLJEqeaRuez5OBpSEQNoFYJxlAw84N4k7TH+5QZ8E
-SqK5GhKuwDgY4zwKyvmggP0SV8h1O5kUm0dQ0OH/anyFoIqNPA9t47bvD8gWU6cn
-Jd3kKkAwsMiTwO0bbtipHLtR/4HP85g14kjcGfBHCI58Hx1z7R1DrrKC6CP/3i7E
-2Qm6zHHB+p8ZPjl3YHuva/K/iiATL9xqH/vwrP++7iqePpY83C8rEzFpz31gA6WX
-F+O6KnFDwh6EeWGjpk96qLZcOWOWezZ7KQSpMvyUFvSXVHfWVAaSudRSY7q6/b60
-b5QksKnJaqIoZ8sHoidRRYGpOIXXH2hd/e03j6KSJcN/KkitUgnjxeHOaEx5PLwA
-jxQ7cGdywyBtblZI3N8wLOMHpW7hdCdh2u1I+ch4Jtwm6Y22jBMSyfAdnlSktmLg
-WjMmPRVm9DwjBD2XKjN8JOUznqA5iyr1uC7xF1IdOKlq+dRpBOujlknG114GGu+y
-BIKbHE42CClBXb40jLYmRUcYMVmDAoXcwaPhCbRqyCB5ajfZ2j/ZFt250RUtsH6H
-SA4uBQIgLTMQU29TnGhftyIz+ODhMm1liZ/5cqdt4EpGIo0+OwvtychDJTGeHpuR
-+BjL3L7oKud3GyxbSOWf+rGoHsealnY/9IUKPvvYu1RZedAlIovLKW2VeQU18q5i
-siI7xTU6lzoqGeiWYbwKSkrK6kTmGNg/XVSlqq7PqmpRAtBs10mVesihn1tcwXcN
-YScaqYQPYxBbfOdl4nq/86MCtjpZ9vewudw3jJpwj89KWQaf1sik4Hk3dI2lxvcp
-sFfZ/sIxovKfm6uX7+Y6gjuDKnId2aEYxsRGGDMAup7hA60+4nlYTk/XR6Fbk4H1
-GS3hZ9/vXZq/2E6JB5QzaaR5mwAd+S/yuTTCcnAEvFzp6TfaRvaUYyvAS3Gr9ahB
-jYDmdJP2IAeKlKN15EMtazd0Qy/TBnjaesqShFUTs2r8semLGLtHLZD7nwkB3+US
-dVvRPD9nnscEEVWmCrjKU1BSEqrHwsOTWxsqc5kq0xQ10DY8Ma6dDmEntnsGTl/s
-NyXxEcf4agZMhtZVipHjXR7LT1CWfPiqmieKKd7QP33uBW3uBT7z6URq8HPAQ+cQ
-7NsoNePvhykYFHCOb5ixzWXZrn74w/016q4Ny3M79ePxQMAf9iQ6J6z63azH1acm
-BVvc7J6ow97NOXzx/YkqDnamN6+JLCHrCUtZ8NJEXGcVawL4q6X9zuQ8yt9ro0kV
-rVjLMxkB3EEF84LZ2xedNY7EoXr+QwsI+FM7VrXwvrJIp6QdOiEJCL/eiCdCoJsi
-lKXj2gMGMg2HMdkuDi7MFJ5OzQvX/2wWtSPutNjN9Ce1gbG/8GO7SGLz7ALfZ1cT
-a1m15IWruG1zjxHs+B2wmNdP4ZwJXpAo8eUi+SLEGO74zCsa+qCotI8TsJkBLJFs
-FjUS3EKA0gpZJgR3GLiBoop1yDo4ntewtwuJ2+XVf63CvVdP8qdzkiz00FZ9rPh/
-BNCy0nFs6RgrpTNk+hhjm+kXJQF+26XbOMxcsLsw8QV6PvMXfkDwFlOALcb049wS
-tnL/WBSdBYmR1jMfOsQGBMs70BB2YKnJk+x4kAKiQLKTELRVTulq1TgVVpGV/Dus
-PT5wQ3N6CBsOBv4SiuR2tAvKS9qx2S5ifNXkvVSRgnbDduXNnt+QdPhNLfD6cnsk
-r/jC5i+HGC0W8JhQza/6ZcXQI/oCpR33hJ0brNz3JPJCVHiPglInnbMBMGdG6p+1
-xJ2LEoXdiq2zeOh2IqoHEbHPfjKIJoleMfWDkBfMULJ5HCS8N+h1dPp9MTPgLipW
-14sb56J8623SH8Jw+IU9MhJqezjSCy123mhQQ49mI0ZnaO5O68wu8yuNNhiZscL0
-HuwqNY2Q+MX3rLjCkRjZgH8yPxqC5Dhwb+DavcAdp1DCNbJ7tEpOIjNVXkrEnTSc
-mxPhafnm/FYh6TDSXVI9dKM1wWt2hHoxmA1auFVf3gOkjCwGrd2hmkDN4kGl98jM
-VYpwoKgRW9vn9JRjaTDAPLZ4CsL6w2FRZ398J6GcWi1p6kTYN8UPPZqxPv5qnn6X
-ldZNoB4E83SWKxwF1f8O/ZmPJSTejmOVSDwIkJgro1e0nkrWqpFez/ScHQ7I3W2T
-4TlIeiS9Mw+8icY2shBZSbSKsEleY4Haa7+3ufTRqi8To5+M7Orf7Vr7XBYQWZj7
-cfdOpOzjCCqmoU2vXP2XZhxCQQ7xgVQWq8L/rhMyZYbtgYRcptvoip4WA3LAXYYA
-s5swtRRNQjteRgQukWN03blKZ1SGP82Vb7XdUm5tSWYoKcM4PF/B0A/r4tuvX940
-Ub2CDqNOLMJH2yB9Q47pyEWj9NSDERN0eD6JETjwK3QW6zT84m6fVnU0+qAZUIhJ
-0NzqF5vzsKTLOp7JeM5qxdS8IPR57d8F+Q7EoH4IEPAyj06IyD0eURIadm5aajp6
-arLmrZPElqfuIwRC1tEoQGRTJdhscvrmxzPgEh98dlOXtO9l/pRbwiDM3f9OyXKB
-A0+z0Cv/3GAWXBQSxvjW4NQL4JR3j+fiyz63rI/jO08NRl9x8a0p7kLY5dM8mVYE
-f+fuosWQaeV7we8sx1iYtEpA/vdszHi1P1qBdk1PlAzkF5PzKO1Kuj2gZCIi5n1w
-C/SgdJIkBkapAM9Ok1QAfbEb+m1h3Y26KQIsqkCXsqkzb1qL1qJzmJl7X0NCLz2H
-STSiD/JKpYRzQRXPTEqdAYbpe3wDDMqYCAz9L7UlYxqxervHJjlGZ+OoakZcQVId
-L0DTc2zvYbzQwgHDzR81sWarBJpof3sdzbY3IBxHd6WyPsIQZXGT1jUuaVlliGn8
-4PpH6Pj23vhfuUhzgAC4z/Vkd7blzrc9cx7gCXLpA60P1tSHj0c6ScsFNqc7zLqn
-Ev+w1ZMux/ZekfzVnP76MVeyk/tsCEzzBk+Aqkdt/A9FiPZJvnSQPEj3HLxWc2YU
-L4usJBSOsS37pb3jHGW3X7FyIBK6m6G7lbpg96ZBrCkdAU1xou+DrkB3tLKrDeJS
-xLwU+xUdVtElFfEe/9/GWUkcQ9Pmd1y/DuDZOZ6yJ7rnqdas9BRoCMxQwE3Fr1Mi
-nX3T6eUxzDH0Oz48ZR2652hSrPh4g8P9NtOaRj3LfmXfEvZGJqZa9I1E4x0BjkCG
-hqdlpYmfSee4g9fpYmLdgVeD6uQRkmN3sp7cjw6Tjc5qkIjRfJ20rryHzyjFYMXx
-Y/0tNJEh1fyccV9L99K/Y0J/LT65GpC42cesZrMhu9G6We7cWMpulP9P7awlgs2r
-1cIxdgOcVs9gcCv9LCNRfnIcPz7wSZLJRwxHAg2mpVhy8iZWvjUkjLtftggl+xYN
-WEAEKQRHlC4/6UZIEIgAG47RgY0WA7UftXFgyzlzxJzKjCGDjixCwchTbtx0CEns
-rwdebThVscLSxrkD+Uup8mnQY+esXsG5skIffRShigsbSCeFRdkwLdArtZr7AVk6
-EXz7BZltWC6sKxlLXSTPKIrESHXGN0f+CKIuz25KGDlTHBAbUSB8TTL7LEYOPhIQ
-EcaPv3YqeIOIYm2D3uzGheCSB3YywGpYbUJo59HyxH4NIfBGtr7BupTLqbmZRCc4
-/FXf/i1Z69fSN3OTrui1MIm/mb1UI5H/2GmdRxfXn/tqnWTKmbJydX+MwGkDhG/U
-kzBQIfto7eTgmatOBy+IZM4JS7dSt7MaqAsyHpvWFuB2ujajvVV/9i9Fnw9IL52x
-779dlSdWhggA+BOk/CoeVeJE8y0WZHGLgDKBHR7aehYNXfh0OWc7SrtGRvGEGVvU
-gQW2KzafIfiRGphYTRvTOikDqdVi8SlvvnEuoX5okYAnwYaDLbVyf28AGdlbzsbG
-hHv8FF/MRzAKbSW3o5DNKTh5kLMBZ5h0h/Fo1YqHk4RY82GyfhONswIQO8LhQSOz
-lQTYrNmD26S3V3HQsf8pz83OnsXhtAg0RuJMV7xsL87wpf5yK1EEJchZ+d033qPG
-QC98EINAuGKCVF5ATIsIXpsVldzaS2VLh4JcSe6zrw/zPMqh0OIr2q3KzXZYPrgw
-EweAYzf5zyAKbB2Jg0gaPKOpEm5xBATeQhzCtS62CK/IFwVU0R1U8yWGmE2+HMKy
-Ulppe6gvd3bnNn8/BOGgkFpSubVw151qzqRnugm8yHpU8ASUxg38gpAIc45R/x6E
-XCDPmbWVwj4WsKpts+mHiWGjMhamfZx/3F3Asp0m7F71c/WiunqpovTuJFG2l2VM
-zS8D9zFbkBOqbeiU+1VfPDdwBNwbcGKhqCFnmIpbMHl0OL+jdGIk/+1HLdUA5pRb
-W9JS7WMGu06YMAXbb3WrzKhyhwhTj59SxfZEV32xWdSVazzxPV/cpWN0vPrLpMuq
-VbJfcCt8bfMwGWN7UEbu/x/WrXDERGWtMz2XTsuPTvwJqiD1CXmk367VEQcJOrYD
-3QZylW+FWX8eR+/zWmL4tKa5NaeIwfc7zugBFOiGaoCaGK0D+iGzrys8bQfOfC10
-Z92jp3Y+5+6QRO6ewdYKCtO03jWLhMpQqPU1vZFT5FGTl+v5/KdMCeS6pcKLm+60
-5SHLDx3CzBlsAsUeNtq5j8X2phS1T3Hut0s/r61jjI9SlAaCaHSIcz15IqxIp7ow
-OfhljQkpZe/SsgcPAZMg7muaLqIiWKF7hC21CgowSdlhYWx36NYZCZYdRYs/YdhQ
-npzdPckbJhnKwZB4vfD5pc+eyDAnxWIu5A9GH+cwDW7ZvN8/406SB0QNNoW62BI2
-nnpE/3VAh3rvCvatpBZIQpyFOGL5hCIwfsdqmO99IEA79s5vq/ofw7FXDmyUrfyH
-rfzXoF7QJgfOtdOtyRc5N9kTRLZGPa6mHsVpaohiWMG0EnCjFIkNE0OXENjJm52c
-VtbKOZMEesvQ9ufkriL1LGzWIiZFGLOvyiAs0FLJOVbn5hyk3W7IGVAOH3hooFxn
-3zk67Zl8A9DYxmX3jy2mSa9/YndBUp9yXAEMOGRrHY9nsjrU5sK6DalTPZQ+cFMK
-h2Fordq7oejTvsimRIeQPo9ppxcf6Le0BHgFjvAZAoZ/aF/4f4ffMmTW34htJgjg
-eteWxKmxZL2K7gHC1XeiqMApLvOGWbVOAce5nOik/aajus+Nfmr7JSjOxRXilOlP
-SifyWLpLTdjRa6fZL2rkNkopDrhBd0Kv5rT3ccAHqpLszEprd5cJweV7qHk3fZdI
-w+g7aDNvfE3DZ5dbvFA1K53HG7hTxj/AFPx7PbCNkfA1YKcG7gvcxVAuSSoeyS10
-b49v9n4tXb66b1Sgx4d3ykLJRm1XmGbnI2PjNRvFOcoBX+X2CApMJ9l3LpBpv2SC
-rjZNaZt8iM4kOMDVLsgtakMlhJTkPb/CUX3oia4a8WJu8ITXfwuTlDt5TN2EwqLV
-fFKMKJBxXC5Oq9T8sCvoy4givPhgfyukYJ1gxpLwZ5m1hmc4+qLwMJRClQPzWNyy
-Def3NH8/SqHCUeQoacTDRDN38NjPI57u+0vQohr4qhNpUkpH0s7f0/S+RBghEJg7
-60S4Gxx2Tsh0XcsYj+ZI5+qxlGFXZKyZNs6bj/kBMwEPJzW3gvQLkhGBkBTPoO/g
-7db9u/rspcoz2GebPBPIPPql7DQRs2+sJLU6+wRU6EhF1AvohS0QNvqqXRqdprMR
-stqx+6x9qnXuvPzJ0N9FwsQue+75+kygYVzbIa3jRZ1GVchWQRFolqscA9LLBxmY
-ATOxkJNov0TmYmfEvTUCbZep1ldhQ3PV1fAJ0pMJs114FFaPWZBRw6uMOM6E98jw
-zNdVtJ/qnOZ0+ztjvGpTFdN8jaUaNTpLB6Zi90R5uBIWQbcG9UuT5Bg1ke/a+lDP
-UW/iRKKa8Vq5ZYVMwXMVWkvQJ7PAOSMGtQp2JtogsHz4FSLKYc3XwlXj825skJ0L
-IaqMgoCP79cY/vjLQBKkAcizmDTsOOvrAKoGe88y7G6GIdOsueYtOi4jog1LZz+R
-XoS06Wfq7xbHOYXzZvfDCDyUN/toEWTT2LyskdjMrDAPp6uERTL7vbjliawzib4f
-mKKLlVcTeOaJhTN/Zvc4JX6pYofRIFLCTyAse6ZQGuYf3PLhqBmE1PkYI1EBv8Ze
-kDxucZ8waMvH6N8WCfhYMQ9U6kH42CNRTSrxyU7Sjy/gTVjAbXgzd3wJH6Yj3Nsa
-On/HOPB4N/HGf54MQvwiSmmpjxaxKX+Bpc8SyoHsU03QEEAf3A45zDkMs7fky/QR
-SV7kIpvak3WGzQbs9KCzdGxFLN2W4IO4RzXRG4Ou9SuvYOhQB7jYiR3TM2j2aQQF
-rtAQem7FMcbp3qXA2gcdLuSjyw7MER0X7sgsNWY3y1EJA7ZgGS73Lvz3usnMhHGM
-BD6LSb8K49yWN5Pn/sKgRm1Uy1Oavooyi3XTkWovpwBiOBJj0Gb+CuRLFZRWuQ1E
-eCtR2OwkSLRMnZrXaPVVYzSZVLokeMvWQqQduUXb5USyVyq0LmUqZvlXlf0EIXaB
-/AC9H2SYa3qG7t/fRMs2xuivfIODUj2YFxUKPCPaOZXVaYRY6TK1o6UOdiYgUjkI
-ViZXnwNmFkXvKcp2AFaBFhC7Km2hcL0AifncfaZDu1smQ2tPw+epI6/G2c6qiYEm
-3QRytHN2vI9DRBd6IZxXNWi9IiXw1x52bxke/WIoS2FRs2bOHDqUsLliME/IuVUV
-YQ6X+vsVZU3dYccCSkIYyHgXFz689RjE3f5cQu7Hw/N7dwrn8k0ns4q6NBYsC1yn
-UG+zt4sgq/m9l3z/a67cUCO6KtmwbnUV1eF1QFaWtinxRufxs8Z9y0vHnXe+Adey
-pItim+oE6ytX8G8E2MWHxjkPCR7R8vD0kM6LdPtYmkMs5lkU2FeLwkKRNU16IA5R
-iAjumLuhJFKSDxdz7rNhsYbsm7reapcwu/EtNGxtC8HOokq0Z0M8K7D/bA54Dh1i
-I3Pd+ludMRpzg5L4r01z1R4PnCVmvBptgcPzXXRu3rBkUyp7OK88AsYycBKi+lLZ
-EyL8KFwBOiGCPewFJo+RciyFuuUPDS+ZY+swuMNngCftjlfHaYVDFYwcZXCx1iSR
-mHoG1vN/nS8OVaOxjqz9x0oKa7EP4P0AbALITx8nvaDJK/mxy/6mD8uYpTqb58ze
-OHHABQ1fYGsBkMZpUDl6t9cEewE2qMnTy5eslM5EwDDKIe0hUiTwxYoajvUhk1lQ
-ku98scFTOX0YiiuSJDB7kqpEMgBf/Qd/uz+kfG9Aci5oORuGEOIfjiOYRcuwyi+f
-bjWCzujzFWiCuYufbzSDHnQhFQTE1cX0T1vHOaVkX5X9TayaGDueHDmWvpYoOs8z
-h0xz+EHGGWbjvpi+go7U0EIhAVuDCbhxlvDsq1x9gBegvaW6WnsZ6WOxN3t5BMr2
-t6GAH1/tWPa1pDgfYIfrkwe2OQ0YFrrp9V0jvRQ1kt9p0l8x3yJXRPZV1FHGdfuK
-1CK8ZrypiF2mFoya8PSDM7ek1Ji6Exsv+vL6xGqOHzhzmKY2wG4q59Gh47zTvovW
-eD4DFuFDT5aNNKty+VvAn7t4DQ+P+aDlXwWHLZOqMVrw273yrb5qBbTptI4yD0Ht
-MWs7PI70GpSh8/TSP12kWx/DINqIgijnKeqh4gRKj8xTa/3pHZvHifuPldO3mVUp
-qnYC1lAoFKxfzelgaAd1LuFKlh58O/4XMdc3nMHHi74TM40JavPlMsdwhW+zOzYp
-64cFkQak8pyXWdsmgedYJ2ytigHuzwS+dtKSkB+YTvLxFmb1jYFoNPIHDVXGXTfL
-9ywbRKLMUuAQCmaSzuwFIiSHkAFvu1RgsCXddq4glSH/QajZghz8cV7h8cw3xYIN
-rlz2tGXk6649WAhZIktM0ceAd+IEnHspnvxCo1JGFQcnNKh8MgUL9QXIVkWeuvee
-mDsBsxKQA/qXlss8t8J0js6cfSzGC2xJjiSINib8eendUAakoC5PU2n2G8+rqHmH
-9t/0Wl51AdXnp0UgxMDncm3nTxBGxKd0ZIGvwc36Yzy22D53SwcWcnSHW266Tehh
-BfSxPpFFB0q0J27Uf3NFE/THYSjBBbteh5p0IqS8XkLQBGhIwA1nWp5/LMKiIG8V
-s9Gh2YBXWIe3R9ierSwTFN87Y9x0ejqZD4SwAvgMJotL1VAnxjurRIGyI0mZePFS
-mlAVloYXwA08pxyBcRQDJetL/D7XR+nTsoTXRiMVKPTpha1Pbajq4cEHJ0xekFP9
-1KRcsjKOL4Fr4G2atm58itvSumKfCb1PzrV8gYE7g7fwpJ+JEHo35w1zlU27XcAq
-vTU4aVrhC3CwJvVtr+NMUk5LBwP+K2XKo95IDayguG4PHDwwMrRPepenM8Ia4K9f
-a3dlI65eQW9uaUMbxfcEe5ArFOIO7Ay2GXD5cILl/AVZs8vTEXvDPAXXvwnhe5zh
-T5BEmvA0+oSOOT2CGcIrBu4dlL2A+WVx3Acwmdoibp76qHQHEE/bjhKjx4nBuvsU
-fcK3qm96dGyXwx9lGa7/VXypyahMB6biQnZodK8P6TdZW5bBHiwGfP6oW+Qli3wG
-2qTO0zoDEc3x5GTtZQOyvXPR/d/kRykZh4kmf0sHlc9BiOSsZdQfyAjmbS3k8Pp+
-jAzhU96qmI1/bGVgaXgNqVNwNNtC8yfn5WOOZ7q1invMByukrvepJlHVQyMZQNxz
-GX17b7UzzF9uaM6bQF3HNzIFQWuzGfC6N0KNiWc6qOe0wq5HSFijWPNmR0xQyI9u
-E6VyscP4+eG7t3jHhuYsbTlomNtMELR72WgBFas1EEIbMXgnD+sWywxxC+lQ1Yzj
-1runj0MsWyjkpYrfKhkqGTe6Kgt7bVm2kNdku4fPgy2uH2dQOEk8bwKxNUTq4gzD
-yJ47oGmN1cQSG2equIPYBCAgPuCBz+igPTAMivSYFVfWlnXbXYiQ6ZOz1EmgPu6z
-hpS8Mba2rkh6lOxpVNQvXwvcwZDbJwobD64x+ZPujz17U5j7k1PFKfUzp1vxsCtI
-Fusqi4BOH/NcSZ9gdMCEy5soCFxhNo2xWqLaqkQL4T9Kwo4xqpxp5Raibh4Ssv4D
-VvtuXVxbue3uQLhmNztYVkOlYQCAH7b05KKlqio/F2pcbixmsiXPn8j/G1+s95m8
-pxeR7zvg96RoZnMF3VkLI1OB2CMPUJ+FxmyU4IKd3WLtjiT1NM7XA5GKdXdXgWbd
-U5rV3d3r5Z43qO3Ul48sEYW4eCdAHSVvmHVY6AezQr5AOsoIUoLms6/OMZNYBgpQ
-3lsuymSl4ZiAJTvhkj94ZDFXKSkeSmWx5NkahCv1ReywaOd33mNPvwYTo+VeXup6
-GOzxIMqjdX3EbrzLf0hCy0iUAtjFdwdM9zoId1gsu64gEFQSXoJy1y5gSmJFXi68
-Raxz7KnzAcR4g2sV6P+iW6OWvItLhC8eUaUHi9cTxO+aI0X461VVOPlVeIgYSIWK
-EbTv0UCphusEgV9Uo/5WkgdFY8C+T+vEgxNklKwS2v//+bAP4DXIETU31wh4OLaU
-U9AgXhdKMawn8zKc+9+aIALrHWnfHTccFDRPqgOFHHEXPbiCIEiwZLPOC4NZ6eXi
-jozBXk3JdR4A5IpayYpXN/5NDNIPV6HYBS1TqwEhLBtX1alqa1mE+tjXfYIJzIGR
-k0hDkkxL/fy73PwjY4cS2Gi9gv8gCJ6Qa4x5clg9fZxgEyb3sjExBAk5gYfiebam
-zwLDyrT1Q/dD1ONKddiNY0s4ty7FmPHTrpyvi7YzlhQSQf7vJs3yNBPCyTAtNLCQ
-Urn4HkKfCPqvajea32LRFFbBwKfNPfgmbKY3eqr5OCeXB1KbjyaN5yLptciaza17
-cFthIeQIccZcDvBGh6lobRKTYoxsSr6+PLTfyVJtYL0RZKogCOim5YqBJoudi8xN
-WGH6dbry94OsXVH3ZjR1FNp40wOWJ8q66rlTCqZDnTwCPVGXgKvF5l98ghVQzV8k
-7yaYHEuImOQq2r3BlVzDPMOlnEwNlKamLHCOGPvKVF7nwzUgK6BMQ2eFXqrZ8+HW
-OGa0YssZIi+YFJLv3iQTxKpP/Y0qpMBddRaRwVuqsFGEoj9yKYg7oHH0RyVk3kck
-gkiWDnkZHp7SFnG9XHLsvK7iwcb7Tf6DGKHv/9ZwmSgSbzDgzaVr9g2CBI2fGYzE
-JnxEqoiQk1os92TmpbN8RfhXZsvDNBN7mlcfdNgSdccfWhUFcF8g4p4POcxxceFM
-WQs403jOppTCzdufMzvX2tKBsR37lxnW/7Ag6GhrJvmRFwuSSBaH9wOWmEs7r87K
-u/rybHswor/la5y9oSAktJMRbE6Yp9b3MNQKMogsmx2iYsH8FLJuplG6U2kwriyl
-SCWVjwLgbMBwzdsOeU71QTkSM9sIYyII8jRTqDRqP7TLqjFxRJEqkdygLzpFz5ZE
-lxGqezdX5hrgwXTlH3RjwXEKsCkgdN5gCfiJSNud2iYi7NqCVv+13+LZUziNq9IB
-bdkLXNfGomQ7xz/vF6E7IY3QkXjdW6PXunxTvphTU6PHV3DoYJuEJWiAVNpZaEaI
-dLRm8whtWuu4cxWvcNcL/Ba/NgvszXyZ/6WjzpqRR06CR+CwenWqx6DRp4Glc9oc
-EfTSHievnr8L4p2Jtp1Qnus8vSbGNll0y4eSgHWA20Bv0ZOA6Oc530itDtbX0TbX
-/o3z9z5+E/aLoxAWRozAgDY4H0OHnhOPOlSrHOgJsHUorjSPh4hA80TY0mF524vi
-pDIKII14f9ycQVbjzqj1XU9RWXgMxL9spOqqOqNLp/5EHgT38JNDPUc5cdZlCEMj
-Vj8qoLroasHzOTCAottSPG2KXTMkEJr5OZg6vXxFJaI36RoPBc/BEI/qpfMOTleX
-dmrh8w3nvH0DtkQjHc6OVsBHeaIs/q7DyVPNmui9kysQIWmbUVNd3yQXXszZgcxd
-fzTtUwXVE6G4AZOTbbEfrmiCf1WxziDR7JDoTjnHzBhKFWGzs8I7zXrJoik1rz49
-UDkS6c52blkBn6hKbQaiwfMYh3tQ2pMEvVGAElXP6ag7foWzjkT08ynPl6pg2OLr
-hcgxY7gxIv7QIZU/EbiW0IjJWMbsW7TjMvudOXnRhklVj/dyLMPGaX65KAz8i/j1
-yz3aIdWgw5RGPRcqOVAitGU91JDsGGS0zPDXuatT3hrrtl+61Qfelj53A96MNDz6
-1brbvzGztUHzLO4pBRpBh7yK5hH6ta/Qkm7RsFGAW750OKaxi/ESlzwPxKb/59Mr
-wcPCQlcrLLtmBRax9K03u5fntN1By3h3JhrBaByWpi9OSqMLlqxTT7F86NxnB9Kq
-Xs1yZXiyqOp4tobM5mVmGHIsNaweIvfBVXhCwagomtmNm0cxcL3EFgQpuVLedx//
-3xt5sgxbk+mb+rF2I6sNRv21KSrN5AnBFDKDQT0MvgiYmojbgQYlXvUpaPgGCRaO
-XzY+7G89siP0gDtLBfh9vT8klDH3MsLoJcgpC1sr8V80rCRXWLoy7s14uo8o4BYs
-AQBREoen/mgBat8ioa9oflWS91TYKVMFOAybHzGs4k8VuvlFcEDS7dmL+XwNJdi4
-19h9pnbM/CYwYo/gbq1lQS8Lu7oNXqpHzaq1zsCEaTdXMx22XmRb/L9L3pNOaZNX
-H7n7YVeU3pbq6xD2hbYAxc1Za+hoBvZ6c9kPp/TAbTDr2aIA9Y6Q0xSuihefzpjX
-XS0jp7KdhzUs195+HgQGLoudzHJ4ByDnRo7mCskwvtaXgO6p4OGn0Z0ognOTs1pN
-QGLd3pguT5ck/3ULLtKibOjnFr5lG+mK52N1O5M2dvJO4wXKj76KBa8xlfLLwqyQ
-5JieTI9pNTW/TgawQ3W6BbFSCmHMDyoFt0V20GA27eB1YZmsJZbDmY14Pv99tbXJ
-E+mQB631t0TpnP733PEBwDrn+EotoVLbaRRg8H+sCzcOBBDca/DJNLA+2rpTp4Me
-48Hce/fYuAMTcPP5XwWGMiDV5vyQ+1S59A8TBH8uAozNsDopggl4PfE9CdZJdFQ8
-A4y9wr2sx4vZBsrM2RW7NSXY9JIHJdQTzMb2WRlGoTLZXycPye4DBcaPOGXv29b1
-cNz1mEbjxW8UnQDFivCu/vCraxzedpE0EjAo51aFJ83SCZkGTy7FVI/AJACzQJx7
-MjWxRZ+d7POMyuNuRX+zuCWAFe49AVjBykKU9v3yvswzXw3UaSxcK2qxiIWe9ajP
-0Mthi70lfmzeeVG0DkFnvA+gNvk/cg2NlxtKz3fGWHL8NX1A2h2lq1OMXOz4Sbq3
-xtZbgI9oknahMzjRQYy1RQTu8osU7Me9dzYkLCQXb5fc1yZdaVLnp/QRb47bYzuX
-v5MrrL29hn7nxMPd4i90mdMwmFfYuTjRerEUTN1rKf+mNmz5ctevx8BrykmE6P3e
-wY75aqR20JDl1Q9lLfGwW/K4ByjhEAQabpj/t+M2By5cUnyzMyqDQMRUTOAcUj8L
-UbfgignICL1jAUArwaAsvgT0s83DybB/YKnYXqiohz67wixcmqwd9bPapjModwKZ
-/bjXU8VVYw5cN6qBlY56BzibGL5lyJdMMPKFlqWBYjREMm3+THkdNnGfWG8hYV3X
-3ZhFR71Tgh+OgX7/ecl9p5HRn4Sf2L9GlXQtxTu0F/FvTWHPWwnN6cmtwk8AXDcy
-dTUuwzeARWc8dHL2/dltT1G/vpOuFRGVH+Y24NK7VzKA/CaBcCSTB4A+OmKqsIuW
-zgtK/9ZArKmnPsPWaODdstnwnq7YiY5HApssoeIWcBaLdDksM5LqoNgvLX4ew8eM
-/47bRF3glBL0D/PczoACe3CU/kbqwXgaufB4qHWPlB+TQLorh8GC8T9v+eU10LfB
-EZspDbCI/FRqtNKUzdxb6atHYvbTjhjpd+IdviGAi/4w9vv0WKomrE8HF752W6xg
-olIvmq9IOt+EufQHYm1WEaz8iWaGE7SwGVfkf9uke4q0pg5v9VyaHNjC/vL37a8k
-kDtHCy4mZDw2UMJGZkzMMAV3zffuwPqHzPt66Lsf1LtZzFgrQ8chvzfYg2q8uu6P
-ERAdD58eOceLU0t0MDVs3RHUpvzee2dfbT8Y6S+Vyvngw8EbMq3S7qUrCgG0eQDS
-/EsH6RjFn5LHRfr+Jfjmg1AY0ml2yMbvP5vD/ZLlAbEqkVUlORK8nCKljI5YEhDF
-qDFvYBjfzQ4/x+PoMjYZSbt4MnKSuyt5/v3kNG7sSi25lgieFP7SLm4qjwFxWPrB
-G2ehLAAeDqGQkC1jol2bh1II1YaLfTSskuFthjUZi5CXgU8NcPheYXDPhLeB0sbR
-lEW/TZNNQrrWt/F4HQh85T/R5TpjcYeOA4iQFLWDdsnkuN8nwa6HGNHMzsoL3mp4
-TkziCWBOBhCvqLZh4xngoGQ8wy9MuA6K96jqdXtExGW0iauf60cdWHQT+0aYkizI
-oiffqck251VNXrOpiLK+n12DvIdibEb93JYYgjsy6UMEHXaoX0Xugbn7YIJjfIby
-DV25avVSt7F2m6uaK3zYnet1IQSkW+x76GAD9bKWtHLlGB+h/iflyBuXXTxFzLPm
-W2UZu/0FC0yz7Q2/w20dlawXS6JO0CThBZusM2D8EwP32C0IMVO26CmzjaROTsHW
-c+NFse8rCXfxCKiglLBM1NzWveLhpGhk/LGytYW2oWtynYdflMDUSggm35K3eI0C
-gf3+W2CnPszxjqBgD5wgzc2HAUkCktkFeIGZ9etRR6G03N3M3GzXbkHC4E3mranx
-2ipNkGDoTIg14+TlDyBPB93Ju+IlYtoMnA9hh0F4NirtPTKBMCaeWCKV7MMynmzp
-z3Anfxy43fiHlFKKR+FCENauLUY021s6g9Ozy/n00BSLqrvSv2tGsjbI10c36nzf
-XTjho2Pdjvyje/BS5E52+VxoGWO+HzRVuM9ItKQTzIk2KsEVuTaEio9f+n/UUkl2
-bwvBzqDZnsl2KuPsGoSPciH73KLv6QfQ85GdJQTmYPDFn4UcCCJeWKn8QgrqEphd
-I3Zpxjo6KaAHe30e3cHVK2iQzKpQFnfNXfEAO4Y8eGWJlTR0W4+czQTknWXn1YHw
-hXsljkMwy2cjRes4BbEXrQ==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DmaPortCommIfcInputDataControl.vhd
+-- Author: Paul Butler
+-- Original Project: LV FPGA Dma Port Communication Interface
+-- Date: 15 October 2014
+--
+-------------------------------------------------------------------------------
+-- (c) 2014 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+--   The NI DMA IP also implements a single Input Data interface for all
+--   the requesters in the application logic. The NI DMA IP will always
+--   initiate the data transfer as a response to the request sent by the
+--   communication interface.  The communication interface needs to be
+--   ready to transfer the associated data whenever the NI DMA IP
+--   desires. The Input Data Control needs to determine the number of
+--   latency cycles between the Pop and valid Data based on the
+--   kNiDmaDmaChannels constant and the read latency of DMA FIFO (two
+--   clock cycles). The module generator will define the
+--   kNiDmaInputDataReadLatency constant at compile time so that the NI
+--   DMA IP to know what the read latency is. Pipeline stages could be
+--   used for decoding and routing Pops to the various subsystems. The
+--   FIFO read latency will be implemented using pipeline stages for
+--   muxing data from the FIFO to the Input Data interface.  The sum of
+--   all these states needs to match the read latency constant.
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+
+  -- This package contains the definitions for the interface between the
+  -- NI DMA IP and the application specific logic
+  use work.PkgNiDma.all;
+
+  use work.PkgDmaPortCommunicationInterface.all;
+  use work.PkgDmaPortCommIfcInputDataControl.all;
+  use work.PkgCommIntConfiguration.all;
+
+entity DmaPortCommIfcInputDataControl is
+  generic (
+
+    ---------------------------------------------------------------------------
+    --The number of input streams
+    ---------------------------------------------------------------------------
+    kNumOfInStrms : natural := 16;
+
+    ---------------------------------------------------------------------------
+    --The channel number to input stream number conversion
+    ---------------------------------------------------------------------------
+    kInStrmIndex  : StrmIndex_t);
+  port (
+    aReset              : in  boolean;
+    BusClk              : in  std_logic;
+
+    ---------------------------------------------------------------------------
+    -- Input Data interface between NI DMA IP and the Commuication Interface
+    ---------------------------------------------------------------------------
+    bNiDmaInputDataFromDma   : in NiDmaInputDataFromDma_t;
+    bNiDmaInputDataToDma     : out NiDmaInputDataToDma_t;
+
+    ---------------------------------------------------------------------------
+    -- The interface with the FIFOs
+    ---------------------------------------------------------------------------
+    bInputDataInterfaceFromFifoArray : in
+      NiDmaInputDataToDmaArray_t(Larger(kNumOfInStrms,1)-1 downto 0);
+
+    bInputDataInterfaceToFifoArray : out
+      NiDmaInputDataFromDmaArray_t(Larger(kNumOfInStrms,1)-1 downto 0)
+    );
+end DmaPortCommIfcInputDataControl;
+
+architecture rtl of DmaPortCommIfcInputDataControl is
+
+  --vhook_sigstart
+  --vhook_sigend
+------------------------------------------------------------------------
+-- Theory of operation:
+--
+--   This component implements a pipelined and-or mux. The "and" stage
+--   (implemented by the SelectData function) will be implemented in a
+--   single LUT level, so it should not contribute a timing closure
+--   problem (The channel decode comes from a register in the DMA IP and
+--   the data that's being selected should come from a register in the
+--   FIFO). The second stage simply "or"'s all the first stage
+--   elements together. We can implement a 32 input "or" gate in two LUT
+--   levels (using 6-input LUT's). We can build a 64 input "or" in three
+--   levels. I think the "or" logic is unlikely to become a timing
+--   bottleneck, but we'll see after some testing.
+--
+--   This component will compile and behave correctly as long as
+--   kInputDataDelay is at least 1. However, if the kInputDataDelay
+--   is set to exactly 1, the output data will not be registered,
+--   possibly leading to the accumulation of a critical path through
+--   multiple entities.
+--
+------------------------------------------------------------------------
+
+  -- kMaxNumOfStrms computes the maximum number of streams that will
+  -- determine the total number of read data latency clocks that this
+  -- component need to meet.  This constant is nedeed for matching the
+  -- latency introduced by this component with the latency introduced by
+  -- a similar component used to multiplex the sink streams.
+  constant kMaxNumOfStrms : natural := kNumberOfDmaChannels;
+
+  -- These types and the corresponding "*ShiftReg" signal are for
+  -- delaying the bNiDmaInputDataFromDma.DmaChannel the same amount as
+  -- the read latency inherent to the DMA FIFO.
+  type DmaChannelOneHotArray_t is array ( natural range<> )
+       of NiDmaDmaChannelOneHot_t;
+  subtype DmaChannelOneHotShiftReg_t is DmaChannelOneHotArray_t
+          ( kFifoReadLatency downto 1 );
+  signal bChannelOneHotShiftReg : DmaChannelOneHotShiftReg_t
+         := (others => (others => false));
+
+  -- ChannelOrderedDataFromFifo accepts the NiDmaInputDataToDmaArray_t
+  -- which is passed into DmaPortCommIfcInputDataControl. That array has
+  -- all of the input channels arranged into the lowest indice of the
+  -- array -- their indices do not match their channel numbers. Since
+  -- the DMA IP provides DmaChannelOneHotArray_t arranged where the
+  -- array index corresponds to the channel number, we need to
+  -- reconstruct an NiDmaInputDataToDmaArray_t that is organize the same
+  -- way. The generic kInStrmIndex translates indices into channel
+  -- numbers, so this function uses that constant to construct a new
+  -- NiDmaInputDataToDmaArray_t return value in which the indices match
+  -- the channel number. That simplifies the construction of the and/or
+  -- mux.
+  -- Since kInStrmIndex is a constant, this function should be
+  -- implemented with no logic -- it's simply a constant rearrangement
+  -- of the input array. On the other hand, the returned array will be
+  -- larger than the input array. The returned array will always match
+  -- the size of the DmaChannelOneHotArray_t, which is a fixed size that
+  -- matches the number of DMA channels implemented by the DMA IP. Many
+  -- of the entries in the returned array will be constant, so the
+  -- synthesizer should perform substantial optimization.
+  function ChannelOrderedDataFromFifo ( val : NiDmaInputDataToDmaArray_t )
+           return NiDmaInputDataToDmaArray_t is
+    variable rval : NiDmaInputDataToDmaArray_t ( NiDmaDmaChannelOneHot_t'range )
+                  := (others => kNiDmaInputDataToDmaZero);
+    variable StrmCount : natural;
+  begin
+
+    -- rval has an entry for every DMA channel, even if that channel is
+    -- unused or is allocated to an output channel. kInStrmIndex is a
+    -- list of the channel numbers that are actually used for input DMA.
+    -- rval is initialized to contain all "zero". For each of the
+    -- mappings in kInStrmIndex, copy the indexed value from val into
+    -- the channel numbered index in rval.
+    --
+    -- val will have an entry for each utilized DMA channel, which will
+    -- often cause val to be shorter than rval or kInStrmIndex. For that
+    -- reason, the loop only iterates over the values in the shortest
+    -- array to avoid using an out-of-range index for the "val(i)"
+    -- expression. The default value of rval will ensure that any unused
+    -- channels have a "zero" value.
+    --
+    -- This function could be simplified by removing the "if" logic.
+    -- That would put non-zero data in the unused slots, but that data
+    -- would never be selected by the DMA Port. I've elected to add the
+    -- extra complexity (the if-statement) to keep the unused and output
+    -- channels zeroed. This will give the synthesizer a better chance
+    -- to optimize around channels that are stuck at zero. Since the
+    -- if-statement only examines a constant, I don't expect this logic
+    -- to consume resources or interfere with timing closure.
+    for i in rval'range loop
+      if    kDmaFifoConfArray(i).Mode = NiFpgaTargetToHost
+         or kDmaFifoConfArray(i).Mode = NiFpgaPeerToPeerWriter then
+        rval ( i ) := val ( kInStrmIndex ( i ) );
+      end if;
+    end loop;
+
+    return rval;
+  end function ChannelOrderedDataFromFifo;
+
+  signal bChannelOrderedData : NiDmaInputDataToDmaArray_t ( NiDmaDmaChannelOneHot_t'range );
+
+  -- SelectData returns a copy of InputDataToDma where all but the
+  -- selected channel is set to "zero". The multiplexor can be completed
+  -- by simply "or"ing the array elements using the OrArray function. It
+  -- is crucial for this function to return "zero" if no channel is
+  -- selected.
+  --
+  -- This function accepts the one-hot channel field so that the
+  -- returned data will be all "zero" if the Dma IP is responding to the
+  -- same channel in non-stream space. An alternative would be to decode
+  -- the channel field and the space field.
+  --
+  -- It's important to note that this function assumes that
+  -- InputDataToDma is organized according to the channel number. The
+  -- entity input "bInputDataInterfaceFromFifoArray" is the correct data
+  -- type, but it is a contiguously arranged list of input data so that
+  -- it can easily be associated with the arbiter's request/grant/done
+  -- arrays. Passing that input directly to SelectData will often
+  -- produce undesirable results. My expectation is that InputDataToDma
+  -- will be formatted by the ChannelOrderedDataFromFifo function.
+  function SelectData ( InputDataToDma : NiDmaInputDataToDmaArray_t;
+                        Channel : NiDmaDmaChannelOneHot_t ) return
+                        NiDmaInputDataToDmaArray_t is
+    variable rval : NiDmaInputDataToDmaArray_t ( InputDataToDma'range ) :=
+                    (others => kNiDmaInputDataToDmaZero);
+  begin
+
+    -- Since Channel'length may be larger than rval'length, we only
+    -- iterate over rval'range to avoid an out-of-bounds index.
+    for i in rval'range loop
+      if Channel ( i ) then
+        rval ( i ) := InputDataToDma ( i );
+      end if;
+    end loop;
+
+    return rval;
+  end function SelectData;
+
+  --vhook_nowarn bSelectedInputDataToDmaArray
+  signal bSelectedInputDataToDmaArray :
+         NiDmaInputDataToDmaArray_t ( NiDmaDmaChannelOneHot_t'range ) :=
+         (others => kNiDmaInputDataToDmaZero);
+
+  --vhook_nowarn aReset
+  -- I have intentionally removed the reset signal from this component
+  -- because there is no functional requirement to reset the registers
+  -- in this component. In the case where the DMA IP is entering a reset
+  -- state, the registers in this component that hold old values of
+  -- outputs from the DMA IP become meaningless -- the DMA IP will
+  -- "forget" any previous requests to transfer data, so all the control
+  -- signals (like bNiDmaInputDataFromDma.DmaChannel) may select data
+  -- from one of the input DMA channels, but when that data arrives at
+  -- the input to the DMA IP, it will be ignored. In other words,
+  -- because the DMA IP is designed to expect a precise delay through
+  -- this component, when the DMA IP enters the reset state we can be
+  -- certain that it will ignore any output values from this component
+  -- until enough time has passed for these registers to be reloaded
+  -- with valid values.
+  --
+  -- There is a risk that some of these registers can enter a metastable
+  -- state if the registers driving the inputs are reset asynchronously.
+  -- Because we know that all the outputs of this component will be
+  -- ignored until well after reset has deasserted (as described in the
+  -- previous paragraph), the metastability here can not cause other
+  -- components to enter an undefined state.
+  --
+begin
+
+  assert kInputDataDelay > 0
+    report "This architecture adds at least one stage of delay on the data path"
+    severity failure;
+
+  -- The DmaPort communication interface has been tested for 16
+  -- (InchWorm) and 32 (Chinch2) DMA channels. Currently there are no
+  -- targets that support more than 32 channels - if that changes in the
+  -- future, this c0mponent needs further testing.
+--  assert kNumberOfDmaChannels<=32
+--    report "DmaPortCommIfcInputDataControl: this c0mponent was tested "
+--         & "with up to 32 channels only - configuring it with more than "
+--         & "32 channels requires validation."
+--    severity Error;
+
+  -- This delays the channel selector field to correspond to the FIFO
+  -- read latency. The output of this delay provides a channel selection
+  -- field that is appropriate for multiplexing the data arriving from
+  -- the FIFO.
+  OneHotChannelShifter:
+  Process ( BusClk ) is
+  begin
+    if rising_edge ( BusClk ) then
+      bChannelOneHotShiftReg <=
+         bChannelOneHotShiftReg ( kFifoReadLatency - 1 downto 1 )
+       & bNiDmaInputDataFromDma.DmaChannel;
+    end if;
+  end Process OneHotChannelShifter;
+
+  -- The SelectRegister process "and"s the incoming data with the
+  -- one-hot channel decode to select at most one valid input data.
+  -- This one-hot enable signal can be none-hot if the DMA IP is reading
+  -- data from a non-stream space. This property ensures that the mux
+  -- output is "zero" when no channel is selected.
+  bChannelOrderedData <=
+    ChannelOrderedDataFromFifo ( bInputDataInterfaceFromFifoArray );
+  SelectRegister:
+  Process ( BusClk ) is
+  begin
+    if rising_edge ( BusClk ) then
+      bSelectedInputDataToDmaArray <= SelectData (
+        bChannelOrderedData,
+        bChannelOneHotShiftReg ( kFifoReadLatency ));
+    end if;
+  end process SelectRegister;
+
+  -- DmaPortInputDataToDmaDelayx is configured to delay the data one
+  -- state less than kInputDataDelay because the first delay state is
+  -- implemented by the SelectRegister process.
+  --
+  -- This delays the data to match the expectations of the DMA IP. A
+  -- larger delay also provides more placement flexibility in case the
+  -- data needs to travel across a large portion of the die (it has
+  -- multiple clock cycles to get to its destination).
+
+  --vhook_e DmaPortInputDataToDmaDelay
+  --vhook_a kDelay kInputDataDelay-1
+  --vhook_a Clk BusClk
+  --vhook_c cNiDmaInputDataToDma OrArray ( bSelectedInputDataToDmaArray )
+  --vhook_c cNiDmaInputDataToDmaDelayed bNiDmaInputDataToDma
+  DmaPortInputDataToDmaDelayx: entity work.DmaPortInputDataToDmaDelay (RTL)
+    generic map (kDelay => kInputDataDelay-1)  --natural:=0
+    port map (
+      Clk                         => BusClk,                                    --in  std_logic
+      cNiDmaInputDataToDma        => OrArray ( bSelectedInputDataToDmaArray ),  --in  NiDmaInputDataToDma_t
+      cNiDmaInputDataToDmaDelayed => bNiDmaInputDataToDma);                     --out NiDmaInputDataToDma_t
+
+  -- We copy bNiDmaInputDataFromDma to every DMA stream circuit. This
+  -- introduces a risk of too much fanout on this signal, but Vivado
+  -- does try hard to replicate overloaded registers.
+  bInputDataInterfaceToFifoArray <= (others => bNiDmaInputDataFromDma );
+
+end rtl;

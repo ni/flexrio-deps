@@ -1,539 +1,437 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-Jm2uGAVYfY7w9Y5qKstopObZuZAEY3b/Io3MSEcWLhjjnKulVhCBBYAEQrAzzGsT
-vMbffkdZgjdXQUg8jOLJXSHZ0Dgbnob2vlppjZs3bgyHCF7MoJ35E+LOsaLimUA7
-hlqStcK49hR1hdeBPr/OwfT3UeVrRtQyq0eJXQ1UksinX1G9Pz3/CmcGfTZ/C72x
-p9icpt0bkY4/1I4GBvNCsA6FFKH947JqH27OPACiQQRW/K7JToQn+1uhWr3LA1od
-lbVrWu8PdZi7zW9gK3jiW5GaPjwbYQGqeGFs3bTKBILjb7sYHxfxw7eDLVMAIu5D
-W+OTIN4JiHiE1gCnNEvkSQ==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="pm+c2fYA/4JT1uhlJGVUubML8hZi8lME4xPobg/m8uM="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-nBaXksR//iZ9fraC7WMJWWSrjqRXHxmM1Y0+KKN3b10NElDzVNMlR76DLrcnamFd
-2n7uzsxWqhhJR5LBl98SXO3Y90J6BMbw+OBG/MFM/zUulxh2Si5YK5G9GCrG9gvZ
-5JomxuZFDu9CzlWGTuRUt6FsE4Lr6sOL1P+hraQDpMk=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="M8TXDiNa0BVMX1P60yIvW2WA9jKGGy8GtbuPknDnC9I="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 23616 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PcieUspG3x8TandemGtyInchwormWrapper.vhd
+-- Author: Hector Rubio
+-- Original Project: NI Cores NiDmaIp
+-- Date: 14 Jan 2019
+--
+-------------------------------------------------------------------------------
+-- (c) 2019 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+--  Wrapper to instantiate the pre-synthesized InchWORM netlist.
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+  use work.PkgBaRegPort.all;  --Fixed Logic RegPort
+  use work.PkgNiDma.all;                   --DmaPort
+  use work.PkgDmaPortRecordFlattening.all; --Flattening and unflattening
+  use work.PkgSwitchedChinch.all;
+  use work.PkgLinkStorageRam.all;
+  use work.PkgInchwormWrapper.all;
+
+--synopsys translate_off
+--For synthesis, netlist comes from an edf and there is no external library
+--For simulation, netlist comes from external library
+library PcieUspG3x8TandemGtyInchwormLib;
+--synopsys translate_on
+
+entity PcieUspG3x8TandemGtyInchwormWrapper is
+  generic (
+    --Rev ID is used internally to indicate that this PCIe device will be
+    -- reconfigured on a live system (aka Dynamic PCIe Reconfiguration or DPR)
+    -- 0x01 means DPR will be used (e.g. LVFPGA target).
+    -- 0X00 means DPR won't be used (e.g. fixed internal FPGA bitfile)
+    kCfgRevId        : std_logic_vector(7 downto 0)  := X"01";
+    kCfgSubsysVendId : std_logic_vector(15 downto 0) := X"1093";
+    kCfgSubsysId     : std_logic_vector(15 downto 0) := X"C4C4";
+    -- By default, the Inchworm will only implement Chunky Link storage memories for those
+    -- Dma Channels that actually need it. That would be all Input/Output DMA channels and
+    -- P2P Writers used by LVFPGA. This information is obtained from
+    -- PkgCommIntConfiguration, which is auto-generated by LVFPGA.
+    --
+    -- However, a given client may implement stream circuits (e.g. DmaOutput in fixed
+    -- logic) that require Chunky Link storage memory. PkgComIntConfiguration would not
+    -- know about those. If you have any channels for which you wish to force-enable
+    -- Chunky Link storage, set kForceChannelEnable(i) to true, where i is the channel for
+    -- which you wish to enable link storage. If you have no such stream circuits that
+    -- require this functionality, you can safely hide this generic to use the default of
+    -- "all false".
+    --
+    -- Note that there are some common uses for reserved DMA Channels that don't need
+    -- Chunky Link storage memory, and thus can be left "false". These include the
+    -- Inchworm's own status pushing circuitry and the Instruction FIFO. The
+    -- LinkInterfaceBridge (for communicating with CICADA) will only need Chunky Link
+    -- storage memory if you use the streaming functionality from CICADA to host.
+    kForceChannelEnable : NiDmaDmaChannelOneHot_t := (others => false)
+  );
+  port (
+    --PCIe Reset. This can be extended in the top level to guarantee seeing the reset
+    -- after configuration and to create a new one on DPR
+    aPcieRst_n   : in  std_logic;
+
+    -- PCIe interface - connect these ports to the external FPGA pins.
+    PcieRefClk_p : in  std_logic;
+    PcieRefClk_n : in  std_logic;
+
+    --Reference clock after the IBUFDS before going into MGTs. MAy be useful as a
+    -- general purpose clock (for logic reset with PCIe Reset or InChwORM reset
+    --Leave open if not used
+    PcieRefClkOut : out std_logic;
+
+    --vhook_nodgv Pcie[RT]x_[pn]
+    PcieRx_p     : in  std_logic_vector(7 downto 0);
+    PcieRx_n     : in  std_logic_vector(7 downto 0);
+    PcieTx_p     : out std_logic_vector(7 downto 0);
+    PcieTx_n     : out std_logic_vector(7 downto 0);
+
+    -- Main 250MHz clock.  Connect both of these ports to a signal named
+    -- DmaClock.  App hw synchronous to this clock must also be clocked by the
+    -- same DmaClock signal without any delta cycle delays on the clock.
+    DmaClockSource : out std_logic;
+    DmaClock       : in  std_logic;
+
+    -- Main reset. Regardless of the fact that it is generated with a Flop in DmaClock,
+    --  recovery and removal should be disabled for every clock (to satisfy LabVIEW
+    --  assumptions).
+    -- App hw running on DmaClock should use this asynchronous reset (potentially
+    --  creating a version that deasserts synchronously with DmaClock and is left for
+    --  STA to check for recovery and removal
+    aBusReset : out boolean;
+
+    -- Interrupt from app hw.  This input must be synchronous with DmaClock.
+    -- App hw is responsible for adding a synchronizer if the app hw design
+    -- doesn't naturally drive this synchronous to DmaClock.
+    dAppHwInterrupt : in std_logic_vector(1 downto 0);
+
+    --------------------------------------
+    -- Byte Addressable RegPort
+    --
+    -- Address Mapping:
+    -----------------------------------------
+    --  BAR0 Address    | BaRegPort Address |
+    --  0x08000-0x7FFFF | 0x08000-0x7FFFF   |
+    -----------------------------------------
+    dBaRegPortIn    : out BaRegPortIn_t;
+    dBaRegPortOut   : in  BaRegPortOut_t;
+    dLvUserMappable : in  std_logic;
+
+    --------------------------------------
+    -- High Speed Sink Interface
+    -- Expected to be connected directly to LabVIEW Window.
+    -- This comes directly from InChWORM netlist and not from companion
+    --
+    -- Address Mapping:
+    ----------------------------------------
+    --  BAR0 Address    | SinkIfc Address  |
+    --  0x80000-0xBFFFF | 0x80000-0xBFFFF  |
+    ----------------------------------------
+    dHighSpeedSinkFromDma : out NiDmaHighSpeedSinkFromDma_t;
+
+    --------------------------------------
+    -- Interface to link interface bridge
+    --
+    -- Address Mapping:
+    ----------------------------------------------
+    --  BAR0 Address    | LinkIfc Bridge Address |
+    --  0xC0000-0xFFFFF | 0x00000-0x3FFFF        |
+    ----------------------------------------------
+    dHostRequestTx    : out SwitchedLinkTx_t;
+    dHostRequestRx    : in  SwitchedLinkRx_t;
+    dHostResponseAck  : in  boolean;
+    dHostResponseErr  : in  boolean;
+    dHostResponseData : in  std_logic_vector(63 downto 0);
+
+    --------------------------------------
+    -- DmaPort Interface
+    -- Expected to be connected directly to DmaPortCommunicationInterface module
+    -- This comes directly from InChWORM netlist and not from companion
+    dInputRequestToDma    : in  NiDmaInputRequestToDma_t;
+    dInputRequestFromDma  : out NiDmaInputRequestFromDma_t;
+    dInputDataToDma       : in  NiDmaInputDataToDma_t;
+    dInputDataFromDma     : out NiDmaInputDataFromDma_t;
+    dInputStatusFromDma   : out NiDmaInputStatusFromDma_t;
+    dOutputRequestToDma   : in  NiDmaOutputRequestToDma_t;
+    dOutputRequestFromDma : out NiDmaOutputRequestFromDma_t;
+    dOutputDataFromDma    : out NiDmaOutputDataFromDma_t;
+
+    -- FPGA Configuration status information for POSC (from config port)
+    dPoscPause : in  boolean;
+    dPoscError : in  boolean;
+    dPoscDone  : out boolean;
+
+    --POSC pins from top level (would be top level pins on an ASIC like in the STC3)
+    aCpResetOut_n         : out std_logic;
+    aCpResetIn_n          : in  std_logic; --Open collector input from aCpResetOut_n
+    aCpSCEN_n             : in  std_logic;
+    aPoscRestoreAsyncMode : in  std_logic;
+
+    --------------------------------------
+    -- Single-wire communication with Authentication IC.
+    -- The following buffer must be implemented in Fixed Logic for correct communication.
+    --
+    --   OpenDrainIoBuf: IOBUF
+    --     port map (
+    --       I  => '0',
+    --       T  => aAuthSdaOut,
+    --       IO => aAuth,   -- Bi-directional line to the chip
+    --       O  => aAuthSdaIn);
+    Clk40Mhz              : in  std_logic;
+    aAuthSdaIn            : in  std_logic;
+    aAuthSdaOut           : out std_logic;
+
+    --------------------------------------
+    -- PCIe Utility signals for DPR, debugging, etc. Leave open if not used.
+    dCfgLtssmState  : out std_logic_vector(5 downto 0);
+    dUserLnkUp      : out std_logic;
+    dUserAppRdy     : out std_logic;
+
+    PcieDrpClk   : in  std_logic;
+    pPcieDrpAddr : in  std_logic_vector(9 downto 0);
+    pPcieDrpDi   : in  std_logic_vector(15 downto 0);
+    pPcieDrpDo   : out std_logic_vector(15 downto 0);
+    pPcieDrpEn   : in  std_logic;
+    pPcieDrpRdy  : out std_logic;
+    pPcieDrpWe   : in  std_logic;
+
+    GtDrpClk   : out std_logic;
+    gGtDrpAddr : in  std_logic_vector(79 downto 0);
+    gGtDrpEn   : in  std_logic_vector(7 downto 0);
+    gGtDrpDi   : in  std_logic_vector(127 downto 0);
+    gGtDrpWe   : in  std_logic_vector(7 downto 0);
+    gGtDrpDo   : out std_logic_vector(127 downto 0);
+    gGtDrpRdy  : out std_logic_vector(7 downto 0);
+    --Tie to (others=>'0') if not used
+    aIbertEyescanResetIn : in std_logic_vector(7 downto 0)
+  );
+end entity; --PcieUspG3x8TandemGtyInchwormWrapper
+
+architecture RTL of PcieUspG3x8TandemGtyInchwormWrapper is
+
+  component PcieUspG3x8TandemGtyInchwormNetlist
+    port (
+      aPcieRst_n                : in  std_logic;
+      PcieRefClk_p              : in  std_logic;
+      PcieRefClk_n              : in  std_logic;
+      PcieRefClkOut             : out std_logic;
+      PcieRx_p                  : in  std_logic_vector(7 downto 0);
+      PcieRx_n                  : in  std_logic_vector(7 downto 0);
+      PcieTx_p                  : out std_logic_vector(7 downto 0);
+      PcieTx_n                  : out std_logic_vector(7 downto 0);
+      DmaClockSource            : out std_logic;
+      DmaClock                  : in  std_logic;
+      aBusReset                 : out boolean;
+      dCfgVendId                : in  std_logic_vector(15 downto 0);
+      dCfgDevId                 : in  std_logic_vector(15 downto 0);
+      dCfgRevId                 : in  std_logic_vector(7 downto 0);
+      dCfgSubsysVendId          : in  std_logic_vector(15 downto 0);
+      dCfgSubsysId              : in  std_logic_vector(15 downto 0);
+      dLinkStorageRamWrite      : out boolean;
+      dLinkStorageRamWriteAddr  : out unsigned(kLinkStorageRamAddrWidth-1 downto 0);
+      dLinkStorageRamWriteData  : out std_logic_vector(kLinkStorageRamDataWidth-1 downto 0);
+      dLinkStorageRamReadAddr   : out unsigned(kLinkStorageRamRdAddrWidth-1 downto 0);
+      dLinkStorageRamReadData   : in  std_logic_vector(kLinkStorageRamRdDataWidth-1 downto 0);
+      dAppHwInterrupt           : in  std_logic_vector(1 downto 0);
+      dFlatBaRegPortIn          : out FlatBaRegPortIn_t;
+      dFlatBaRegPortOut         : in  FlatBaRegPortOut_t;
+      dLvUserMappable           : in  std_logic;
+      dFlatHighSpeedSinkFromDma : out FlatNiDmaHighSpeedSinkFromDma_t;
+      dFlatHostRequestTx        : out FlatSwitchedLinkTx_t;
+      dFlatHostRequestRx        : in  FlatSwitchedLinkRx_t;
+      dHostResponseAck          : in  boolean;
+      dHostResponseErr          : in  boolean;
+      dHostResponseData         : in  std_logic_vector(63 downto 0);
+      dFlatInputRequestToDma    : in  FlatNiDmaInputRequestToDma_t;
+      dFlatInputRequestFromDma  : out FlatNiDmaInputRequestFromDma_t;
+      dFlatInputDataToDma       : in  FlatNiDmaInputDataToDma_t;
+      dFlatInputDataFromDma     : out FlatNiDmaInputDataFromDma_t;
+      dFlatInputStatusFromDma   : out FlatNiDmaInputStatusFromDma_t;
+      dFlatOutputRequestToDma   : in  FlatNiDmaOutputRequestToDma_t;
+      dFlatOutputRequestFromDma : out FlatNiDmaOutputRequestFromDma_t;
+      dFlatOutputDataFromDma    : out FlatNiDmaOutputDataFromDma_t;
+      dPoscPause                : in  boolean;
+      dPoscError                : in  boolean;
+      dPoscDone                 : out boolean;
+      aCpResetOut_n             : out std_logic;
+      aCpResetIn_n              : in  std_logic;
+      aCpSCEN_n                 : in  std_logic;
+      aPoscRestoreAsyncMode     : in  std_logic;
+      Clk40Mhz                  : in  std_logic;
+      aAuthSdaIn                : in  std_logic;
+      aAuthSdaOut               : out std_logic;
+      dCfgLtssmState            : out std_logic_vector(5 downto 0);
+      dUserLnkUp                : out std_logic;
+      dUserAppRdy               : out std_logic;
+      PcieDrpClk                : in  std_logic;
+      pPcieDrpAddr              : in  std_logic_vector(9 downto 0);
+      pPcieDrpDi                : in  std_logic_vector(15 downto 0);
+      pPcieDrpDo                : out std_logic_vector(15 downto 0);
+      pPcieDrpEn                : in  std_logic;
+      pPcieDrpRdy               : out std_logic;
+      pPcieDrpWe                : in  std_logic;
+      GtDrpClk                  : out std_logic;
+      gGtDrpAddr                : in  std_logic_vector(79 downto 0);
+      gGtDrpEn                  : in  std_logic_vector(7 downto 0);
+      gGtDrpDi                  : in  std_logic_vector(127 downto 0);
+      gGtDrpWe                  : in  std_logic_vector(7 downto 0);
+      gGtDrpDo                  : out std_logic_vector(127 downto 0);
+      gGtDrpRdy                 : out std_logic_vector(7 downto 0);
+      aIbertEyescanResetIn      : in  std_logic_vector(7 downto 0));
+  end component;
+
+  --vhook_sigstart
+  signal dCfgDevId: std_logic_vector(15 downto 0);
+  signal dCfgRevId: std_logic_vector(7 downto 0);
+  signal dCfgSubsysId: std_logic_vector(15 downto 0);
+  signal dCfgSubsysVendId: std_logic_vector(15 downto 0);
+  signal dCfgVendId: std_logic_vector(15 downto 0);
+  signal dFlatBaRegPortIn: FlatBaRegPortIn_t;
+  signal dFlatBaRegPortOut: FlatBaRegPortOut_t;
+  signal dFlatHighSpeedSinkFromDma: FlatNiDmaHighSpeedSinkFromDma_t;
+  signal dFlatHostRequestRx: FlatSwitchedLinkRx_t;
+  signal dFlatHostRequestTx: FlatSwitchedLinkTx_t;
+  signal dFlatInputDataFromDma: FlatNiDmaInputDataFromDma_t;
+  signal dFlatInputDataToDma: FlatNiDmaInputDataToDma_t;
+  signal dFlatInputRequestFromDma: FlatNiDmaInputRequestFromDma_t;
+  signal dFlatInputRequestToDma: FlatNiDmaInputRequestToDma_t;
+  signal dFlatInputStatusFromDma: FlatNiDmaInputStatusFromDma_t;
+  signal dFlatOutputDataFromDma: FlatNiDmaOutputDataFromDma_t;
+  signal dFlatOutputRequestFromDma: FlatNiDmaOutputRequestFromDma_t;
+  signal dFlatOutputRequestToDma: FlatNiDmaOutputRequestToDma_t;
+  signal dLinkStorageRamReadAddr: unsigned(kLinkStorageRamRdAddrWidth-1 downto 0);
+  signal dLinkStorageRamReadData: std_logic_vector(kLinkStorageRamRdDataWidth-1 downto 0);
+  signal dLinkStorageRamWrite: boolean;
+  signal dLinkStorageRamWriteAddr: unsigned(kLinkStorageRamAddrWidth-1 downto 0);
+  signal dLinkStorageRamWriteData: std_logic_vector(kLinkStorageRamDataWidth-1 downto 0);
+  --vhook_sigend
+
+begin
+
+  --synopsys translate_off
+
+  --Each InChWORM reports its BIM type for simulation with the PcieBfm. It has to be
+  -- done in the wrapper because the netlist is synthesized to a library that can't
+  -- access shared variables in the work library.
+  work.PkgSystemConfiguration.BimType.Set(work.PkgSystemConfigurationTypes.UsPlus);
+
+  --synopsys translate_on
+
+  ------------------------------------------------------------------------------------
+  -- Instantiate netlist and flatten/unflatten ports from netlist.
+  ------------------------------------------------------------------------------------
+  --Default values for all CHInCh compatible devices (like InChWORM)
+  dCfgVendId       <= X"1093";
+  dCfgDevId        <= X"C4C4";
+
+  --These come from generics to enforce the fact that they must be valid and stable
+  -- at power up.
+  dCfgRevId        <= kCfgRevId;
+  dCfgSubsysVendId <= kCfgSubsysVendId;
+  dCfgSubsysId     <= kCfgSubsysId;
+
+  --vhook PcieUspG3x8TandemGtyInchwormNetlist InchwormNetlist
+  InchwormNetlist: PcieUspG3x8TandemGtyInchwormNetlist
+    port map (
+      aPcieRst_n                => aPcieRst_n,                 --in  std_logic
+      PcieRefClk_p              => PcieRefClk_p,               --in  std_logic
+      PcieRefClk_n              => PcieRefClk_n,               --in  std_logic
+      PcieRefClkOut             => PcieRefClkOut,              --out std_logic
+      PcieRx_p                  => PcieRx_p,                   --in  std_logic_vector(7:0)
+      PcieRx_n                  => PcieRx_n,                   --in  std_logic_vector(7:0)
+      PcieTx_p                  => PcieTx_p,                   --out std_logic_vector(7:0)
+      PcieTx_n                  => PcieTx_n,                   --out std_logic_vector(7:0)
+      DmaClockSource            => DmaClockSource,             --out std_logic
+      DmaClock                  => DmaClock,                   --in  std_logic
+      aBusReset                 => aBusReset,                  --out boolean
+      dCfgVendId                => dCfgVendId,                 --in  std_logic_vector(15:0)
+      dCfgDevId                 => dCfgDevId,                  --in  std_logic_vector(15:0)
+      dCfgRevId                 => dCfgRevId,                  --in  std_logic_vector(7:0)
+      dCfgSubsysVendId          => dCfgSubsysVendId,           --in  std_logic_vector(15:0)
+      dCfgSubsysId              => dCfgSubsysId,               --in  std_logic_vector(15:0)
+      dLinkStorageRamWrite      => dLinkStorageRamWrite,       --out boolean
+      dLinkStorageRamWriteAddr  => dLinkStorageRamWriteAddr,   --out unsigned(kLinkStorageRamAddrWidth-1:0)
+      dLinkStorageRamWriteData  => dLinkStorageRamWriteData,   --out std_logic_vector(kLinkStorageRamDataWidth-1:0)
+      dLinkStorageRamReadAddr   => dLinkStorageRamReadAddr,    --out unsigned(kLinkStorageRamRdAddrWidth-1:0)
+      dLinkStorageRamReadData   => dLinkStorageRamReadData,    --in  std_logic_vector(kLinkStorageRamRdDataWidth-1:0)
+      dAppHwInterrupt           => dAppHwInterrupt,            --in  std_logic_vector(1:0)
+      dFlatBaRegPortIn          => dFlatBaRegPortIn,           --out FlatBaRegPortIn_t
+      dFlatBaRegPortOut         => dFlatBaRegPortOut,          --in  FlatBaRegPortOut_t
+      dLvUserMappable           => dLvUserMappable,            --in  std_logic
+      dFlatHighSpeedSinkFromDma => dFlatHighSpeedSinkFromDma,  --out FlatNiDmaHighSpeedSinkFromDma_t
+      dFlatHostRequestTx        => dFlatHostRequestTx,         --out FlatSwitchedLinkTx_t
+      dFlatHostRequestRx        => dFlatHostRequestRx,         --in  FlatSwitchedLinkRx_t
+      dHostResponseAck          => dHostResponseAck,           --in  boolean
+      dHostResponseErr          => dHostResponseErr,           --in  boolean
+      dHostResponseData         => dHostResponseData,          --in  std_logic_vector(63:0)
+      dFlatInputRequestToDma    => dFlatInputRequestToDma,     --in  FlatNiDmaInputRequestToDma_t
+      dFlatInputRequestFromDma  => dFlatInputRequestFromDma,   --out FlatNiDmaInputRequestFromDma_t
+      dFlatInputDataToDma       => dFlatInputDataToDma,        --in  FlatNiDmaInputDataToDma_t
+      dFlatInputDataFromDma     => dFlatInputDataFromDma,      --out FlatNiDmaInputDataFromDma_t
+      dFlatInputStatusFromDma   => dFlatInputStatusFromDma,    --out FlatNiDmaInputStatusFromDma_t
+      dFlatOutputRequestToDma   => dFlatOutputRequestToDma,    --in  FlatNiDmaOutputRequestToDma_t
+      dFlatOutputRequestFromDma => dFlatOutputRequestFromDma,  --out FlatNiDmaOutputRequestFromDma_t
+      dFlatOutputDataFromDma    => dFlatOutputDataFromDma,     --out FlatNiDmaOutputDataFromDma_t
+      dPoscPause                => dPoscPause,                 --in  boolean
+      dPoscError                => dPoscError,                 --in  boolean
+      dPoscDone                 => dPoscDone,                  --out boolean
+      aCpResetOut_n             => aCpResetOut_n,              --out std_logic
+      aCpResetIn_n              => aCpResetIn_n,               --in  std_logic
+      aCpSCEN_n                 => aCpSCEN_n,                  --in  std_logic
+      aPoscRestoreAsyncMode     => aPoscRestoreAsyncMode,      --in  std_logic
+      Clk40Mhz                  => Clk40Mhz,                   --in  std_logic
+      aAuthSdaIn                => aAuthSdaIn,                 --in  std_logic
+      aAuthSdaOut               => aAuthSdaOut,                --out std_logic
+      dCfgLtssmState            => dCfgLtssmState,             --out std_logic_vector(5:0)
+      dUserLnkUp                => dUserLnkUp,                 --out std_logic
+      dUserAppRdy               => dUserAppRdy,                --out std_logic
+      PcieDrpClk                => PcieDrpClk,                 --in  std_logic
+      pPcieDrpAddr              => pPcieDrpAddr,               --in  std_logic_vector(9:0)
+      pPcieDrpDi                => pPcieDrpDi,                 --in  std_logic_vector(15:0)
+      pPcieDrpDo                => pPcieDrpDo,                 --out std_logic_vector(15:0)
+      pPcieDrpEn                => pPcieDrpEn,                 --in  std_logic
+      pPcieDrpRdy               => pPcieDrpRdy,                --out std_logic
+      pPcieDrpWe                => pPcieDrpWe,                 --in  std_logic
+      GtDrpClk                  => GtDrpClk,                   --out std_logic
+      gGtDrpAddr                => gGtDrpAddr,                 --in  std_logic_vector(79:0)
+      gGtDrpEn                  => gGtDrpEn,                   --in  std_logic_vector(7:0)
+      gGtDrpDi                  => gGtDrpDi,                   --in  std_logic_vector(127:0)
+      gGtDrpWe                  => gGtDrpWe,                   --in  std_logic_vector(7:0)
+      gGtDrpDo                  => gGtDrpDo,                   --out std_logic_vector(127:0)
+      gGtDrpRdy                 => gGtDrpRdy,                  --out std_logic_vector(7:0)
+      aIbertEyescanResetIn      => aIbertEyescanResetIn);      --in  std_logic_vector(7:0)
+
+  --vhook_e LinkStorageRamXilinx LinkStorageRam
+  --vhook_g kEnabledChannels     kGetEnabledChannels(kForceChannelEnable)
+  LinkStorageRam: entity work.LinkStorageRamXilinx (struct)
+    generic map (kEnabledChannels => kGetEnabledChannels(kForceChannelEnable))  --NiDmaDmaChannelOneHot_t
+    port map (
+      DmaClock                 => DmaClock,                  --in  std_logic
+      dLinkStorageRamWrite     => dLinkStorageRamWrite,      --in  boolean
+      dLinkStorageRamWriteAddr => dLinkStorageRamWriteAddr,  --in  unsigned(kLinkStorageRamAddrWidth-1:0)
+      dLinkStorageRamWriteData => dLinkStorageRamWriteData,  --in  std_logic_vector(kLinkStorageRamDataWidth-1:0)
+      dLinkStorageRamReadAddr  => dLinkStorageRamReadAddr,   --in  unsigned(kLinkStorageRamRdAddrWidth-1:0)
+      dLinkStorageRamReadData  => dLinkStorageRamReadData);  --out std_logic_vector(kLinkStorageRamRdDataWidth-1:0)
+
+  --DmaPort
+  dFlatInputRequestToDma <= Flatten(dInputRequestToDma);
+  dFlatInputDataToDma    <= Flatten(dInputDataToDma);
+  dInputRequestFromDma   <= UnFlatten(dFlatInputRequestFromDma);
+  dInputDataFromDma      <= UnFlatten(dFlatInputDataFromDma);
+  dInputStatusFromDma    <= UnFlatten(dFlatInputStatusFromDma);
+
+  dFlatOutputRequestToDma <= Flatten(dOutputRequestToDma);
+  dOutputRequestFromDma   <= UnFlatten(dFlatOutputRequestFromDma);
+  dOutputDataFromDma      <= UnFlatten(dFlatOutputDataFromDma);
+
+  --High speed sink
+  dHighSpeedSinkFromDma <= UnFlatten(dFlatHighSpeedSinkFromDma);
+
+  --BaRegPort
+  dBaRegPortIn      <= UnFlatten(dFlatBaRegPortIn);
+  dFlatBaRegPortOut <= Flatten(dBaRegPortOut);
+
+  --To Link Interface Bridge
+  dFlatHostRequestRx <= Flatten(dHostRequestRx);
+  dHostRequestTx     <= UnFlatten(dFlatHostRequestTx);
+
+end RTL;

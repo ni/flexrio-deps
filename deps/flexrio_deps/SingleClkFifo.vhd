@@ -1,152 +1,137 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-Jm2uGAVYfY7w9Y5qKstopObZuZAEY3b/Io3MSEcWLhjjnKulVhCBBYAEQrAzzGsT
-vMbffkdZgjdXQUg8jOLJXSHZ0Dgbnob2vlppjZs3bgyHCF7MoJ35E+LOsaLimUA7
-hlqStcK49hR1hdeBPr/OwfT3UeVrRtQyq0eJXQ1UksinX1G9Pz3/CmcGfTZ/C72x
-p9icpt0bkY4/1I4GBvNCsA6FFKH947JqH27OPACiQQRW/K7JToQn+1uhWr3LA1od
-lbVrWu8PdZi7zW9gK3jiW5GaPjwbYQGqeGFs3bTKBILjb7sYHxfxw7eDLVMAIu5D
-W+OTIN4JiHiE1gCnNEvkSQ==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="pm+c2fYA/4JT1uhlJGVUubML8hZi8lME4xPobg/m8uM="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-nBaXksR//iZ9fraC7WMJWWSrjqRXHxmM1Y0+KKN3b10NElDzVNMlR76DLrcnamFd
-2n7uzsxWqhhJR5LBl98SXO3Y90J6BMbw+OBG/MFM/zUulxh2Si5YK5G9GCrG9gvZ
-5JomxuZFDu9CzlWGTuRUt6FsE4Lr6sOL1P+hraQDpMk=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="M8TXDiNa0BVMX1P60yIvW2WA9jKGGy8GtbuPknDnC9I="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 5040 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: SingleClkFifo.vhd
+-- Author: Paul Butler, Craig Conway
+-- Original Project: NiCores
+-- Date: 8 October 2008
+--
+-------------------------------------------------------------------------------
+-- (c) 2008 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+-- SingleClkFifo creates a one clock-domain FIFO using
+-- FifoFlagsSingleClk and DualPortRAM.  The main difference between this
+-- FIFO and others at NI is that this one provides access to all the
+-- storage rather than the usual 2^N - 1.
+--
+-- How to Use This Component
+-- -------------------------
+--
+-- A much more thorough description can be found in SingleClkFifoFlags.vhd.
+-- See below for a very basic description of usage:
+--
+-- Writing
+--
+-- To queue data in the FIFO, place the data in cWriteData and strobe cWrite.
+-- cWrite can assert at the same time as cWriteData updates.  There is no need
+-- to maintain the value of cWriteData after cWrite deasserts.
+--
+-- Do not queue data if cEmptyCount equals zero, as this will cause a FIFO
+-- overflow.
+--
+-- Reading
+--
+-- cReadData always represents the data at the head of the queue.  To dequeue
+-- this data to access the next value, strobe cRead and only capture the
+-- data when cDataValid is asserted.
+--
+-- Do not dequeue data if cFullCount equals zero, as this will cause a FIFO
+-- underflow.  When cFullCount equals zero the value of cReadData is invalid;
+-- cReadData will update automatically if new data is written into an empty
+-- FIFO.
+--
+-------------------------------------------------------------------------------
+
+library IEEE;
+  use IEEE.std_logic_1164.all;
+  use IEEE.numeric_std.all;
+
+entity SingleClkFifo is
+  generic (
+    kAddressWidth : positive;
+    kWidth : positive;
+    kRamReadLatency : natural;
+    kFifoAdditiveLatency : natural := 1
+  );
+  port (
+    aReset : in boolean;
+    Clk : in std_logic;
+
+    cReset : in boolean := false;
+    cClkEn : in boolean := true;
+
+    -- FIFO Interface
+    cWrite : in boolean;
+    cDataIn : in std_logic_vector ( kWidth - 1 downto 0 );
+
+    cRead : in boolean;
+    cDataOut : out std_logic_vector ( kWidth - 1 downto 0 );
+
+    cFullCount,
+    cEmptyCount : out unsigned(kAddressWidth downto 0);
+
+    cDataValid : out boolean
+
+  );
+end entity SingleClkFifo;
+
+architecture rtl of SingleClkFifo is
+
+  --vhook_sigstart
+  signal cMemRdAddr: unsigned(kAddressWidth-1 downto 0);
+  signal cMemWtAddr: unsigned(kAddressWidth-1 downto 0);
+  --vhook_sigend
+begin
+
+  --vhook_e SingleClkFifoFlags
+  --vhook_a kEnableErrorAssertions true
+  --vhook_a aError open
+  SingleClkFifoFlagsx: entity work.SingleClkFifoFlags (rtl)
+    generic map (
+      kAddressWidth          => kAddressWidth,         -- in  positive
+      kWidth                 => kWidth,                -- in  positive
+      kRamReadLatency        => kRamReadLatency,       -- in  natural
+      kFifoAdditiveLatency   => kFifoAdditiveLatency,  -- in  natural range 0 to 1 := 1
+      kEnableErrorAssertions => true)                  -- in  boolean := true
+    port map (
+      aReset      => aReset,       -- in  boolean
+      Clk         => Clk,          -- in  std_logic
+      cReset      => cReset,       -- in  boolean
+      cWrite      => cWrite,       -- in  boolean
+      cRead       => cRead,        -- in  boolean
+      cClkEn      => cClkEn,       -- in  boolean
+      cFullCount  => cFullCount,   -- out unsigned(kAddressWidth downto 0)
+      cEmptyCount => cEmptyCount,  -- out unsigned(kAddressWidth downto 0)
+      cDataValid  => cDataValid,   -- out boolean
+      cMemWtAddr  => cMemWtAddr,   -- out unsigned(kAddressWidth-1 downto 0)
+      cMemRdAddr  => cMemRdAddr,   -- out unsigned(kAddressWidth-1 downto 0)
+      aError      => open);        -- out boolean := false
+
+  --vhook_e DualPortRAM
+  --vhook_a {^[IO]Clk} Clk
+  --vhook_a {^[io]ClkEn$} cClkEn
+  --vhook_a {^[io](.*)} c$1
+  --vhook_a iAddr cMemWtAddr
+  --vhook_a oAddr cMemRdAddr
+  DualPortRAMx: entity work.DualPortRAM (rtl)
+    generic map (
+      kAddressWidth   => kAddressWidth,    -- in  integer := 8
+      kWidth          => kWidth,           -- in  integer := 32
+      kRamReadLatency => kRamReadLatency)  -- in  integer := 2
+    port map (
+      IClk     => Clk,         -- in  std_logic
+      iClkEn   => cClkEn,      -- in  boolean := true
+      iWrite   => cWrite,      -- in  boolean
+      iAddr    => cMemWtAddr,  -- in  unsigned(kAddressWidth-1 downto 0)
+      iDataIn  => cDataIn,     -- in  std_logic_vector(kWidth-1 downto 0)
+      OClk     => Clk,         -- in  std_logic
+      oClkEn   => cClkEn,      -- in  boolean := true
+      oReset   => cReset,      -- in  boolean := false
+      oAddr    => cMemRdAddr,  -- in  unsigned(kAddressWidth-1 downto 0)
+      oDataOut => cDataOut);   -- out std_logic_vector(kWidth-1 downto 0)
+
+end rtl;
