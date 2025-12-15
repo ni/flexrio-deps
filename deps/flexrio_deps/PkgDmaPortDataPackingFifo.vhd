@@ -1,180 +1,183 @@
--------------------------------------------------------------------------------
---
--- File: PkgDmaPortDataPackingFifo.vhd
--- Author: Haider Khan
--- Original Project: CHInCh Interface
--- Date: 11 January 2008
---
--------------------------------------------------------------------------------
--- (c) 2008 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose: Hold functions used by the data packing FIFOs.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-  use work.PkgNiDmaConfig.all;
-  use work.PkgNiDma.all;
-
-Package PkgDmaPortDataPackingFifo is
-
-  -- This function returns the actual sample size that should be used for the DMA FIFO
-  -- based on the size in bits of one sample.
-  function ActualSampleSize(
-    SampleSizeInBits : natural;
-    PeerToPeer       : boolean;
-    FxpType          : boolean
-  ) return natural;
-
-  -- This function returns the FIFO port width based on the port data width
-  -- on the VI side.
-  function ActualFifoPortWidth(ViFifoPortWidth : natural) return natural;
-
-  -- This function determines the number of bits that should be used to
-  -- represent the number of samples that fit in the FIFO based on the sample size and
-  -- the address width needed to reprezent the FIFO space in data bus words.  For example,
-  -- if the sample size is 16 bits and the size of the FIFO in data bus words is 1K
-  -- (10 address bits), then the actual number of bits used for the addressing
-  -- the the FIFO in terms of samples is 12.
-  function FifoCountWidth(
-    SampleSize   : natural;
-    AddressWidth : natural
-  ) return natural;
-
-  -- This function returns the byte enables used for controlling the byte-wide
-  -- write enable to the FIFO. This function will be only used for Input Streams because
-  -- the Output Streams receive the write enables together with the data comming on the
-  -- data bus.
-  function GetWriteEnables(
-    WriteSampleAddress : unsigned;
-    WrPortWidth        : natural
-  ) return BooleanVector;
-
-
-end Package PkgDmaPortDataPackingFifo;
-
-Package body PkgDmaPortDataPackingFifo is
-
-  --Round up the sample size in bits to either 8, 16, 32, or 64-bits. These
-  --are the only configurations for the FIFO that are supported and all data
-  --coming in needs to fit in one of these data in port widths.
-  function ActualSampleSize (SampleSizeInBits : natural;
-                             PeerToPeer       : boolean;
-                             FxpType          : boolean)
-  return natural is
-
-    variable rval : natural;
-    variable AllowedWordSize : natural;
-
-  begin
-
-    -- Always use 64 bits for a FXP type, unless it's a P2P stream.
-    if FxpType and not PeerToPeer then
-      return 64;
-
-    -- Otherwise, round up to the nearest 8, 16, 32, or 64 bits.
-    else
-
-      -- This loop iterates through the smallest 9 bus sizes from 
-      -- largest to smallest. An allowed bus size must be a power of 2 
-      -- number of bytes, which means 8, 16, 32, etc. up to 1024 bits. 
-      -- As of now, it's not clear what the largest allowed word size 
-      -- should be. For now I've chosen 1024 arbitrarily.
-      -- It is important to start with the largest bus size and work 
-      -- down so that the returned value is the smallest bus size that 
-      -- can contain the required number of bits in SampleSizeInBits.
-      BusSizeLoop:
-      for i in 8 downto 0 loop
-        AllowedWordSize := 8 * (2**i);
-        if SampleSizeInBits <= AllowedWordSize then
-          rval := AllowedWordSize;
-        end if;
-      end loop BusSizeLoop;
-      
-      return rval;
-
-    end if;
-  end function;
-
-  -- The function computes the FIFO's data port width. When the data bus is wider
-  -- than the data width on the VI side the FIFO port width will be given by the data
-  -- bus width. When the data bus is narrower than the data width on the VI side
-  -- the FIFO port width will be given by the width of the data on the VI side.
-  function ActualFifoPortWidth(ViFifoPortWidth : natural) return natural is
-
-  begin
-
-    if kNiDmaDataWidth >= ViFifoPortWidth then
-      -- Wider bus case
-      return kNiDmaDataWidth;
-    else
-      -- Narrower bus case
-      return ViFifoPortWidth;
-    end if;
-
-  end function;
-
-  -- Return the width required for counting the number of samples in the FIFO.
-  function FifoCountWidth(SampleSize : natural;
-                          AddressWidth : natural
-  ) return natural is
-
-  begin
-
-    if kNiDmaDataWidth >= SampleSize then
-      return AddressWidth + Log2(kNiDmaDataWidth/SampleSize);
-    else
-      return AddressWidth - Log2(SampleSize/kNiDmaDataWidth);
-    end if;
-
-  end function;
-
-  -- This function computes which bytes need to be written to the FIFO based on the
-  -- sample addresss and the width of the write port width.
-  -- The WriteSampleAddress represents the sample address within a write port word.
-  -- The WrPortWidth represents the data port width in bits.
-  -- For the case when the data bus is wider than the data width on the VI side
-  -- the FIFO's data width match the data bus width and the number of byte enables
-  -- is the number of bytes that fits in one data bus word. The bytes corresponding
-  -- to the sample that match the location of the sample address are enabled
-  -- to be written to the FIFO.
-  function GetWriteEnables(
-    WriteSampleAddress : unsigned;
-    WrPortWidth        : natural
-  ) return BooleanVector is
-
-    variable WriteEnables : BooleanVector(kNiDmaDataWidthInBytes-1 downto 0);
-
-  begin
-
-    if WrPortWidth < kNiDmaDataWidth then
-    -- Handles the case when the data bus is wider than the data width on the VI side
-    -- case when the FIFO's data width match the bus data width. The data written
-    -- to the FIFO is smaller than the FIFO's data width.
-
-      for i in kNiDmaDataWidthInBytes-1 downto 0 loop
-        WriteEnables(i) := i/(WrPortWidth/8) = WriteSampleAddress;
-      end loop;
-
-    else --WrPortWidth >= kNiDmaDataWidth
-    -- When the data written to the FIFO is as wide as the FIFO's data width matching the
-    -- data bus width, all lanes are enabled.
-      WriteEnables := (others => true);
-
-    end if;
-
-    return WriteEnables;
-
-  end function;
-
-
-end Package body PkgDmaPortDataPackingFifo;
-
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+Jm2uGAVYfY7w9Y5qKstopObZuZAEY3b/Io3MSEcWLhjjnKulVhCBBYAEQrAzzGsT
+vMbffkdZgjdXQUg8jOLJXSHZ0Dgbnob2vlppjZs3bgyHCF7MoJ35E+LOsaLimUA7
+hlqStcK49hR1hdeBPr/OwfT3UeVrRtQyq0eJXQ1UksinX1G9Pz3/CmcGfTZ/C72x
+p9icpt0bkY4/1I4GBvNCsA6FFKH947JqH27OPACiQQRW/K7JToQn+1uhWr3LA1od
+lbVrWu8PdZi7zW9gK3jiW5GaPjwbYQGqeGFs3bTKBILjb7sYHxfxw7eDLVMAIu5D
+W+OTIN4JiHiE1gCnNEvkSQ==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="pm+c2fYA/4JT1uhlJGVUubML8hZi8lME4xPobg/m8uM="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+nBaXksR//iZ9fraC7WMJWWSrjqRXHxmM1Y0+KKN3b10NElDzVNMlR76DLrcnamFd
+2n7uzsxWqhhJR5LBl98SXO3Y90J6BMbw+OBG/MFM/zUulxh2Si5YK5G9GCrG9gvZ
+5JomxuZFDu9CzlWGTuRUt6FsE4Lr6sOL1P+hraQDpMk=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="M8TXDiNa0BVMX1P60yIvW2WA9jKGGy8GtbuPknDnC9I="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 6496 )
+`protect data_block
+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
+ZBgJEa81mGXIZ08rnHiZBg==
+`protect end_protected
