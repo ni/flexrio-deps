@@ -1,127 +1,111 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-j9eMmSPGcKCWAR9PvkqZ1R001FU8QKTyJzFqNLn+qur6INyYDE1AI8LWcxAzfnTc
-IpZG7ua3uuk5/kQKKQx8ZIPLfmv6H3t3eWjki8YIAtY/d5E7Gq8Z5mNxMYRzGGTg
-TCMm6oOrOTVYlCXHE0X9AW696Z7UGfWirVibl8hs19hrFdeZKGiGht4r09vHR+Gl
-FQQmSObM5aSK5wu5KOrK5ZUKGHyBhjnIQO5NnittDjOwxV/57nHVg0pdG6JUqyvm
-tEgmCY36RCMRGWN7sekPtNHjqpZkmYrVX1T9QF3h73+8ZekZYd2xY2hpHHGYYeWA
-t3+Fmb/6NUmoP8+Pt2hI6g==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="wX+NBVcG/A5ruHK3pkDqG8ZVPdOz9TJPJ5saXZYSeQ4="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-j/hqWUoxjK88VtH4QmjIrexFOSwtsLKOZ/LCP4cmrqgzmR/e71apdtoL+o8nlfy6
-eZxDZMmrZmJGoazz2oK6kz7xJU85UCwNc4cxAsVxNdCP19vZxph/nCYZQ9lUFkLH
-uLBkOeFP15CD3jG5/dp945fHP13J9SzB/L9PWvDC/gY=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="sqDZkaglKf+bDjC7VKm3lOELrT2Jlynh4UhPg2J0Q70="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 3824 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgDmaPortCommIfcStreamStates.vhd
+-- Author: Matthew Koenn
+-- Original Project: CHInCh Interface
+-- Date: 24 September 2008
+--
+-------------------------------------------------------------------------------
+-- (c) 2008 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose: 
+--
+--   Holds utilities relating to stream state.
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+
+Package PkgDmaPortCommIfcStreamStates is
+
+  ---------------------------------------------------------------------------------------
+  -- Stream States
+  --
+  -- Unlinked : A channel is in the unlinked state before the driver has linked it to a
+  --            peer.
+  --
+  -- Stopped  : A channel is in the stopped state when it has been linked to a peer but
+  --            the driver has not yet enabled the stream.
+  --
+  -- Started  : A channel is started once the driver has activated the stream.  Data will
+  --            only be transmitted to or from this peer while it is in the started
+  --            state.
+  --
+  -- Flushing : A source channel is in the flushing state when it has received a request
+  --            to stop but is still transmitting data before it can actually stop.
+  --
+  ---------------------------------------------------------------------------------------
+  
+  
+  -- The stream states need to be linked to specific values so that it matches the values
+  -- expected by the driver.
+  subtype StreamStateValue_t is std_logic_vector(1 downto 0);
+  type StreamStateValueArray_t is array (natural range <>) of StreamStateValue_t;
+  
+  constant kStreamStateUnlinked  : StreamStateValue_t := "00";
+  constant kStreamStateDisabled  : StreamStateValue_t := "01";
+  constant kStreamStateEnabled   : StreamStateValue_t := "10";
+  constant kStreamStateFlushing  : StreamStateValue_t := "11";
+
+  type StreamState_t is (Unlinked, Disabled, Enabled, Flushing);
+  
+  -- Functions to convert between StreamState and StreamStateValue.
+  function to_StreamState(arg : StreamStateValue_t) return StreamState_t;
+  function to_StreamStateValue(arg : StreamState_t) return StreamStateValue_t;
+  
+end Package PkgDmaPortCommIfcStreamStates;
+
+Package body PkgDmaPortCommIfcStreamStates is
+  
+  -- Convert a StreamStateValue type to a StreamState type.
+  function to_StreamState(arg : StreamStateValue_t) return StreamState_t is
+    variable ReturnVal : StreamState_t;
+  begin
+    
+    if arg = kStreamStateUnlinked then
+      ReturnVal := Unlinked;
+    elsif arg = kStreamStateDisabled then
+      ReturnVal := Disabled;
+    elsif arg = kStreamStateEnabled then
+      ReturnVal := Enabled;
+    elsif arg = kStreamStateFlushing then
+      ReturnVal := Flushing;
+    else
+      ReturnVal := Unlinked;
+    end if;
+    
+    return ReturnVal;
+    
+  end to_StreamState;
+  
+  -- Convert a StreamState type to a StreamStateValue type.
+  function to_StreamStateValue(arg : StreamState_t) return StreamStateValue_t is
+    variable ReturnVal : StreamStateValue_t;
+  begin
+    
+    if arg = Unlinked then
+      ReturnVal := kStreamStateUnlinked;
+    elsif arg = Disabled then
+      ReturnVal := kStreamStateDisabled;
+    elsif arg = Enabled then
+      ReturnVal := kStreamStateEnabled;
+    elsif arg = Flushing then
+      ReturnVal := kStreamStateFlushing;
+    else
+      ReturnVal := kStreamStateUnlinked;
+    end if;
+    
+    return ReturnVal;
+    
+  end to_StreamStateValue;
+    
+end Package body PkgDmaPortCommIfcStreamStates;
+

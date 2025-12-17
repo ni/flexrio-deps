@@ -1,374 +1,388 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-j9eMmSPGcKCWAR9PvkqZ1R001FU8QKTyJzFqNLn+qur6INyYDE1AI8LWcxAzfnTc
-IpZG7ua3uuk5/kQKKQx8ZIPLfmv6H3t3eWjki8YIAtY/d5E7Gq8Z5mNxMYRzGGTg
-TCMm6oOrOTVYlCXHE0X9AW696Z7UGfWirVibl8hs19hrFdeZKGiGht4r09vHR+Gl
-FQQmSObM5aSK5wu5KOrK5ZUKGHyBhjnIQO5NnittDjOwxV/57nHVg0pdG6JUqyvm
-tEgmCY36RCMRGWN7sekPtNHjqpZkmYrVX1T9QF3h73+8ZekZYd2xY2hpHHGYYeWA
-t3+Fmb/6NUmoP8+Pt2hI6g==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="wX+NBVcG/A5ruHK3pkDqG8ZVPdOz9TJPJ5saXZYSeQ4="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-j/hqWUoxjK88VtH4QmjIrexFOSwtsLKOZ/LCP4cmrqgzmR/e71apdtoL+o8nlfy6
-eZxDZMmrZmJGoazz2oK6kz7xJU85UCwNc4cxAsVxNdCP19vZxph/nCYZQ9lUFkLH
-uLBkOeFP15CD3jG5/dp945fHP13J9SzB/L9PWvDC/gY=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="sqDZkaglKf+bDjC7VKm3lOELrT2Jlynh4UhPg2J0Q70="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 15696 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgXReg.vhd
+-- Author: Craig Conway
+-- Original Project: XmlParse
+-- Date: 2 December 2015
+--
+-------------------------------------------------------------------------------
+-- (c) 2015 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--   This file contains constants and the record definition used by XmlParse
+-- to describe registers.
+--   XmlParse will use XReg2_t as long as it finds the XReg2_t declaration
+-- in this file.as appropriate for what it detects in the PkgXReg file.
+--
+--   Recommended Usage
+--
+--   Use the accessor functions (Get*) to get fields from the XReg2_t
+-- record. You should not create any constants yourself of type XReg2_t
+-- using this format:
+--
+-- constant kSomeRec : XReg2_t := (offset => X"1234", size=>32, etc.);  -- WRONG
+--
+-- Doing it this way means that any update to PkgXReg (where fields
+-- are added), will cause the above line to fail due to missing
+-- fields. Instead, create functions (see XmlParse-generated files
+-- for additional examples) like this:
+--
+-- function kSomeRecF return XReg2_t is          -- RIGHT
+--   variable X : XReg2_t := kXRegDefault;
+-- begin
+--   X.offset := X"1234"
+--   X.size := 32;
+--   etc.
+-- end function kSomeRecF;
+--
+-- constant kSomeRec : XReg2_t := kSomeRecF;
+--
+-- Because X has a default assignment of kXRegDefault, any additional fields
+-- added to XReg2_t will not break the above code.
+--
+-- Note, however, that even if existing code will not be broken, new code that
+-- relies on new fields may behave incorrectly when a register information is
+-- created with a version of XmlParse that does not support such new fields, or
+-- created in an external project with a version of this package that does not
+-- have those fields. To catch these problems a version field is used. Every
+-- time a new field is added to XReg2_t the version of XmlParse that knows how
+-- to assign such field bumps up the value reported on the version field (as
+-- long as the PkgXReg in that project supports it as well) and the accessor
+-- function (Get*) for that field will check the version to make sure the field
+-- info is reliable and not just assigned to a default.
+--
+-- You may notice comments of the form "XmlParse supports xyz". These are read
+-- by XmlParse to know what features this version of the file supports. Don't
+-- modify them.
+--
+-- vreview_group packages
+-- vreview_closed http://review-board.natinst.com/r/257847/
+-- vreview_closed http://review-board.natinst.com/r/238277/
+-- vreview_closed http://review-board.natinst.com/r/222525/
+-- vreview_closed http://review-board.natinst.com/r/218352/
+-- vreview_closed http://review-board.natinst.com/r/154082/
+-- vreview_closed http://review-board.natinst.com/r/151570/
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+library work;
+  --synopsys translate_off
+  use work.PkgNiSim.all;
+  --synopsys translate_on
+
+package PkgXReg is
+
+    -- The largest register width supported by XmlParse is kMaxRegVecLen
+    constant kMaxRegVecLen : integer := 512;
+    subtype XRegVec_t is std_logic_vector(kMaxRegVecLen-1 downto 0);
+    type XRegNatVec_t is array(0 to kMaxRegVecLen-1) of natural;
+
+    -- Sets the maximum address width supported by XReg2_t
+    constant kXAddrWidth : natural := 64;
+    function XAddrResize (Addr : unsigned) return unsigned;
+
+
+    -- This record is used by XmlParse to create constants holding
+    -- information about each register. Earlier versions of XmlParse
+    -- created constants with default assignments, so this record
+    -- cannot be changed without breaking a lot of code. Newer
+    -- versions of XmlParse create functions that return XReg2_t.
+    -- This allows fields to be added to XReg2_t without breaking
+    -- existing projects. But we're stuck with XReg_t for backwards
+    -- compatibility reasons.
+    type XReg_t is record
+      offset, size : natural;
+      readable, writable : boolean;
+      mask, strobemask : XRegVec_t;
+    end record;
+
+    -- This record is a superset of XReg_t. XmlParse will create
+    -- functions that return XReg2_t for each register. The
+    -- accessor functions defined in this file provide convenient
+    -- access to the fields.
+    type XReg2_t is record  --XmlParse supports xreg2
+      offset : unsigned(kXAddrWidth-1 downto 0);
+      size : natural;
+      readable, writable : boolean;
+      rmask, wmask, strobemask, initialvalue: XRegVec_t;
+      msblookupw, msblookupr : XRegNatVec_t; -- write bitfield array, read bitfield array
+      isreg, ismem, iswin : boolean;  --XmlParse supports isreg
+      --synopsys translate_off
+      name : TestStatusString_t;  --XmlParse supports name
+      --synopsys translate_on
+      ------- Added in version 1 -------
+      version : natural;
+      clearablemask : XRegVec_t;
+      ------- Tell XML Parse the latest version this file supports ----------
+      --XmlParse xreg2version 1
+    end record;
+
+    constant kXRegVecOnes : XRegVec_t := (others => '1');
+    constant kXRegVecZero : XRegVec_t := (others => '0');
+    -- This deferred constant is assigned in the package body
+    constant kXRegDefault : XReg2_t;
+
+    -- Resize the argument so that it is kMaxRegVecLen bits
+    function XRegResize (X : std_logic_vector) return XRegVec_t;
+
+    -- Return the offset/size
+    function GetOffset(X : XReg2_t) return unsigned;
+    function GetOffset(X : XReg2_t) return natural;
+    function GetSize(X : XReg2_t) return natural;
+
+    -- Return the write, read, strobe and clearable masks
+    function GetWtMask(X : XReg2_t) return std_logic_vector;
+    function GetRdMask(X : XReg2_t) return std_logic_vector;
+    --Note: bits with clearable attribute are also considered strobes for this function
+    function GetStrobeMask(X : XReg2_t) return std_logic_vector;
+    function GetClearableMask(X : XReg2_t) return std_logic_vector;
+
+    -- Return a bitfield from a register. These are generally useful to decode a writable
+    --  field in the register implementation or decode a readable field in the testbench
+    -- Note that a register can have different bitfields of different size on the same
+    --  location, therefore, a parameter is needed to specify if the bitfield is readable
+    --  or writable. The parameter defaults to writable for convenience since that is the
+    --  expected use on the register implementation side and the testbench side typically
+    --  has wrappers that know the context (read or write).
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return std_logic_vector;
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return natural;
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return std_logic;
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return boolean;
+
+    --Get Msb of a readable or writable bitfield
+    function GetMsb(X : XReg2_t; Bf : natural; Rd : boolean) return natural;
+
+    -- Return the initial value of a register or bitfield
+    function GetInitialVal(X : XReg2_t) return std_logic_vector;
+    function GetInitialVal(X : XReg2_t; Bf : natural) return std_logic_vector;
+    function GetInitialVal(X : XReg2_t; Bf : natural) return integer;
+    function GetInitialVal(X : XReg2_t; Bf : natural) return std_logic;
+    function GetInitialVal(X : XReg2_t; Bf : natural) return boolean;
+
+    --synopsys translate_off
+    function GetOffsetStr(X : XReg2_t; MinBitWidth : natural := 16) return string;
+    function GetName(X : XReg2_t) return string;
+    --synopsys translate_on
+
+end package;
+package body PkgXReg is
+
+    function XAddrResize(Addr : unsigned) return unsigned is
+    begin
+      return resize(Addr, kXAddrWidth);
+    end function XAddrResize;
+
+    -- Return a vector of type XRegVec_t. Allows XmlParse to create
+    -- masks that are the size of each register. The assumption is
+    -- that there won't be a register larger than kMaxRegVecLen.
+    function XRegResize (X : std_logic_vector) return XRegVec_t is
+      variable Val : XRegVec_t := (others => '0');
+    begin
+      Val(x'length-1 downto 0) := X;
+      return Val;
+    end function XRegResize;
+
+    -- Return the default for an XReg
+    function XRegDefault return XReg2_t is
+      variable X : XReg2_t;
+    begin
+      X.version := 0;
+      X.offset := (others => '0');
+      X.size := 32;
+      X.readable := true;
+      X.writable := true;
+      X.wmask := kXRegVecOnes;
+      X.rmask := kXRegVecOnes;
+      X.strobemask := kXRegVecZero;
+      X.clearablemask := kXRegVecZero;
+      X.initialvalue := kXRegVecZero;
+      -- Default assumes all bitfields are single bits (lsb=msb)
+      for i in 0 to kMaxRegVecLen-1 loop
+        X.msblookupw(i) := i;
+        X.msblookupr(i) := i;
+      end loop;
+      x.isreg := false;
+      x.ismem := false;
+      x.iswin := false;
+      --synopsys translate_off
+      X.name := (others => ' ');
+      --synopsys translate_on
+      return X;
+    end function XRegDefault;
+
+    constant kXRegDefault : XReg2_t := XRegDefault;
+
+    -- Return the offset as unsigned
+    function GetOffset(X : XReg2_t) return unsigned is
+    begin
+      return X.offset;
+    end function GetOffset;
+
+    -- Return the offset as natural
+    function GetOffset(X : XReg2_t) return natural is
+    begin
+      return To_Integer(X.offset);
+    end function GetOffset;
+
+    -- Return the size as natural
+    function GetSize(X : XReg2_t) return natural is
+    begin
+      return X.size;
+    end function GetSize;
+
+    -- Return the write mask
+    function GetWtMask(X : XReg2_t) return std_logic_vector is
+    begin
+      return X.wmask(X.size-1 downto 0);
+    end function GetWtMask;
+
+    -- Return the read mask
+    function GetRdMask(X : XReg2_t) return std_logic_vector is
+    begin
+      return X.rmask(X.size-1 downto 0);
+    end function GetRdMask;
+
+    -- Return the strobe mask
+    function GetStrobeMask(X : XReg2_t) return std_logic_vector is
+    begin
+      --Note. Using clearablemask directly without checking for version.
+      --If clearablemask actually comes from XML, this defines the desired new behavior
+      --  (It is equivalent to modifying XmlParse to mark clearable bits as strobes).
+      --If clearablemask comes from old XmlParse or old PkgXReg (default to all '0's) then
+      --  this is equivalent to old behavior (before XmlParse printed the clearable mask).
+      --We do this to avoid breaking existing code that doesn't use clearable bits.
+      return X.strobemask(X.size-1 downto 0) or X.clearablemask(X.size-1 downto 0);
+    end function GetStrobeMask;
+
+    -- Return the clearable mask
+    function GetClearableMask(X : XReg2_t) return std_logic_vector is
+    begin
+      --synopsys translate_off
+      assert X.version >= 1
+        report "Called GetClearableMask with an XReg2_t record created with an old version of XmlParse or PkgXReg." & LF &
+               "Default value of clearablemask returned may not reflect the actual attribute of the register." & LF &
+               "Update the regmap package with the latest version of XmlParse and this (or newer) version of PkgXReg" & LF &
+               "Register Name: " & X.name
+        severity failure;
+      --synopsys translate_on
+      return X.clearablemask(X.size-1 downto 0);
+    end function GetClearableMask;
+
+    function GetMsb(X : XReg2_t; Bf : natural; Rd : boolean) return natural is
+    begin
+      if Rd then
+        return X.msblookupr(Bf);
+      end if;
+      return X.msblookupw(Bf);
+    end function GetMsb;
+
+    -- Return a bitfield from a register vector as a std_logic_vector
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return std_logic_vector is
+    begin
+      return Reg(GetMsb(X, Bf, Rd) downto Bf);
+    end function GetBitfield;
+
+    -- Return a bitfield from a register vector as a integer
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return natural is
+    begin
+      return To_Integer(unsigned(Reg(GetMsb(X, Bf, Rd) downto Bf)));
+    end function GetBitfield;
+
+    -- Return a bitfield from a register vector as a std_logic
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return std_logic is
+    begin
+      --synopsys translate_off
+      assert GetMsb(X, Bf, Rd)=Bf
+        report "Single bit version of GetBitfield called on multi-bit bitfield at lsb=" & integer'image(Bf)
+        severity failure;
+      --synopsys translate_on
+      return Reg(Bf);
+    end function GetBitfield;
+
+    -- Return a bitfield from a register vector as a boolean
+    function GetBitfield(X : XReg2_t; Bf : natural; Reg : std_logic_vector; Rd : boolean := false)
+      return boolean is
+    begin
+      --synopsys translate_off
+      assert GetMsb(X, Bf, Rd)=Bf
+        report "Single bit version of GetBitfield called on multi-bit bitfield at lsb=" & integer'image(Bf)
+        severity failure;
+      --synopsys translate_on
+      return Reg(Bf)='1';
+    end function GetBitfield;
+
+    -- Return the initial value of a register
+    function GetInitialVal(X : XReg2_t) return std_logic_vector is
+    begin
+      return X.initialvalue(X.size-1 downto 0);
+    end function GetInitialVal;
+
+    -- Return the initial value of a bitfield as std_logic_vector
+    function GetInitialVal(X : XReg2_t; Bf : natural) return std_logic_vector is
+    begin
+      --synopsys translate_off
+      assert X.msblookupw(Bf)>Bf
+        report "Multi-bit version of GetInitialVal called on single bit bitfield at " & integer'image(Bf)
+        severity failure;
+      --synopsys translate_on
+      return X.initialvalue(X.msblookupw(Bf) downto Bf);
+    end function GetInitialVal;
+
+    -- Return the initial value of a bitfield as integer
+    function GetInitialVal(X : XReg2_t; Bf : natural) return integer is
+    begin
+      return To_Integer(unsigned(X.initialvalue(X.msblookupw(Bf) downto Bf)));
+    end function GetInitialVal;
+
+    -- Return the initial value of a bitfield as std_logic
+    function GetInitialVal(X : XReg2_t; Bf : natural) return std_logic is
+    begin
+      --synopsys translate_off
+      assert X.msblookupw(Bf)=Bf
+        report "Single bit version of GetInitialVal called on multi-bit bitfield at lsb=" & integer'image(Bf)
+        severity failure;
+      --synopsys translate_on
+      return X.initialvalue(Bf);
+    end function GetInitialVal;
+
+    -- Return the initial value of a bitfield as boolean
+    function GetInitialVal(X : XReg2_t; Bf : natural) return boolean is
+    begin
+      return X.initialvalue(Bf)='1';
+    end function GetInitialVal;
+
+    --synopsys translate_off
+
+    -- Return the offset of the register/ram/window
+    function GetOffsetStr(X : XReg2_t; MinBitWidth : natural := 16) return string is
+      variable MinLen : natural;
+    begin
+      MinLen := MinBitWidth / 4;
+      if MinBitWidth mod 4 > 0 then
+        MinLen := MinLen + 1;
+      end if;
+      return 'x' & TrimNumericString(HexImage(X.offset), MinLen);
+    end function GetOffsetStr;
+
+    -- Return the name of the register/ram/window
+    function GetName(X : XReg2_t) return string is
+    begin
+      return RemoveTrailingSpaces(X.name);
+    end function GetName;
+
+    --synopsys translate_on
+
+end package body;
