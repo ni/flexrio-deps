@@ -1,188 +1,191 @@
--------------------------------------------------------------------------------
---
--- File: DualPortRAM_Vivado.vhd
--- Author: Craig Conway, Jeff Bergeron, Siddharth Sethi, Vikram Raj
--- Original Project: NiCores
--- Date: 16 February 2009
---
--------------------------------------------------------------------------------
--- (c) 2009 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---  This module provides code that synthesis tools can use to infer
--- block RAMs.  You specify the number of address bits and the width.  This
--- model should also simulate the block RAMs correctly.
---
--- This model is specifically meant for Vivado and has only been tested with
--- Vivado and 7 Series FPGAs. It may or may not work with other tools and targets.
---
---  kAddrWidth is the number of address bits.  2^kAddrWidth is the depth
--- of the RAM.
---
---  kWidth is the width of the input and output data buses.
---
---  kRamReadLatency specifies the delay in oClk cycles from when oRead
--- is asserted to when the data is valid.  A value of 2 is default.  This
--- causes the address and data to be registered twice internally in the RAM. 
--- Note that the internal address register is inferred from oDataOut0.
--- A value of 3 causes the address to be registered within the fabric.
---
---  Note that with a read latency of 1, you can end up with a clock crossing through
--- the RAM because you will have asynchronous access to memory contents. In many cases,
--- this is fine but a careful analysis of the circuit should be done to ensure it is.
---
---  This model infers WRITE_MODE_A=NO_CHANGE, WRITE_MODE_B=WRITE_FIRST, with port A
--- being the write side and port B being the read side.
---
---  See Xilinx UG901 for more info on the template.
---  http://www.xilinx.com/support/documentation/sw_manuals/xilinx2014_3/ug901-vivado-synthesis.pdf
---  Page 97, "Simple Dual-Port Block RAM with Dual Clocks VHDL Coding Example"
---
---  What has been tested in actual hardware:
---  * Vivado 2014.1 - Zynq
---
---  What has been specifically verified to synthesize a Block RAM:
---  * Vivado 2014.1 - Zynq, Artix7
---  * Vivado 2014.2 - Kintex7 325 fbg900
---       This was tested in three scenarios: dual clock connected directly to top level,
---       dual clock in FIFO, and single clock in FIFO. In all cases, this produced
---       a RAMB18E1 with WRITE_MODE_A=NO_CHANGE and WRITE_MODE_B=WRITE_FIRST
---  * Vivado 2014.3 - Kintex7 325 fbg900
---       Same scenario as above with 2014.2
---
---  What has not been verified:
---  * Any other synthesis tool
---  * Any other FPGA
---
---  What does not work:
---
---   * Nothing so far
---
---  If you try other synthesis tools, fpga vendors, or devices, please
--- let Craig Conway know so the above lists can be updated.
---
--- vreview_group rams
--- vreview_closed http://review-board.natinst.com/r/79838/
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library unisim;
-  use unisim.vcomponents.all;
-
-entity DualPortRAM_Vivado is
-  generic (
-    kAddressWidth : integer := 8;
-    kWidth : integer := 32;
-    kRamReadLatency : integer range 1 to 3 := 2
-  );
-  port (
-    IClk : in std_logic;
-    iClkEn : in boolean;
-    iWrite : in boolean;
-    iAddr : in unsigned(kAddressWidth-1 downto 0);
-    iDataIn : in std_logic_vector(kWidth-1 downto 0);
-
-    OClk : in std_logic;
-    oReset : in boolean;
-    oClkEn : in boolean;
-    oAddr : in unsigned(kAddressWidth-1 downto 0);
-    oDataOut : out std_logic_vector(kWidth-1 downto 0)
-  );
-end DualPortRAM_Vivado;
-
-architecture rtl of DualPortRAM_Vivado is
-
-  -- The Xilinx documentation recommends using a shared variable for many of the
-  -- templates, but for the simple dual port, using a signal for iRAM synthesizes
-  -- correctly (2014.1, 2014.2).
-  type ram_type is array ((2**kAddressWidth)-1 downto 0)
-                            of std_logic_vector (kWidth-1 downto 0);
-  signal iRAM : ram_type := (others => (others => '0'));
-
-  signal oDataOut0, oDataOut1 : std_logic_vector(kWidth-1 downto 0) := (others => '0');
-  signal oXAddr, oDlyAddr : unsigned(kAddressWidth-1 downto 0) := (others => '0');
-
-  -- Vivado/XST attribute
-  attribute ram_style : string;
-  attribute ram_style of iRAM : signal is "block";
-
-begin
-
-  -- For Vivado 2014.1 and earlier, a workaround was required for a data corruption issue. This
-  -- workaround inserted a LUT1 in the data path (see CARs 459965, 469277, 461282). This issue
-  -- has been verified as fixed in 2014.2 by Kristin Hampsten, so the LUT workaround is removed.
-
-  -- This process writes the value on iDataIn into iRAM.
-  -- Xilinx 7 Series: iClkEn and iWrite are separate inputs to the Block RAM.
-  -- In Vivado 2014.1 and 2014.2, this synthesizes as a WRITE_FIRST BRAM.
-  -- That may not be true in future versions and should be verified.
-  -- This port is Write only so synthesizes as a simple dual port and makes
-  -- more efficient use of the BRAMs.
-  P1: process(IClk)
-  begin
-    if rising_edge(IClk) then
-      if iClkEn then
-        if iWrite then
-          iRAM(To_Integer(iAddr)) <= iDataIn;
-        end if;
-      end if;
-    end if;
-  end process P1;
-
-  -- This process delays the read address by one clock.  This is only used if we
-  -- need to provide 3 cycle read latency.  The flip-flops will be inferred in the
-  -- fabric and not as part of the BRAM.
-  P2: process(OClk)
-  begin
-    if rising_edge(OClk) then
-      if oClkEn then
-        oDlyAddr <= oAddr;
-      end if;
-    end if;
-  end process P2;
-
-  -- oXAddr is the address actually used to select the Block ram contents on
-  -- a read.  It is only used if we need read latency of 3.
-  oXAddr <= oDlyAddr when kRamReadLatency=3 else
-            oAddr;
-
-  -- This process creates the RAM read circuitry.
-  -- Xilinx 7 Series: oClkEn and oReset are separate inputs to the Block RAM.
-  -- This port is Read only so synthesizes as a simple dual port and makes
-  -- more efficient use of the BRAMs.
-  P3: process(OClk)
-  begin
-    if rising_edge(OClk) then
-      if oClkEn then
-        oDataOut0 <= iRAM(To_Integer(oXAddr));
-      end if;
-    end if;
-  end process P3;
-
-  -- This process creates the optional Output Register (part of the 7 Series BRAM).
-  -- Xilinx 7 Series: oClkEn and oReset are separate inputs to the Block RAM.
-  P4: process(OClk)
-  begin
-    if rising_edge(OClk) then
-      if oClkEn then
-        if oReset then
-          oDataOut1 <= (others => '0');
-        else
-          oDataOut1 <= oDataOut0;
-        end if;
-      end if;
-    end if;
-  end process P4;
-
-  -- Select whether to use the Latch output or Register output based on ReadLatency
-  oDataOut <= oDataOut0 when kRamReadLatency=1 else
-              oDataOut1;
-
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+j9eMmSPGcKCWAR9PvkqZ1R001FU8QKTyJzFqNLn+qur6INyYDE1AI8LWcxAzfnTc
+IpZG7ua3uuk5/kQKKQx8ZIPLfmv6H3t3eWjki8YIAtY/d5E7Gq8Z5mNxMYRzGGTg
+TCMm6oOrOTVYlCXHE0X9AW696Z7UGfWirVibl8hs19hrFdeZKGiGht4r09vHR+Gl
+FQQmSObM5aSK5wu5KOrK5ZUKGHyBhjnIQO5NnittDjOwxV/57nHVg0pdG6JUqyvm
+tEgmCY36RCMRGWN7sekPtNHjqpZkmYrVX1T9QF3h73+8ZekZYd2xY2hpHHGYYeWA
+t3+Fmb/6NUmoP8+Pt2hI6g==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="wX+NBVcG/A5ruHK3pkDqG8ZVPdOz9TJPJ5saXZYSeQ4="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+j/hqWUoxjK88VtH4QmjIrexFOSwtsLKOZ/LCP4cmrqgzmR/e71apdtoL+o8nlfy6
+eZxDZMmrZmJGoazz2oK6kz7xJU85UCwNc4cxAsVxNdCP19vZxph/nCYZQ9lUFkLH
+uLBkOeFP15CD3jG5/dp945fHP13J9SzB/L9PWvDC/gY=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="sqDZkaglKf+bDjC7VKm3lOELrT2Jlynh4UhPg2J0Q70="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 6912 )
+`protect data_block
+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
+Qcaid5qfJF52V6ObkkVbFUbIP4fIlA15Khp77OtIDcSKE008O+ZGtf2Tubek+MpK
+KILBdA8GSSUnkEV1E25A2zoS04zZtJyG5NKMeOts4PXCdcgERn/lv5JM5vT6l5mb
+fiEEX05ol3BNdOXYdldz6lDkW7ULE38V1hwcAqyY4tvfXtuSUmsyvxFtOzRcnpUr
+bEdwG1DWF56I6qIW57a9VGl0sTlv6zkKfclflqO/gpcM6MiMAJcuHTVKlW/Hw76O
+NvJF9y12xXMsLc81SfOW/CczX9KmNrNObBqvABpkDWaaDawlvv69kSc1rb+g9FS9
+FyTBUlS0FQYrQlRJ3nP0aeTu8zXhWYWYwrlpeKk/MiDpQLNJoGfoza+i8uVxIVo1
+ccrWf24QBDY+AI+32PPeO41NWMFhzFHV9czbPTqoYOcJgmI3S5y7IWTKdyOoGeJq
+EmqniBCVxTpxKUKqh9Eln73v3eFRIWagRl34Na/c+oEd9ekHpusXjjXNe5JeAHPM
+NfUApze6f83phdF4MYtsHQtFjQQB0nZ0hPP0szpHamP3eYKzY7Jlf29H+NSROigc
+i5xCZvR/jGDeli8552SiUyksyuY4KUp6zfVqaNpLgpQLHaGW+UhVlUgBFAKGUXmB
+iwXskMFvjDd06Y7+lFQXkT6ia64XRddvMg+n2ApzwP7gB2apVXid0sRHs/mL01hc
+5IXHIh7TdwPvrTS5wCr2OKHb31RBAXHj2ZqzbJkFwqI2dsy3MLY9RG9JXbqhyZpm
+KgDFBoe/4Rr19o8Ap0s1lt9jqqtmZPiyQDNJys7LztIvvPwXGtgQpX+/XA6hQruZ
+CKVnA0Qil+eEDWVg95eE73Jb3C6lp7JAMjtjKuyRY4/++PvKh45Rp8UHhLvWqWT4
+Ghft0l9xCr7mH3K9JFZwCq3/fO+kjdKGP+Mo6EPKKuytvyU/G+ifv0zOxmvVweQ/
+LhiYD/cQ9Fy0AmvNZ3Sx2ahNywvVkn0NySbK508OZ8vposnaDpZWK22+FZHmYPyT
+JFKp8Mzb7Aw64fpoxffrcoorOFnYSX+p8NtSG6MbhaNVS71wk/KkSerQh+7Uaszb
+DKhQgYa4E+qeTPME3K/6w7189aN6GnFSYkx/0wlke3sZvhSDPEaA8/CoXCOLzpzI
+7yRNTWYRYYbvagWW7GxV7B265/9wTLEeSI+l1w+voMSIyPyT//TBiMkZcNg2iO1p
++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
+`protect end_protected
