@@ -1,1175 +1,954 @@
--------------------------------------------------------------------------------
---
--- File: PkgSwitchedChinch.vhd
--- Author: Brent Roberts
--- Original Project: STC3
--- Date: 1 December 2005
---
--------------------------------------------------------------------------------
--- (c) 2005 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
---   Provide types, constants, accessors, and constructors for dealing with
---   Switched CHInCh Bus packets and link interfaces.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-  use work.PkgChinch.all;
-  use work.PkgChinchConfig.all;
-
-package PkgSwitchedChinch is
-
-  -----------------------------------------------------------------------------
-  -- Switched Fabric types
-  -----------------------------------------------------------------------------
-
-  constant kMaxPayloadSize : integer := kChinchConfig.IO_MPS;
-  
-  -- These types are the same as in the Chinch
-  subtype SwitchedPacketWord_t is std_logic_vector(63 downto 0);
-  subtype SwitchedPacketType_t is std_logic_vector(2 downto 0);
-  subtype SwitchedPacketSpc_t is std_logic_vector(1 downto 0);
-  subtype SwitchedPacketCompletionStatus_t is std_logic_vector(1 downto 0);
-  subtype SwitchedPacketUpperAddress_t is unsigned(31 downto 0);
-
-  -- The source and destination endpoints cut into the label and stream fields
-  -- of the original Chinch packets.
-  subtype SwitchedPacketEndpoint_t is unsigned(3 downto 0);
-  type SwitchedPacketEndpointArray_t is array (natural range <>) of SwitchedPacketEndpoint_t;
-
-  subtype SwitchedPacketLabel_t is unsigned(7 downto 0);
-  
-  subtype SwitchedPacketStream_t is unsigned(9 downto 0);
-
-  -- The address field is 32 bits wide.  For local memory space, the upper bits
-  -- are occupied by the destination endpoint number.  None of the functions in
-  -- this package strip that part away, though it should be pointed out that
-  -- response packets will have the destination and source endpoint numbers
-  -- switched around for routing. 
-  --
-  -- Therefore, it's best to ignore the top bits if it's a local address.
-  subtype SwitchedPacketAddress_t is unsigned(31 downto 0);
-  
-  subtype SwitchedPacketLocalAddress_t is unsigned(27 downto 0);
-
-  subtype SwitchedPacketByteLane_t is unsigned(2 downto 0);
-  
-  -- This field is coded to be just large enough to hold the max payload size.
-  -- The math here assumes that the max payload size is a power of two.
-  -- This field cannot be the full CHInCh length field; the Local field takes
-  -- up what was the MSB of length field.
-  subtype SwitchedPacketLength_t is unsigned(Log2(kMaxPayloadSize) downto 0);
-  
-  -- Packet Types
-  constant kSwitchedPacketTypeRequestSplitRead   : SwitchedPacketType_t :=
-    kChinchPacketTypeRequestSplitRead;
-  constant kSwitchedPacketTypeRequestPostedWrite : SwitchedPacketType_t :=
-    kChinchPacketTypeRequestPostedWrite;
-  constant kSwitchedPacketTypeResponseRead       : SwitchedPacketType_t :=
-    kChinchPacketTypeResponseRead;
-  
-  constant kSwitchedPacketTypeRetrain    : SwitchedPacketType_t :=
-    "000";
-  constant kSwitchedPacketTypeLinkConfig : SwitchedPacketType_t :=
-    "111";
-  
-  -- Packet Spaces
-  constant kSwitchedPacketSpcExtHeader : SwitchedPacketSpc_t :=
-    kChinchPacketSpcExtHeader;
-  constant kSwitchedPacketSpcMemory    : SwitchedPacketSpc_t :=
-    kChinchPacketSpcMemory;
-  constant kSwitchedPacketSpcMessage   : SwitchedPacketSpc_t :=
-    kChinchPacketSpcMessage;
-  constant kSwitchedPacketSpcStream    : SwitchedPacketSpc_t :=
-    kChinchPacketSpcStream;
-
-  -- Packet Completion Statuses
-  constant kSwitchedPacketComplStatUnused  : SwitchedPacketCompletionStatus_t :=
-    kChinchPacketComplStatUnused;
-  constant kSwitchedPacketComplStatSuccess : SwitchedPacketCompletionStatus_t :=
-    kChinchPacketComplStatSuccess;
-  constant kSwitchedPacketComplStatFailure : SwitchedPacketCompletionStatus_t :=
-    kChinchPacketComplStatFailure;
-  constant kSwitchedPacketComplStatTermCnt : SwitchedPacketCompletionStatus_t :=
-    kChinchPacketComplStatTermCnt;
-  constant kSwitchedPacketComplStatDisconn : SwitchedPacketCompletionStatus_t :=
-    kChinchPacketComplStatDisconn;
-
-  -- Link Configuration Packet Subtypes
-  subtype SwitchedPacketLCSubtype_t is std_logic_vector(3 downto 0);
-
-  constant kSwitchedPacketLCSubtypeRouteDefine :
-    SwitchedPacketLCSubtype_t := "0000";
-  constant kSwitchedPacketLCSubtypeIssueCredits :
-    SwitchedPacketLCSubtype_t := "0001";
-  constant kSwitchedPacketLCSubtypeConfigWrite :
-    SwitchedPacketLCSubtype_t := "0010";
-  constant kSwitchedPacketLCSubtypeConfigRead :
-    SwitchedPacketLCSubtype_t := "0011";
-  constant kSwitchedPacketLCSubtypeConfigResponse :
-    SwitchedPacketLCSubtype_t := "0100";
-  -- The kSwitchedPacketLCSubtypeTearDown subtype is used internally by
-  -- IoPort2s, IsoPorts, and QosPorts for implementing the tear down feature.
-  constant kSwitchedPacketLCSubtypeTearDown :
-    SwitchedPacketLCSubtype_t := "0101";
-
-  -- Route Define Port Numbers
-  subtype SwitchedPacketPort_t is unsigned(2 downto 0);
-  type SwitchedPacketRoute_t is array (3 downto 0) of
-    SwitchedPacketPort_t;
-
-  -- Issue Credit Fields
-  subtype SwitchedPacketCredits_t is unsigned(15 downto 0);
-  subtype SwitchedPacketReadCredits_t is unsigned(7 downto 0);
-
-  -- Config Read/Write/Response Fields
-  subtype SwitchedPacketConfigDevice_t is unsigned(3 downto 0);
-  subtype SwitchedPacketConfigAddress_t is unsigned(7 downto 0);
-  subtype SwitchedPacketConfigData_t is std_logic_vector(31 downto 0);
-
-  -----------------------------------------------------------------------------
-  -- Switched Fabric functions
-  -----------------------------------------------------------------------------
-  
-  -- These functions are used to parse and construct packet headers.
-
-  function SwitchedPacketGetType (Header : SwitchedPacketWord_t)
-    return SwitchedPacketType_t;
-
-  function IsRequestType (PktType : SwitchedPacketType_t) return boolean;
-  function IsRoutableType (PktType : SwitchedPacketType_t) return boolean;
-  
-  function SwitchedPacketGetSpc (Header : SwitchedPacketWord_t)
-    return SwitchedPacketSpc_t;
-
-  function SwitchedPacketGetSource (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t;
-  
-  function SwitchedPacketGetDestination (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t;
-  
-  function SwitchedPacketGetDestination (Address : SwitchedPacketAddress_t)
-    return SwitchedPacketEndpoint_t;
-  
-  function SwitchedPacketGetLabel (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLabel_t;
-
-  function SwitchedPacketGetLength (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLength_t;
-
-  function SwitchedPacketUpdateLength (
-    Header : SwitchedPacketWord_t;
-    Length : SwitchedPacketLength_t)
-    return SwitchedPacketWord_t;
-
-  function SwitchedPacketGetHost (Header : SwitchedPacketWord_t)
-    return boolean;
-  
-  function SwitchedPacketGetAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketAddress_t;
-
-  function SwitchedPacketBuildLocalAddress (
-    Destination  : SwitchedPacketEndpoint_t;
-    LocalAddress : SwitchedPacketLocalAddress_t)
-    return SwitchedPacketAddress_t;
-
-  function SwitchedPacketGetLocalAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLocalAddress_t;
-
-  function SwitchedPacketGetLocalAddress (Address : SwitchedPacketAddress_t)
-    return SwitchedPacketLocalAddress_t;
-
-  function SwitchedPacketUpdateLocalAddress (
-    Header   : SwitchedPacketWord_t;
-    LclAddr  : SwitchedPacketLocalAddress_t)
-    return SwitchedPacketWord_t;
-
-  function SwitchedPacketGetByteLane (Header : SwitchedPacketWord_t)
-    return SwitchedPacketByteLane_t;
-
-  function SwitchedPacketUpdateByteLane (
-    Header   : SwitchedPacketWord_t;
-    ByteLane : SwitchedPacketByteLane_t)
-    return SwitchedPacketWord_t;
-
-  function SwitchedPacketGetCompletionStatus (Header : SwitchedPacketWord_t)
-    return SwitchedPacketCompletionStatus_t;
-
-  function SwitchedPacketGetUpperAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketUpperAddress_t;
-
-  function SwitchedPacketGetStream (Header : SwitchedPacketWord_t)
-    return SwitchedPacketStream_t;
-
-  function SwitchedPacketGetStream (Address : SwitchedPacketAddress_t)
-    return SwitchedPacketStream_t;
-
-  function SwitchedPacketBuildStreamAddress (Stream : SwitchedPacketStream_t)
-    return SwitchedPacketLocalAddress_t;
-
-  function SwitchedPacketGetDone (Header : SwitchedPacketWord_t)
-    return boolean;
-
-  function SwitchedPacketGetEOR (Header : SwitchedPacketWord_t)
-    return boolean;
-
-  function SwitchedPacketBuildHeader (
-    PktType          : SwitchedPacketType_t;
-    Spc              : SwitchedPacketSpc_t;
-    PktLabel         : SwitchedPacketLabel_t;
-    Source           : SwitchedPacketEndpoint_t;
-    Destination      : SwitchedPacketEndpoint_t;
-    PktLength        : SwitchedPacketLength_t;
-    Host             : boolean;
-    Address          : SwitchedPacketAddress_t;
-    CompletionStatus : SwitchedPacketCompletionStatus_t;
-    Stream           : SwitchedPacketStream_t;
-    EndOfRecordFlag  : boolean := false;
-    DoneFlag         : boolean := false)
-    return SwitchedPacketWord_t;
-
-  function SwitchedPacketBuildExtendedHeader (
-    UpperAddress : SwitchedPacketUpperAddress_t)
-    return SwitchedPacketWord_t;
-
-  -- These functions are used to deal with Link Configuration packets
-  function SwitchedPacketGetLinkLocal (Header : SwitchedPacketWord_t)
-    return boolean;
-  
-  function SwitchedPacketGetLCSubtype (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLCSubtype_t;
-
-  -- Return a link config packet header with the given subtype.  RemainingBits
-  -- will be used for the remaining bits of the link config header that aren't
-  -- part of the type and subtype.
-  function SwitchedPacketBuildLinkConfig (
-    LinkLocal     : boolean;
-    LCSubtype     : SwitchedPacketLCSubtype_t;
-    RemainingBits : SwitchedPacketWord_t)
-    return SwitchedPacketWord_t;
-  
-  -- Route Define packets
-  function SwitchedPacketGetRouteEndpoint (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t;
-
-  function SwitchedPacketGetRouteSourceEp (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t;
-
-  function SwitchedPacketGetNextPort (Header : SwitchedPacketWord_t)
-    return SwitchedPacketPort_t;
-  
-  function SwitchedPacketGetRoute (Header : SwitchedPacketWord_t)
-    return SwitchedPacketRoute_t;
-  
-  function SwitchedPacketBuildRouteDefine (
-    Endpoint          : SwitchedPacketEndpoint_t;
-    Route             : SwitchedPacketRoute_t;
-    SourceEp          : SwitchedPacketEndpoint_t := (others => '0'))
-    return SwitchedPacketWord_t;
-
-  -- Shift the entries in the Route Define packet header down one, as when a
-  -- switch would receive the packet, process the first route entry, and
-  -- forward the rest onward.
-  function SwitchedPacketShiftRoute (Header : SwitchedPacketWord_t)
-    return SwitchedPacketWord_t;
-
-  -- Issue Credit Packets
-    
-  function SwitchedPacketGetPacketCredits (Header : SwitchedPacketWord_t)
-    return SwitchedPacketCredits_t;
-
-  function SwitchedPacketGetReadCredits (Header : SwitchedPacketWord_t)
-    return SwitchedPacketReadCredits_t;
-
-  function SwitchedPacketBuildIssueCredits (
-    PacketCredits : SwitchedPacketCredits_t;
-    ReadCredits   : SwitchedPacketReadCredits_t)
-    return SwitchedPacketWord_t;
-
-  -- Config Write/Read/Response Packets
-
-  function SwitchedPacketGetConfigDevice (Header : SwitchedPacketWord_t)
-    return SwitchedPacketConfigDevice_t;
-
-  function SwitchedPacketGetConfigAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketConfigAddress_t;
-
-  function SwitchedPacketGetConfigData (Header : SwitchedPacketWord_t)
-    return SwitchedPacketConfigData_t;
-
-  function SwitchedPacketBuildConfigWrite (
-    Route   : SwitchedPacketRoute_t;
-    Device  : SwitchedPacketConfigDevice_t;
-    Address : SwitchedPacketConfigAddress_t;
-    Data    : SwitchedPacketConfigData_t)
-    return SwitchedPacketWord_t;
-
-  function SwitchedPacketBuildConfigRead (
-    Route   : SwitchedPacketRoute_t;
-    Device  : SwitchedPacketConfigDevice_t;
-    Address : SwitchedPacketConfigAddress_t)
-    return SwitchedPacketWord_t;
-
-  function SwitchedPacketBuildConfigResponse (
-    Data : SwitchedPacketConfigData_t)
-    return SwitchedPacketWord_t;
-
-  function SwitchedPacketShiftConfigDevice (Header : SwitchedPacketWord_t)
-    return SwitchedPacketWord_t;
-
-  -----------------------------------------------------------------------------
-  -- Switched Fabric Logic Simplification
-  -- 
-  --   Since, in some data paths, the packet types, and spaces may be
-  --   restricted we want to convey how a module can simplify its logic for
-  --   that data path.  This type is requested by some functions or modules to
-  --   allow for such simplification.
-  -----------------------------------------------------------------------------
-
-  type SwitchedPacketRestriction_t is record
-    -- Packet types to allow
-    AllowReadRequest  : boolean;
-    AllowReadResponse : boolean;
-    AllowWriteRequest : boolean;
-    AllowRouteDefine  : boolean;
-    AllowConfigWrite  : boolean;
-    AllowConfigRead   : boolean;
-    AllowConfigResponse : boolean;
-
-    -- Packet spaces to allow
-    AllowMemory       : boolean;
-    AllowMessage      : boolean;
-    AllowStream       : boolean;
-
-    -- Allow extended packets?
-    AllowExtended     : boolean;
-
-    -- Allow memory requests to local or host space?
-    AllowLocal        : boolean;
-    AllowHost         : boolean;
-
-    -- Allow zero-length write request packets?
-    AllowZeroLength   : boolean;
-  end record;
-
-  function "or" (L, R : SwitchedPacketRestriction_t)
-    return SwitchedPacketRestriction_t;
-  function "and" (L, R : SwitchedPacketRestriction_t)
-    return SwitchedPacketRestriction_t;
-  
-  constant kSwitchedPacketAllowAll : SwitchedPacketRestriction_t :=
-    (others => true);
-
-  -----------------------------------------------------------------------------
-  -- Packet Length Functions
-  --
-  --   These functions return the length of a packet for the given header.
-  -----------------------------------------------------------------------------
-
-  -- The maximum possible number of words in a packet.
-  function kMaxPacketWords return integer;
-
-  function SwitchedPacketGetPayloadWords (
-    Header : SwitchedPacketWord_t;
-    Width  : natural)
-    return unsigned;
-
-  function SwitchedPacketGetPacketWords (
-    Header : SwitchedPacketWord_t;
-    Width  : natural)
-    return unsigned;
-
-  function SwitchedPacketGetPacketWords (Header : SwitchedPacketWord_t)
-    return integer;
-
-  -----------------------------------------------------------------------------
-  -- Test functions
-  --
-  --   These functions allow you to test for parameters in the header.
-  -----------------------------------------------------------------------------
-
-  function SwitchedPacketIsReadRequest (Header : SwitchedPacketWord_t)
-    return boolean;
-  function SwitchedPacketIsReadResponse (Header : SwitchedPacketWord_t)
-    return boolean;
-  function SwitchedPacketIsWriteRequest (Header : SwitchedPacketWord_t)
-    return boolean;
-  function SwitchedPacketIsLinkConfig (Header : SwitchedPacketWord_t)
-    return boolean;
-
-  -- The remaining functions here assume that it's not a link config packet.
-  function SwitchedPacketIsMemory (Header : SwitchedPacketWord_t)
-    return boolean;
-  function SwitchedPacketIsMessage (Header : SwitchedPacketWord_t)
-    return boolean;
-  function SwitchedPacketIsStream (Header : SwitchedPacketWord_t)
-    return boolean;
-
-  function SwitchedPacketIsExtended (Header : SwitchedPacketWord_t)
-    return boolean;
-  
-  function SwitchedPacketIsLocal (Header : SwitchedPacketWord_t)
-    return boolean;
-  function SwitchedPacketIsHost (Header : SwitchedPacketWord_t)
-    return boolean;
-  
-  -----------------------------------------------------------------------------
-  -- Switched Packet Link Interface
-  -----------------------------------------------------------------------------
-
-  subtype RFR_Delay_t is unsigned(3 downto 0);
-  
-  -- Signals output from a sender and input to a receiver
-  --
-  -- RFR_Delay indicates how many clock cycles it takes for the sender to
-  -- respond to the ReadyForRead signal going false.
-  --
-  -- A value of 0 corresponds to a packet source that can respond to
-  -- ReadyForRead without any delay:
-  --
-  --                          |\
-  --    PacketsWithoutReads --|F|
-  --                          | |---- bOutputTx
-  --       PacketsWithReads --|T|
-  --                          |/
-  --                           |
-  --                           +----- bOutputRx.ReadyForRead
-  --
-  -- A value of 1 means that an additional DFF is present after the mux:
-  --
-  --                          |\
-  --    PacketsWithoutReads --|F|    +---+
-  --                          | |----|D Q|-- bOutputTx
-  --       PacketsWithReads --|T|    |   |
-  --                          |/     |>  |
-  --                           |     +---+
-  --                           |
-  --                           +----- bOutputRx.ReadyForRead
-  --
-  -- Higher values can be used to indicate the presence of FIFOs, pipeline
-  -- stages, or other registers in the path from ReadyForRead to the output.
-  -- For instance, a value of 5 is appropriate for this:
-  --
-  --                          |\
-  --    PacketsWithoutReads --|F|    +---+  +-----------+
-  --                          | |----|D Q|--|3 deep FIFO|-- bOutputTx
-  --       PacketsWithReads --|T|    |   |  +-----------+
-  --                          |/     |>  |
-  --                           |     +---+
-  --                           |  +---+
-  --                           +--|Q D|--- bOutputRx.ReadyForRead
-  --                              |   |
-  --                              |  <|
-  --                              +---+
-  --
-  -- The value for RFR_Delay should be a constant; it definitely needs to be
-  -- bounded.  The RFR_Delay_t subtype has an upper boundary of 15, but that
-  -- doesn't mean that a packet receiver must be able to hold 16 read request
-  -- words in order to fulfill the requirements set here.  Instead, it is best
-  -- that the size of that FIFO be configurable through a generic.  The
-  -- component can then be instantiated such that the FIFO is large enough for
-  -- the _expected_ RFR_Delay.  Furthermore, an assertion should be made in the
-  -- RTL that the RFR_Delay would not be too large.
-  --
-  type SwitchedLinkTx_t is record
-    Data      : SwitchedPacketWord_t;
-    Ready     : boolean;
-    LastWord  : boolean;
-    RFR_Delay : RFR_Delay_t;
-  end record;
-
-  constant kSwitchedLinkTxZero : SwitchedLinkTx_t := (
-    Data      => (others => '0'),
-    Ready     => false,
-    LastWord  => false,
-    RFR_Delay => to_Unsigned(1, RFR_Delay_t'length)
-    );
-
-  -- An aggregate of SwitchedLinkTx_t signals
-  type SwitchedLinkTxArray_t is array (natural range <>) of SwitchedLinkTx_t;
-  
-  -- Signals output from a receiver and input to a sender
-  type SwitchedLinkRx_t is record
-    Accept       : boolean;
-    ReadyForRead : boolean;
-  end record;
-
-  constant kSwitchedLinkRxZero : SwitchedLinkRx_t := (
-    Accept       => false,
-    ReadyForRead => false
-    );
-
-  -- An aggregate of SwitchedLinkRx_t signals
-  type SwitchedLinkRxArray_t is array (natural range <>) of SwitchedLinkRx_t;
-
-end PkgSwitchedChinch;
-
-package body PkgSwitchedChinch is
-
-  function SwitchedPacketGetType (Header : SwitchedPacketWord_t)
-    return SwitchedPacketType_t is
-  begin
-    return Header(2 downto 0);
-  end SwitchedPacketGetType;
-
-  function IsRequestType (PktType : SwitchedPacketType_t) return boolean is
-  begin
-    return ((PktType = kSwitchedPacketTypeRequestSplitRead) or
-            (PktType = kSwitchedPacketTypeRequestPostedWrite));
-  end IsRequestType;
-  
-  function IsRoutableType (PktType : SwitchedPacketType_t) return boolean is
-  begin
-    return ((PktType = kSwitchedPacketTypeRequestSplitRead) or
-            (PktType = kSwitchedPacketTypeRequestPostedWrite) or
-            (PktType = kSwitchedPacketTypeResponseRead));
-  end IsRoutableType;
-  
-  function SwitchedPacketGetSpc (Header : SwitchedPacketWord_t)
-    return SwitchedPacketSpc_t is
-    variable Result : SwitchedPacketSpc_t := Header(4 downto 3);
-  begin
-    return Result;
-  end SwitchedPacketGetSpc;
-
-  function SwitchedPacketGetSource (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t is
-    variable Result : SwitchedPacketEndpoint_t :=
-      unsigned(Header(16 downto 13));
-  begin
-    return Result;
-  end SwitchedPacketGetSource;
-
-  function SwitchedPacketGetDestination (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t is
-    variable Result : SwitchedPacketEndpoint_t :=
-      unsigned(Header(63 downto 60));
-  begin
-    if SwitchedPacketGetHost(Header) then
-      -- Host memory request.  So the destination endpoint is zero.
-      return (others => '0');
-    end if;
-
-    -- All other cases have the destination endpoint in the header.
-    return Result;
-  end SwitchedPacketGetDestination;
-
-  function SwitchedPacketGetDestination (Address : SwitchedPacketAddress_t)
-    return SwitchedPacketEndpoint_t is
-    variable Result : SwitchedPacketEndpoint_t := Address(31 downto 28);
-  begin
-    return Result;
-  end SwitchedPacketGetDestination;
-  
-  function SwitchedPacketGetLabel (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLabel_t is
-    variable Result : SwitchedPacketLabel_t := 
-      unsigned(Header(12 downto 5));
-  begin
-    return Result;
-  end SwitchedPacketGetLabel;
-
-  function SwitchedPacketGetLength (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLength_t is
-    variable Result : SwitchedPacketLength_t := 
-      unsigned(Header(SwitchedPacketLength_t'length+16 downto 17));
-  begin
-    return Result;
-  end SwitchedPacketGetLength;
-
-  function SwitchedPacketUpdateLength (
-    Header : SwitchedPacketWord_t;
-    Length : SwitchedPacketLength_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := Header;
-  begin
-    Result(SwitchedPacketLength_t'length+16 downto 17) :=
-      std_logic_vector(Length);
-    return Result;
-  end SwitchedPacketUpdateLength;
-
-  function SwitchedPacketGetHost (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return to_Boolean(Header(31));
-  end SwitchedPacketGetHost;
-  
-  function SwitchedPacketGetAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketAddress_t is
-    variable Result : SwitchedPacketAddress_t := 
-      unsigned(Header(63 downto 32));
-  begin
-    return Result;
-  end SwitchedPacketGetAddress;
-
-  function SwitchedPacketBuildLocalAddress (
-    Destination  : SwitchedPacketEndpoint_t;
-    LocalAddress : SwitchedPacketLocalAddress_t)
-    return SwitchedPacketAddress_t is
-    variable Result : SwitchedPacketAddress_t;
-  begin
-    Result(31 downto 28) := Destination;
-    Result(27 downto 0) := LocalAddress;
-    return Result;
-  end SwitchedPacketBuildLocalAddress;
-
-  function SwitchedPacketGetLocalAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLocalAddress_t is
-    variable Result : SwitchedPacketLocalAddress_t := 
-      unsigned(Header(59 downto 32));
-  begin
-    return Result;
-  end SwitchedPacketGetLocalAddress;
-
-  function SwitchedPacketGetLocalAddress (Address : SwitchedPacketAddress_t)
-    return SwitchedPacketLocalAddress_t is
-    variable Result : SwitchedPacketLocalAddress_t := Address(27 downto 0);
-  begin
-    return Result;
-  end SwitchedPacketGetLocalAddress;
-
-  function SwitchedPacketUpdateLocalAddress (
-    Header  : SwitchedPacketWord_t;
-    LclAddr : SwitchedPacketLocalAddress_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := Header;
-  begin
-    Result(31+SwitchedPacketLocalAddress_t'length downto 32) :=
-      std_logic_vector(LclAddr);
-    return Result;
-  end SwitchedPacketUpdateLocalAddress;
-
-  function SwitchedPacketGetByteLane (Header : SwitchedPacketWord_t)
-    return SwitchedPacketByteLane_t is
-  begin
-    return SwitchedPacketGetLocalAddress(Header)
-      (SwitchedPacketByteLane_t'range);
-  end SwitchedPacketGetByteLane;
-
-  function SwitchedPacketUpdateByteLane (
-    Header   : SwitchedPacketWord_t;
-    ByteLane : SwitchedPacketByteLane_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := Header;
-  begin
-    Result(31+SwitchedPacketByteLane_t'length downto 32) :=
-      std_logic_vector(ByteLane);
-    return Result;
-  end SwitchedPacketUpdateByteLane;
-
-  function SwitchedPacketGetCompletionStatus (Header : SwitchedPacketWord_t)
-    return SwitchedPacketCompletionStatus_t is
-    variable Result : SwitchedPacketCompletionStatus_t := Header(59 downto 58);
-  begin
-    return Result;
-  end SwitchedPacketGetCompletionStatus;
-
-  function SwitchedPacketGetUpperAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketUpperAddress_t is
-    variable Result : SwitchedPacketAddress_t := 
-      unsigned(Header(63 downto 32));
-  begin
-    return Result;
-  end SwitchedPacketGetUpperAddress;
-
-  function SwitchedPacketGetStream (Header : SwitchedPacketWord_t)
-    return SwitchedPacketStream_t is
-    variable Result : SwitchedPacketStream_t := 
-      unsigned(Header(53 downto 44));
-  begin
-    return Result;
-  end SwitchedPacketGetStream;
-
-  function SwitchedPacketGetStream (Address : SwitchedPacketAddress_t)
-    return SwitchedPacketStream_t is
-    variable Result : SwitchedPacketStream_t := Address(21 downto 12);
-  begin
-    return Result;
-  end SwitchedPacketGetStream;
-
-  function SwitchedPacketBuildStreamAddress (Stream : SwitchedPacketStream_t)
-    return SwitchedPacketLocalAddress_t is
-    variable Result : SwitchedPacketLocalAddress_t := (others => '0');
-  begin
-    Result(21 downto 12) := Stream;
-    return Result;
-  end SwitchedPacketBuildStreamAddress;
-
-  function SwitchedPacketGetDone (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return to_boolean(Header(42));
-  end SwitchedPacketGetDone;
-
-  function SwitchedPacketGetEOR (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return to_boolean(Header(43));
-  end SwitchedPacketGetEOR;
-
-  function SwitchedPacketBuildHeader (
-    PktType          : SwitchedPacketType_t;
-    Spc              : SwitchedPacketSpc_t;
-    PktLabel         : SwitchedPacketLabel_t;
-    Source           : SwitchedPacketEndpoint_t;
-    Destination      : SwitchedPacketEndpoint_t;
-    PktLength        : SwitchedPacketLength_t;
-    Host             : boolean;
-    Address          : SwitchedPacketAddress_t;
-    CompletionStatus : SwitchedPacketCompletionStatus_t;
-    Stream           : SwitchedPacketStream_t;
-    EndOfRecordFlag  : boolean := false;
-    DoneFlag         : boolean := false)
-    return SwitchedPacketWord_t is
-    variable ReturnVal : SwitchedPacketWord_t := (others => '0');
-  begin
-    ReturnVal(2 downto 0) := PktType;
-    ReturnVal(4 downto 3) := Spc;
-    ReturnVal(12 downto 5) := std_logic_vector(PktLabel);
-    ReturnVal(16 downto 13) := std_logic_vector(Source);
-    ReturnVal(PktLength'length+16 downto 17) := std_logic_vector(PktLength);
-
-    if Host then
-      ReturnVal(31) := '1';
-    end if;
-
-    if ((PktType = kSwitchedPacketTypeRequestSplitRead) or
-        (PktType = kSwitchedPacketTypeRequestPostedWrite)) then
-      if Spc = kSwitchedPacketSpcStream then
-        ReturnVal(34 downto 32) := std_logic_vector(Address(2 downto 0));
-        ReturnVal(42) := to_StdLogic(DoneFlag);
-        ReturnVal(43) := to_StdLogic(EndOfRecordFlag);
-        ReturnVal(53 downto 44) := std_logic_vector(Stream);
-        ReturnVal(63 downto 60) := std_logic_vector(Destination);
-      else
-        if Host then
-          ReturnVal(63 downto 32) := std_logic_vector(Address);
-        else
-          ReturnVal(59 downto 32) := std_logic_vector(Address(27 downto 0));
-          ReturnVal(63 downto 60) := std_logic_vector(Destination);
-        end if;
-      end if;
-    elsif PktType = kSwitchedPacketTypeResponseRead then
-      ReturnVal(34 downto 32) := std_logic_vector(Address(2 downto 0));
-      if Spc = kSwitchedPacketSpcStream then
-        ReturnVal(53 downto 44) := std_logic_vector(Stream);
-      end if;
-      ReturnVal(59 downto 58) := std_logic_vector(CompletionStatus);
-      ReturnVal(63 downto 60) := std_logic_vector(Destination);
-    else
-      report "Invalid Packet Type" severity error;
-    end if;
-
-    return ReturnVal;
-  end SwitchedPacketBuildHeader;
-
-  function SwitchedPacketBuildExtendedHeader (
-    UpperAddress : SwitchedPacketUpperAddress_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := (others => '0');
-  begin
-    Result(63 downto 32) := std_logic_vector(UpperAddress);
-    return Result;
-  end SwitchedPacketBuildExtendedHeader;
-
-  function SwitchedPacketGetLinkLocal (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return to_boolean(Header(3));
-  end SwitchedPacketGetLinkLocal;
-  
-  function SwitchedPacketGetLCSubtype (Header : SwitchedPacketWord_t)
-    return SwitchedPacketLCSubtype_t is
-    variable Result : SwitchedPacketLCSubtype_t :=
-      Header(7 downto 4);
-  begin
-    return Result;
-  end SwitchedPacketGetLCSubtype;
-  
-  function SwitchedPacketBuildLinkConfig (
-    LinkLocal     : boolean;
-    LCSubtype     : SwitchedPacketLCSubtype_t;
-    RemainingBits : SwitchedPacketWord_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := RemainingBits;
-  begin
-    Result(2 downto 0) := kSwitchedPacketTypeLinkConfig;
-    Result(3) := to_StdLogic(LinkLocal);
-    Result(7 downto 4) := LCSubtype;
-    return Result;
-  end SwitchedPacketBuildLinkConfig;
-  
-  function SwitchedPacketGetRouteEndpoint (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t is
-    variable Result : SwitchedPacketEndpoint_t :=
-      unsigned(Header(23 downto 20));
-  begin
-    return Result;
-  end SwitchedPacketGetRouteEndpoint;
-
-  function SwitchedPacketGetRouteSourceEp (Header : SwitchedPacketWord_t)
-    return SwitchedPacketEndpoint_t is
-    variable Result : SwitchedPacketEndpoint_t :=
-      unsigned(Header(27 downto 24));
-  begin
-    return Result;
-  end SwitchedPacketGetRouteSourceEp;
-
-  function SwitchedPacketGetNextPort (Header : SwitchedPacketWord_t)
-    return SwitchedPacketPort_t is
-    variable Result : SwitchedPacketPort_t :=
-      unsigned(Header(10 downto 8));
-  begin
-    return Result;
-  end SwitchedPacketGetNextPort;
-
-  function SwitchedPacketGetRoute (Header : SwitchedPacketWord_t)
-    return SwitchedPacketRoute_t is
-    variable Result : SwitchedPacketRoute_t;
-  begin
-    for i in Result'range loop
-      Result(i) := unsigned(Header(10+(3*i) downto 8+(3*i)));
-    end loop;  -- i
-    return Result;
-  end SwitchedPacketGetRoute;
-  
-  function SwitchedPacketBuildRouteDefine (
-    Endpoint          : SwitchedPacketEndpoint_t;
-    Route             : SwitchedPacketRoute_t;
-    SourceEp          : SwitchedPacketEndpoint_t := (others => '0'))
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := (others => '0');
-  begin
-    Result(2 downto 0) := kSwitchedPacketTypeLinkConfig;
-    Result(7 downto 4) := kSwitchedPacketLCSubtypeRouteDefine;
-    Result(23 downto 20) := std_logic_vector(Endpoint);
-    Result(27 downto 24) := std_logic_vector(SourceEp);
-    for i in Route'range loop
-      Result(10+(3*i) downto 8+(3*i)) := std_logic_vector(Route(i));
-    end loop;  -- i
-    return Result;
-  end SwitchedPacketBuildRouteDefine;
-
-  function SwitchedPacketShiftRoute (Header : SwitchedPacketWord_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := Header;
-  begin
-    Result(19 downto 8) := "000" & Result(19 downto 11);
-    return Result;
-  end SwitchedPacketShiftRoute;
-  
-  function SwitchedPacketGetPacketCredits (Header : SwitchedPacketWord_t)
-    return SwitchedPacketCredits_t is
-    variable Result : SwitchedPacketCredits_t :=
-      unsigned(Header(31 downto 16));
-  begin
-    return Result;
-  end SwitchedPacketGetPacketCredits;
-
-  function SwitchedPacketGetReadCredits (Header : SwitchedPacketWord_t)
-    return SwitchedPacketReadCredits_t is
-    variable Result : SwitchedPacketReadCredits_t :=
-      unsigned(Header(39 downto 32));
-  begin
-    return Result;
-  end SwitchedPacketGetReadCredits;
-
-  function SwitchedPacketBuildIssueCredits (
-    PacketCredits : SwitchedPacketCredits_t;
-    ReadCredits   : SwitchedPacketReadCredits_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := (others => '0');
-  begin
-    Result(2 downto 0) := kSwitchedPacketTypeLinkConfig;
-    Result(7 downto 4) := kSwitchedPacketLCSubtypeIssueCredits;
-    Result(31 downto 16) := std_logic_vector(PacketCredits);
-    Result(39 downto 32) := std_logic_vector(ReadCredits);
-    return Result;
-  end SwitchedPacketBuildIssueCredits;
-
-  function SwitchedPacketGetConfigDevice (Header : SwitchedPacketWord_t)
-    return SwitchedPacketConfigDevice_t is
-    variable Result : SwitchedPacketConfigDevice_t :=
-      unsigned(Header(23 downto 20));
-  begin
-    return Result;
-  end SwitchedPacketGetConfigDevice;
-
-  function SwitchedPacketGetConfigAddress (Header : SwitchedPacketWord_t)
-    return SwitchedPacketConfigAddress_t is
-    variable Result : SwitchedPacketConfigAddress_t :=
-      unsigned(Header(31 downto 24));
-  begin
-    return Result;
-  end SwitchedPacketGetConfigAddress;
-
-  function SwitchedPacketGetConfigData (Header : SwitchedPacketWord_t)
-    return SwitchedPacketConfigData_t is
-    variable Result : SwitchedPacketConfigData_t := Header(63 downto 32);
-  begin
-    return Result;
-  end SwitchedPacketGetConfigData;
-
-  function SwitchedPacketBuildConfigWrite (
-    Route   : SwitchedPacketRoute_t;
-    Device  : SwitchedPacketConfigDevice_t;
-    Address : SwitchedPacketConfigAddress_t;
-    Data    : SwitchedPacketConfigData_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := (others => '0');
-  begin
-    Result(2 downto 0) := kSwitchedPacketTypeLinkConfig;
-    Result(7 downto 4) := kSwitchedPacketLCSubtypeConfigWrite;
-    for i in Route'range loop
-      Result(10+(3*i) downto 8+(3*i)) := std_logic_vector(Route(i));
-    end loop;  -- i
-    Result(23 downto 20) := std_logic_vector(Device);
-    Result(31 downto 24) := std_logic_vector(Address);
-    Result(63 downto 32) := Data;
-    return Result;
-  end SwitchedPacketBuildConfigWrite;
-
-  function SwitchedPacketBuildConfigRead (
-    Route   : SwitchedPacketRoute_t;
-    Device  : SwitchedPacketConfigDevice_t;
-    Address : SwitchedPacketConfigAddress_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := (others => '0');
-  begin
-    Result(2 downto 0) := kSwitchedPacketTypeLinkConfig;
-    Result(7 downto 4) := kSwitchedPacketLCSubtypeConfigRead;
-    for i in Route'range loop
-      Result(10+(3*i) downto 8+(3*i)) := std_logic_vector(Route(i));
-    end loop;  -- i
-    Result(23 downto 20) := std_logic_vector(Device);
-    Result(31 downto 24) := std_logic_vector(Address);
-    return Result;
-  end SwitchedPacketBuildConfigRead;
-
-  function SwitchedPacketBuildConfigResponse (
-    Data : SwitchedPacketConfigData_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := (others => '0');
-  begin
-    Result(2 downto 0) := kSwitchedPacketTypeLinkConfig;
-    Result(7 downto 4) := kSwitchedPacketLCSubtypeConfigResponse;
-    Result(63 downto 32) := Data;
-    return Result;
-  end SwitchedPacketBuildConfigResponse;
-
-  function SwitchedPacketShiftConfigDevice (Header : SwitchedPacketWord_t)
-    return SwitchedPacketWord_t is
-    variable Result : SwitchedPacketWord_t := Header;
-  begin
-    Result(23 downto 20) :=
-      std_logic_vector(unsigned(Header(23 downto 20)) - 1);
-    return Result;
-  end SwitchedPacketShiftConfigDevice;
-
-  function "or" (L, R : SwitchedPacketRestriction_t)
-    return SwitchedPacketRestriction_t is
-  begin
-    return (
-      AllowReadRequest    => L.AllowReadRequest    or R.AllowReadRequest,
-      AllowReadResponse   => L.AllowReadResponse   or R.AllowReadResponse,
-      AllowWriteRequest   => L.AllowWriteRequest   or R.AllowWriteRequest,
-      AllowRouteDefine    => L.AllowRouteDefine    or R.AllowRouteDefine,
-      AllowConfigWrite    => L.AllowConfigWrite    or R.AllowConfigWrite,
-      AllowConfigRead     => L.AllowConfigRead     or R.AllowConfigRead,
-      AllowConfigResponse => L.AllowConfigResponse or R.AllowConfigResponse,
-      AllowMemory         => L.AllowMemory         or R.AllowMemory,
-      AllowMessage        => L.AllowMessage        or R.AllowMessage,
-      AllowStream         => L.AllowStream         or R.AllowStream,
-      AllowExtended       => L.AllowExtended       or R.AllowExtended,
-      AllowLocal          => L.AllowLocal          or R.AllowLocal,
-      AllowHost           => L.AllowHost           or R.AllowHost,
-      AllowZeroLength     => L.AllowZeroLength     or R.AllowZeroLength
-      );
-  end "or";
-  
-  function "and" (L, R : SwitchedPacketRestriction_t)
-    return SwitchedPacketRestriction_t is
-  begin
-    return (
-      AllowReadRequest    => L.AllowReadRequest    and R.AllowReadRequest,
-      AllowReadResponse   => L.AllowReadResponse   and R.AllowReadResponse,
-      AllowWriteRequest   => L.AllowWriteRequest   and R.AllowWriteRequest,
-      AllowRouteDefine    => L.AllowRouteDefine    and R.AllowRouteDefine,
-      AllowConfigWrite    => L.AllowConfigWrite    and R.AllowConfigWrite,
-      AllowConfigRead     => L.AllowConfigRead     and R.AllowConfigRead,
-      AllowConfigResponse => L.AllowConfigResponse and R.AllowConfigResponse,
-      AllowMemory         => L.AllowMemory         and R.AllowMemory,
-      AllowMessage        => L.AllowMessage        and R.AllowMessage,
-      AllowStream         => L.AllowStream         and R.AllowStream,
-      AllowExtended       => L.AllowExtended       and R.AllowExtended,
-      AllowLocal          => L.AllowLocal          and R.AllowLocal,
-      AllowHost           => L.AllowHost           and R.AllowHost,
-      AllowZeroLength     => L.AllowZeroLength     and R.AllowZeroLength
-      );
-  end "and";
-  
-  -- The maximum possible number of words in a packet.
-  function kMaxPacketWords return integer is
-  begin
-    -- The payload doesn't always start at the optimal position.  64 bytes
-    -- starting at byte lane 3 isn't optimal, since the first and last words
-    -- aren't fully used.  So add one more possible word for payload.
-    return 2 + (kMaxPayloadSize / 8) + 1;
-  end kMaxPacketWords;
-  
-  function SwitchedPacketGetPayloadWords (
-    Header : SwitchedPacketWord_t;
-    Width  : natural)
-    return unsigned is
-    
-    variable Length : SwitchedPacketLength_t :=
-      SwitchedPacketGetLength(Header);
-    
-    variable IsWriteRequest : boolean := SwitchedPacketIsWriteRequest(Header);
-    variable IsReadResponse : boolean := SwitchedPacketIsReadResponse(Header);
-    
-    variable Result : unsigned(Width-1 downto 0) := (others => '0');
-  begin
-
-    if IsWriteRequest or IsReadResponse then
-      -- There is a payload, or we're assuming that there is a payload.
-
-      -- This returns invalid data for zero-length transactions.
-      Result := ChinchPacketPayloadWords(
-        PktLength => resize(Length, ChinchPacketLength_t'length),
-        Address   => SwitchedPacketGetAddress(Header),
-        Width     => Width
-        );
-      
-      -- Decide whether to check for zero-length transactions.  Let's look at
-      -- this by packet type:
-      --
-      --   Link Config   - Never has a payload, so don't check
-      --   Read Request  - Never has a payload, so don't check
-      --   Read Response - Can have a length of zero.
-      --   Write Request - Can have a length of zero.
-
-      -- Need to check for zero-length transactions
-      if Length = 0 then
-        -- It's a zero-length transaction.  So override the result.
-        Result := to_unsigned(0, Result'length);
-      end if;
-    end if;
-    
-    return Result;
-  end SwitchedPacketGetPayloadWords;
-  
-  function SwitchedPacketGetPacketWords (
-    Header : SwitchedPacketWord_t;
-    Width  : natural)
-    return unsigned is
-    
-    variable IsReadRequest : boolean := SwitchedPacketIsReadRequest(Header);
-    variable IsWriteRequest : boolean := SwitchedPacketIsWriteRequest(Header);
-    variable Adder : integer;
-    variable Result : unsigned(Width-1 downto 0) := (others => '0');
-  begin
-
-    Result := SwitchedPacketGetPayloadWords(
-      Header => Header,
-      Width  => Width
-      );
-
-    if ((IsWriteRequest or IsReadRequest) and
-        (SwitchedPacketGetSpc(Header) = kSwitchedPacketSpcExtHeader)) then
-      -- There is an extended header.
-      Adder := 2;
-    else
-      -- There is not an extended header.
-      Adder := 1;
-    end if;
-
-    Result := Result + Adder;
-
-    return Result;
-  end SwitchedPacketGetPacketWords;
-  
-  function SwitchedPacketGetPacketWords (
-    Header : SwitchedPacketWord_t)
-    return integer is
-  begin
-    return to_integer(
-      SwitchedPacketGetPacketWords(
-        Header      => Header,
-        Width       => Log2(kMaxPacketWords+1)
-        ));
-  end SwitchedPacketGetPacketWords;
-  
-  function SwitchedPacketIsReadRequest (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return (SwitchedPacketGetType(Header) =
-            kSwitchedPacketTypeRequestSplitRead);
-  end SwitchedPacketIsReadRequest;
-  
-  function SwitchedPacketIsReadResponse (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return SwitchedPacketGetType(Header) = kSwitchedPacketTypeResponseRead;
-  end SwitchedPacketIsReadResponse;
-  
-  function SwitchedPacketIsWriteRequest (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return (SwitchedPacketGetType(Header) =
-            kSwitchedPacketTypeRequestPostedWrite);
-  end SwitchedPacketIsWriteRequest;
-  
-  function SwitchedPacketIsLinkConfig (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return SwitchedPacketGetType(Header) = kSwitchedPacketTypeLinkConfig;
-  end SwitchedPacketIsLinkConfig;
-  
-  function SwitchedPacketIsMemory (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return SwitchedPacketGetSpc(Header) = kSwitchedPacketSpcMemory;
-  end SwitchedPacketIsMemory;
-  
-  function SwitchedPacketIsMessage (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return SwitchedPacketGetSpc(Header) = kSwitchedPacketSpcMessage;
-  end SwitchedPacketIsMessage;
-  
-  function SwitchedPacketIsStream (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return SwitchedPacketGetSpc(Header) = kSwitchedPacketSpcStream;
-  end SwitchedPacketIsStream;
-  
-  function SwitchedPacketIsExtended (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return SwitchedPacketGetSpc(Header) = kSwitchedPacketSpcExtHeader;
-  end SwitchedPacketIsExtended;
-  
-  function SwitchedPacketIsLocal (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return not SwitchedPacketGetHost(Header);
-  end SwitchedPacketIsLocal;
-  
-  function SwitchedPacketIsHost (Header : SwitchedPacketWord_t)
-    return boolean is
-  begin
-    return SwitchedPacketGetHost(Header);
-  end SwitchedPacketIsHost;
-
-end PkgSwitchedChinch;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+hVdJHWSfELCmA4ds+csnOQAALbB3ps7EiTSHEDd//nts1r+JQrRE4d3bDPRJpiX2
+Sl8d+xAK9BIi4i+3ruAzYvB6kuD7r+gs02Jsvd/1kn7JYK4xBxCjtdDFjVHOTEl1
+sSh1oNiYUwLuwR1yKfP+xBhqxD2Dv6pCKhH1NdGilpJQ6cvivGkSunAu0tzP76T0
+4x1pB179E7uIeRplfHWX03KzEBF+eVtfgXVp2W1BGjfAe43y1pCvNYZOh1+TY62g
+EgAFgbo7pAujZxZy/YSiZjUr2mGp7o83qMXyusx8+rQ41D3X6rxfuP0RiId2pOpC
+6oq5Dfkx04a1dk4s8w8cVg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="Sm9DkM+kBxuxXCFA+l3fFkxuSWV4xqRc4Nn7Ji3ukao="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+m2emGBqRy4AuduN4dffN8194qYvc9UXRqiQc56IrQYMiIVQPyh59I8SYabcDdspI
+7AFHnvKD5YaF6tQfxWm+mlcmMEk2Y//aUjxeiGGs+RkKgbHitJF/K7nqg1dmKvDg
+a/GaBCq4Bqh0EehlN4ntP5HxM4qcvSfh5m/Coe3drc4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="uG91daMWA1mGkhgP3oZKMYye3UAomMWgG80HuuXg2E0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 43504 )
+`protect data_block
+c9NqBF2D1wSep1rW7utzHsk2j40aow1MnrccxUTvKej2Q1cyeDDbgAml4eTSXI8z
+QYgCADtWi7S8BeChdv4B2VxKcS7CMq/DaQrOy1MKTfQzfAlK0iubmlTkljLy0Rwd
+wia3ms54AV9dDzVA1W5koat4eqXqUAyqSxNHa7wyS1qgW7NkiXuzKmUMnayIR803
+JwCVbuBj5OpEacf4ACzfFbbuzjuaBGPS14Syo1MS2MRAZ3TxC3ZNsKpnhm4HuiXq
+6UGxvlD74c3hcrH/HVcOaeujKwp+J7+VjAhzmLDb98yZTv9l8uUi03Uz/a8qUOOY
+VRAYQ8GpO3Ot72YGYXTGhurN9gUBbtjZwhMCH07bXUJSSd7B6Kne/NfF8ASh8Ydc
+QcdYUJJwXAYdyv3t4BLtb0DniCkG2gteziRSukvz3aZ4wVsVc/MxG2PYGuxuVfK0
+rz53jCeiwaxxbzEo7cZkDDP9JHScoFNq060SjBZffCx/hNImFMPlEOoUN7o1SCVB
+SuJXnsjpNsJTXhnhwa0Ce1ni3YCi49A36r0+gMwDAKA+8A+Rfhtq8m71q66DGPLS
+F/bd8HH3vOppmhyyU4SlHAzfG7xpA6URLxa43eUcYq3GGOSAHkChEymB2nE0dAGB
+DCUb1/TQI+gFKXwaHN3N7l7l3wq/+3pU0I5Ff49MiYWtxUQ/fgVQn29FI8nwTH8/
+gpCwDEJNW1p8dHeh+RPswtw+hUvSNuCgY076UniaYe4aH0J3LwUr+r15dAyxXcxQ
+i+S6T/BywvFWgxMZ4MQihGpfDp6lXl1J2EjD40ShYk65gJgANuxqFhCJLDWHCD8h
+5cX4UNTqLuSEsjsnlknE1pDj4Ep2hlz8V5MtdT3PdX5N9nRo4X/ArV15EP5P1fr6
+yckx5MQklYwDBpXJjVgQL7D17DmfqlsRjLaOO+C36f3gZwin5Wxfb7cukKPo0FNA
+aJ5LImQAzOc5QhLziFYW5xnnKUhrgQ3gAN7iUJpZhQg/jjPkBCAoTDqCL9Di7Trj
+y0GV3S8W2qOKFcxsvshLDuEvqvfovTbNoBcX9n8l+zxYmo3dr4RrEBIy4L4zR/k+
+jDMplpmSB0VW52WfzKcohE/54nLkHqLYZo7194VUhZwC2ejlx0kd1FkUkvOxuarr
+APPp7z42030lBu/B/v9lRczLAmUuoyozOhPkjaNoWZlQKZ8my2ZuqEOTREJLP6Hu
+eLO9gtGSU31E4zPHfSc65PoFTvqw0IHT/f5l3pjZX3evGK/aUnUVhRK55b2K9ks7
+Yue3DlhI2y+4YsJN8t+f0G/oOIhOAlQsm1NjLkwIcVPuo8xevMszoV8jkXL5MMEM
+zumcAjt5ITUjH6Why3HrYbbp8uZSHbjoAlf03ojikZCbGvNXjZ2b+x8oPLGY/Grw
+3Z6ALHwx8R08qUuKI5/SEUuj2QxR3jS+yCwpnNtTI+D5cdF97w92cxzkWmpp5mMc
+vtEkUFhSxvaDwOby/8kkMggWjr06OD+m7YceEnyH8M51LRhcNDJD4L+IL34S+Trq
+apxXex3OOwpBylsdsgJp/FshUzWuhV6l+hFPxIT+jMK+vAypR5GL+tEc+rh+hlmk
+/d9zfAwVbTWtsCW7QypCvBoiKKUDw6lk1XT8OwhwMiMm3f2w2X3amtIp8AGL1j5T
+Aj/JEADd2v1u+NVcSu7/xz29fU67sQ3ERhy+Xwn+uaNF1DDWVZLYZEBt2Jg/3CpS
+Gvw4NnqjXfkzacH83Wuah+8dyUGTAdKgpA0hO1KCleHmHKc5wWAiCPYeoCiw3+Ab
+50ZuecEI8cReAZrSRcURTxBBmoeW4kJzXgkRem7xy/AA9J/NUU/MUWURQqywkvPq
+M6sMLKytSqL3oJqVdduHQibT17xPGYR0VDnjcoKeMlTJOotjq4nwyve2dRPB18nm
+XzFFdDuVsUxSTbd7ghYR4kcLnIVM4y9eswi4fEIV43FvE/xRpKj3t0cC+WKrYhOE
+Bz6DECGon+163O+DkTF/XXmA8sXHFDyvz/7VatRfifC9xprnwE6zPnSndqpvPT2K
+853lYVP5U8SN6FIqZ9OFp7eJUzRO1i6D5HxRWTtzTPFa86wpjYp/ZxefzQj6dE+7
+/tlLksVkONVVCNN4JkAcgh8qx/KhuiDtVF8bHxMUvs1zGkZXZPAuoK5xS3uFRly2
+Xdo44CsmdqwhsFW0+h+vEF74g9sA/f4cJE4rFym1exm531cPix/CCteU03w/fzte
+tHnVeZHF+CrKIvQF9XhOCYeqdgOiqbVlkbafF1UJjthwKvNIi9HN2DQLZKYT3igD
+aPxkLiF6T1qd9gwHR3zA2pSGhWjQWJvJwuhrbi/70Ph0/VQPGXp/TLh938RAi0sL
+BTLVGmEo4yCj+EpK/XDDzAhD83z460PQNoccnujejyeJyL2v6MsojZQpDZbScCeu
+i695kQfVe8OEGpickE8iFarzMB6xmziydwBouk5ZONbBIBoHa20OsFPwwFmUdI6B
+saGf7LcSz9NIpnA4yDCW+py2Te362WtnZ7ThJ2OS4Jwx1UaoRrEQLs+H53F56eiz
+pP2RRyVUNnK51Bg04z2UE485tc99ak+ZzzekylR2WEuGnVunRHJYubr+671uF59u
+WZBInrMuWYIX3CmgZst7bt3LIfmUPLFF4L7X2BJkCaI0cbrimpqohnUoALKj5bGr
+Y94TJ9KXZOehRCMRzs/8Sma3i3BTlj1Yf7e8MBUcn2MuJGqHEqNutVyhkJMUr6mH
+b/fcyHGE6OQG0Cra80HWvG/qYTJ2tegI+vyLUWBAK/s7KaQ3KAoN40r3mkQvYomv
+ugzh1fLwUkigo/y68+hdRu/G4iv/r+cSWWgPq4Q5jtF/SBsG3TOFJqBXZFSxa3Wf
+UsuGm+sZJIIEuIT1FoXkxr8oFMWDBB6rUtJ2Of4moJS8aqRQkAQG6UwLktouTxIt
+nYxsbHsyXXnbXJYRmfNxbLbalw83IIwG4oQZQl73NXDLuGTUFqNJ9zdJw9r3iYkJ
+7NKWNB/PMFgXC3vRL4bqWxkzqJFVSM0eq2nUNX+V3PcoDdUzPOTA1n8f4DGLtFA+
++IerSfUrbidAdCW5qyFVBuEOSlo2Lnh9o8kmE6nq/+wvw2o4IfNUGhJYfVZRXPpA
+ZyK7qrUG/KRnNv2pDQ5ib50/f5KvFiCRzD1wxcCASklcJF8UyDimvLbvXmDdUxJT
+GxbiY3NjOY2lOP1u4Oa98CsCFCESV2CsyEsSoQrK52XuwnKF4GQsv0cZsXK+yQdc
+eu1MJK9iz81zrjj2GaBvPr/lT1fSYpVzPKopeGTLG3avLyrV058QVbfyEyUOcInV
+h3XGBQ9AI06rOmMEEsuT6EbV9bKiiYC8fufVRHcyy4ojV/+rQFW4wzMSq0WGjgew
+hBgdSOJqKX/DM4xTQ5Xzpf9+SSdeGBCd8x28Gy+ggsVsb7gXv8fvKaNGxsKLwnrl
+TTL3B4uOY/cYIFC3o0Q5SyEp/CHB9wFlY4Y6baHo21MV28fFc0GTvBhTyB3jlNHm
+XynYi1j4j8HOR9x+WCw4aT3q9NR+31S6ZqGcyEAkf1lGgl/fknb6uThkFJ9gsHtI
+r2wBuHFuFYhZUeaqox+Zlmqc0uZLvSGgT+E/sTMCtW5agGDDYozSE6mBf+WtPoDa
+T3fHD2PWM6kjLKqGhyluut4pAPxUmJnXSmSErNIFX2YGDZCsoECAQqZPlF3VALgo
+m0RJNpFY7lLZD7+mDrPXcNUOHdSK/nZ0/wx2eG7jGeXK3i8Bm1Cgb5uZ230PU3rX
+kSufz3Sds7D4aak8xU3bucmVoI1mvjGuecb1rnEP01wtXNRkNk28MqZsd7AvH4VD
+5pL8ClFO1hD4Zb/oQGfT+Mm1Nhj+0EUbgNrfejZc4qji6aC0OzDR/bqrpX6iDl7K
+3++mPpdZF/Y9n41Jc4Oq1pI1oB2cxlkwsRmfN8u+nCSwDFCs0tCVGZapnI+FbLqv
+MTKK54CGRfSxsj2ts00Fa/9fQaGbbAr541JeG1DeGvgPb7zQZ2WdjLIJp+8qOeqD
+pXQk2khCJ/TkpqxNRW13/kbZFbMO1G06SDgvu18sKhe1o3JGldLpDmNOAAWRnh14
+fRhbU19k79fEbiTv4vArdmF8I/ZuP3ebL6htXGsOHJj80PpnFvJKGfkA1WpNH5tb
+8GsDtFu9RwcNF01LydbB0BcvlJKCgHWUIqz8eLnIr7SYB3jOMAzUB+JOW1CEHH3r
+UcS4B/3myvdLYKSmxVwQoZAFwQ7lBUPDwVBSIO4p5BI8XyRlfTQ6hSaS7eqBzsqt
+hAx7X6MGGepwjM6gne8J72mZVeoWumfHcGBj4o1sETlmOZ8WdKU311TKI9BVwBuA
+t+X8RG+yxPo3q6+qvTeIpt+QhHgsw7WcYqutXFR5AaTbCpJ2kpLdu3jxIQGRwAnJ
+LkAY9oa84ic4Xa79iQuRSl2JO36YEIRNYZAvdqXDSDnyYnCcWTzBhIWnhurgp3v/
+zRl1R63XdcG3/6rrUU5FXKPjNVAheEWF7WoDsPNMpJXZIlNag4V9fwa6/LeKEQnr
+Df8AJWIWOOQya/BDXYUGnQrQ38OmqVc7/kG3rmT4NflBFvYbE4hTPVJ5mGePen+s
+NKko4s04SpwiSqbssEyoqAsLVmUdVTxd0uw5bpqaQhc6WjeDb3LcjESU1YkBaca8
+wJMuVQ9hbp1uElHzpciP0VO17/rrWmTI2VXQ49+AjBr/B8j15jGr220F/6wNeAXH
+pHBe6s8qvDs0P15O5/aPdTXRsmtXKzDeNYojCS7/fUa3IzVlDcn3mKfRfKcTXB9y
+imhk73+nreD5TLzWFoo+pZEgYxulLvQ8G9EgIkXefyhkHkFogDm2BgGmVfoTEQ6H
+xsKWk1Avb/NBI+mDTdpWC58lWUbnI+A9lfe21rL1BFUV62suxDQgnjywLuVLePLb
+fM9zZCVtC48Djo4drDr/WYv2H6m7XDDKsRrO27C3U/eI60E0UK5HgWwgC9zXI7vD
+UI5XREzhMwQRE/Ci/gYBlegRVwgEKPwqoHm/Y2FU3U79zpGoYDQTLuDna8YQWS76
+e0wv3VL1NC0CyuAfgw5XVZklK4DXi7cU4a1T+Mixbwf2Ld/zK8TsvnKDgaRavgE5
+/qh1MD3/mOXUWgisqGX5ZjXkmFb7UG51Sb0I9L7Cws4r4QKZEOZP+MIAyk80Gv0V
+I1J//xM/RNs/vMM+cdFjVlwuoCvD51Hm8eI2z5rxde1L18TkXubHTGMko2cdCJ6e
+Z/N/43rI6LU4dvhxfRcYu2gwWEhcqZGta66XtzfPgs1rbtFBbub2blHMudCe5+Vg
+GgNS8gc70doHB8v+XYX6k9ddRg2rEmzrsdZtHfi08JYRXbIbIbW1crJPD+wTFACm
+ANd9JolGRU50+BsSMdiuLfhvdHGm/Z8QYVryiqVE/PsWujDHAnPJvejZ3bW8cH4G
+XjwVqdMYP4/cKDAnrGAcMzyj5ZMXkf+UBABey+U0B1hwzHYA3KoBwhxp48lUkDkm
+Cxhv27xjbWRyiW4PDZbXOIY/oAFGb09Bnokp9HHOX76hXU21eTQCc4han6HsH2T5
+XindnF7v5BF43i/1wh2cd7Pp5pyxY4TGk1mpzfloseSGVMl7m4XvTgdbqBiB7awS
+Pgndai8XgK2JAeyMpNJrOc++HirKOMia+awJhTQXUpT6Nux8xLVreA7Xqf6NjX2J
+c6xpL+WD3k67dQSH5j3ys03BFent0m1HdGJBuVLO5hU8y9vNIYsUT6AkDXjS7XIV
+7CaFYEWwwbJCfBK7OZy+k64XaQgBrcE2aYlgC3faUG1JE46YQLGC20UITNznb7k1
+wEkItpo5HPWEkDuNg5WWiU5NrjveK4cVPz7CMEAywq12iErCIbBu0w7lcQkDOWkh
+64apa18ilXTUU33N0tY5HwhJHuEbEWSvWG3EmT0GuRulsF0c6PeHBJvJJVvRPw2N
+A1Bx4SznhrAp9zN2cMy75beE/RVbnEbnWWsHYzappflWzJ0P55izHsTZhtph+8q+
+m3o6XuLHqRgzLWIY+QV2fiEECV1g+JBzCpj505QXCgJVE76910ZQiLfyywg3PTMp
+UcNNLDalDBMm2su8+rGJvp3LDScrFnosEhAF1PmA3mbA2gjtAuF1vzDzpaKFCb/z
+npS7Lf9L6J8caktQsBv6QRFFgX7OKzA7sR/0gksm6+k3OAr0SwFCSkXjPXAcYYuL
+QurBRojrqG67ZsB/kM6YqOkSjtH0Ofm3/8kPt4Cpz8om3JCCrXQdc4sroiP2/WKQ
+8Q0YntpTIb/pSvtL/ZMdI4qvOQk7TL7i6dlWrvBrV7s9Qc5GFLTFLbDtoAmzMKgQ
+Jn9999ggUBH04urrkGzhy/cbxDg1JdpJyRW17eMgVBA6ofyfPxFepHkMFlXWnPQQ
+suDaao1lODTuXumzLRfyvmPqcKatQ8ZkuZWJG4IS9tuzH8snSmB2YS+SdunAvq/k
+9n66KWJtD1ToUTOK9hqDRofqRjKAqbqq7IXJT5BkePSQYUz4LZgmuGh4cv//zAWm
+nAP/g7ZV2f08fnLfyh99qba2lNdGMPxJbSCZ+BcAgsyGwgOmFCxzESOnwZ4wR9zX
+YFIfKzwGe142/UarHr13GQSi+cX/sc4cWulWB+mBGpQTOjDps5PeNRVE6GPhJiAK
+zjS/5BTySpnUfehca/sM5I/MOz1hOwkm8uim0lgvcUUqqIee9KHxBLqJfB0oh0zX
+jjZNDcbQhduDtCk3e3PtAgKsT6Grv+H6OmVfllPdo4bRwIOGhgGIPcgocCxK+GvA
+ZJvq6hi+5MsjJOp66W0KSbgGvAypFkxxRYzyhGWuza1jeHjqjJST0L9so5JdgOCk
+BWOtAFR5H2zBCTSEnqTMmm1lI9JT1B5ksRlMR0tVce1ZrBgiVbtflpZ3BC4K4wN5
+RBUiEY+lT4LkT6dGaJA4hXtqAVf+IT+zXRpfKLmTfT3OSgUlvZ0WvuenpzUgbcgQ
+qRDgAahZlzQ/+OVNxNYdNLCEdmvbLNEhBhVK9uugKfBISJ4BZ/5CdMsOOuO9vG7j
+2lRWINMGhTFNd6Zm600txrtPNmd4x/JrfE8Ur0GNK7bz2b2ttuuDSDKV5tjX5mcU
+Sur3cJVQlF26Z+n9/IyfO0OJNpcD3geamkJlDWHjxNhPjISAJGee9ZrkMoIPMWae
+1vzmWDTYROQsQUr3JMcpMFCrXbqZV1QdCkCuyo/4gmJYF0vU+FiFcEpHUSUtbVjn
+gTOq3P1m9wFm6vlOkWvElrcXRADBF0UULkn21KkBimYwL3+alITOdjgbLn50Ap2P
+lIBL31aJ1hyzt/w7BOWkF5kkf0IrnRvCvGuGj+8HXV4+MfN24rknPj07sxR7NRTG
+GsHwfPGhQfrN4t2Jkwk6ZJUEyzIysG2/oVPbYlfQ/sCRVfFYTSvYyvq+OXRYAI36
+zF+Z85G9rjgvaiQ/U4ajFiAyIs/Gr0J7ujI348WPOi2u4e/CYnH0IHaHiuDCHaDt
+qWVnHhVX4YSVneYPZAptpf8NPDyiobTtw1PSjlAvbWhMX+QdNE6dLE6DK/9A0LjT
+NvR9pasuTdbHX6/OeKLqMouBOMRUDG1G/jq8eoKocAjYwsiMA7YCRm0l/YLtrFxI
+xkDNu3xBBvNgBg08veVecU2sZQGuurEvhox6Ibsgos5M+t+Vncu0jTUop2kvh3tJ
+Ge+j6D3ov7/xB9hbnBMQxfIepQF8QD5mdnP4tSWr86Ct3rLw477/zlLYNWR5Bs3S
+nFMckfePskUPXznt2G47IkQWIyPGLiywHevdnrCQvrCOG3YZDzftGiIiH4TpOjkC
+TgyyHoiO7Hr5wkvm2+XBYtQ5SlXAz0fDwQDDQSpHuFYv6phKCePmix7VA1U0xWDc
+pPEdQOyTn8qDQQOOYCxi3tarfWns1amTKPn5zJ32LF5r2qpHcgnRzHPiGi1uERhk
+NmAQs6pAncLR+tHRcf7Gn3zByA4ti0lYVqpYGUyHt5F0cRr7t9+fgQe8oStwwEnd
+WhhXIIVsXoDQeTGd7GLh+0nBBq7CoTXP/mvGbAFzsIcGSDFQ7O6d+35o7yL7OsfW
+5l+kdrtcnpUu7xJu+xDmIQCZYNFqZuXOj9sNUF0DFI+7vn+ssxRSQWDtQSvRB7vn
+EPhMNut7tNY4ZU3yG8Fc8hsWdIzdgBhWLNHxL9Msw7hIdk7Pl/72/9v+QnJ+AMUc
+r1QlaUguCbgz7vaE4MrPCXIFqUfBYUX6zBHVj2eUfKy7dvFNp1NIiqRTCSyk8vGy
+hx8xwWTbGR+pKuxCspiXIvNtPb6/NdTLqqgnnfkdA2aBh0KEMfYpkot5x/9iD7v1
+Q241PGvc03qK8aa7ix8LigFZP9YuUA2ouniG9Zmlb2swoyKJt12FjMir0p0eeoS5
+DwF5yxg+2UtbsV6SiNG4INdUG6eSs/2GCoN9tLlk5JJPtf47CAQMZ9iKX7FFcDUa
+ms0jyCj1jgJRkvkwPI74iNZbCkglkskq+uZNLvgrTT+oUY/vhfat9KfirBa0UPkJ
+TtTwP15zoFpnPp2E5lSnxOWIQvC5W2+XSMcgEiVjvGn/7NJIcqPUu71bHQcjcgB0
+J/0q9dFRnf7r0McwkkNOShA64fgfUadd8LjqrLa6OLIh3DN5/0PURe4aFpiJoLk1
+xbIhg1amGcL6FfsWEZrtxGPKeMf0h5a6RPpwILS3jd9/DkN4LKbFRuw9x4iT6M3/
+tNXNUUZe5wh1wdrfEioy9T7nLhdmuXs7004M6w6475lsfrMh4uo4tGej9q47cBmC
+9LyffY1mlTxDFpEZUxIo9xJ8UJ6gx+0Dx+ueq7edHDNyAMiQArNkWAhuZQ7hl7YI
+CXDxFWsMu0h8Ya6W+n+2wq9lc4NAUTKevW2Zx63MwZYfdxIU0hFNTOseSEFophPl
+dvNmvQJITDzbn3P/GcSZbaVlkdTMTT0ATm+fmGAbC+k9xv1lCFm2Qk9LlkwC34DZ
+86bhJLrUqDhQ9hRgU6McS8P6dP2+FF2yU/VLJEY3Kp/4yKESc6e1Ro6RUI6TQIsw
+Xl9NRQXvSEYPmTZ+I28qgvhY2r37fno8S6t/v05r0DCv0Mief85Rwr9ZGwFIbzh3
+NMscenapEcNk3GXMAQH5Nu/rqVf9VGhiyNynimvLs6iT2FPtHr2zzBe/qdYHbJ53
+32mM/Xz7fjsaakhqAASc5Siw+t8svxHnNfT4kHx0iISsyhYLXYbfGdDxBQhwfSMW
+82j3DU5JLI7PZhKTtXSAk2ArVctQxb+sJSf46UZV+1uRQR0DV4FwbsUISzzgT8eF
+RaCbksxCc6wapANr0Q9P8iskZnoXZ824ROK/3Rk/j3dpH4s/t4jE3CM4jUtx5jFa
+c/9uZLNKsDPOzmQqcI+OHCawARLCU1VgV3Wgiu2It96cWk2gXaxyWSNFHqSj21Kw
+whTSrcpwN0LkALu+oSRmOeqN4I8cbTYzH3paF9Xco5IEIfb6evdre2XwQAVenBku
+NHDh0bn0sv2Yr6IAHH+odMp4s+1+WoyQcrWZW2HEz2VUheZO8jCSMZ9U3rEYHMMZ
+MvJDf3eLZzdZk7CaSbdb7wSoxqFELlgPbZQjQgrkvC7ShNhCywSCz2bzlCO/pcOE
+19K/ULl9/KlGxnqL002pLuL30kg6eU2XbIuiHgbyTPMHKlch71bfETO0OC+65MoX
+YBUEgq9fi7QA1t138K2CJG66tNv0tXI3KPD3I+GlpVGROabzvBHKME8L0eYW1R9K
+xNjblJaKoYXJ1wawQ8ovsJxAF79pPIWBiXGNMeWaCczdOZVPWSiInMP/pehwDhsE
+2y3STSZ5wYZP6jPsfsrXJVcrxrC8MAJxkmX8WGFQbKsMrN87nIGxVYnwPNpkBAIy
+hWQDN07e3b/b32U3+pnO/IGMsSkKrUjxe6H7BQ8FcnUH2FVi2cWN4gtddc0G06ER
+0Jzbxx2ZddR6ULwm9rKX4AMZKzc+rXCNKTYyCFvOC0G06i1a9KKfIhEEjmo7/yWO
+NYcFbOPrVfyxFVqhFSH2tXm5fwu78CDYGxdh8mu5cEK8TYIz6pf1afVPjHtinnGI
+RY94vMctEOrhubiUG5A0NnW2SNT5mxXPCMHBiBunZsDLANrWouuOQWSWynueTRf3
+70gGYpCtftGoDXVWjHGuyTG86MCCQ1lLWbHVpYk7lOsWXbh6ddvGEicWjzaHpa/n
+gGeJa9b1bV2veD+QE/HNX2P3PKZYzTOF1Auou0Wdu3c7HgPsml5Q2Q0QSSuHqRLP
+Yv38Pk/a+ndOzRii1NqQTtS36jYGIdcWY5oPuvqkAyOSgC2VVTapSle6fL3qCVQV
+mTI5rbFve3sPFMYCYFZIQwLn+eiSmAm88u9BMEGGQDQYrRze/cc11E7tPYkwDgIq
+jljNGckM5TivEgccCeaNqoXkV661sT4nG5L8FjmxIa7zmIN1uqNcic4N/bPOJoyO
+QGhCTSb9kRXK4hO/fVdoLroRaEJtJMETX1P+kB4ufYctJqdAYsgTW8sy6jJXx29I
+E34XHBYsjHFALA32yEuSlCTQmXDEGZ7TRZo8vZMn31jzjTPPuABJP/ZHVgAXA3R0
+EhJ7rOv5PocH4wBgeUqMzMrzNQHIPDCYZtgmeQvqSAGkGMlJGJ6UIlzapr/2zcKF
+yqdXoWOwuD6yk8yRNj2kh8Y/HNIqSIobPhkPEbHA2G9JfE5OekbMn2SJpPO+JTFY
+MlmgFEvgqKZ+Z05bmc5MPfcXS2UJcFd/iHOcys2ukTPZjYuhWx7qWczgUsuqZ0uU
+7PTQDvnLY5bQA2feLuoeOai+2pKnRwWz06WxmqKBoWmYKGFzS9I7RtMVANdKP9I0
+XIJlZub1rCKQddelNhFCnwcZiN6ahIqObF0K2gknhiTuzzkpExifN+PnocIb/720
+6/xuTqcyLNJjsaZFpoHAHK/3Mgi70uWzkpaHFucUJyezp7hnj6WOXc7jFg6mJiqY
+wNj06I246+2lAkvT7u9ghLs0RQN1TRNEmSEXJRq4tSjNRC4iLM8ivMe0e9slvQEZ
+SaYePC12iAMpMUENspNJ2OY25Y6+/i5Jc0uXEC2lHS1B6Jp5XGe/v4lo19Z7yXPD
+i++IXYr59bf9daji6WNayvQS2O1gY8plK8T7dktrdA/x6wozWrMFoHLLEk/VYIdc
+NAxwhaZ0lA9a2BSR39Pz7DTUWlbrooZ4CJjzFMA7ROm/K7bNsjZTb+8BHzqPFclv
+5TgDIyUQpcvPgEzXPu80aTHSTI8Iyrgqy/4LnzRR+9ZapZyzM71KBZlD5ltJv6A6
+R4emJGTV2LQL/mlcZ8i+yr7+PkgEEw8uuqS+Kza917GrSeWaYyvbkTuPlSkGvZig
+rGBewKv8k2obR1H9EUwQkYiZUrtNxFJzyiagVu4421BQ5WHis3rHc6f88I4Qw1j/
+dE+HdDhDJMkesqi0babCCHGAXqj4f0V6NPnbkD8BkFF5Xsl3IkWI5wJz6XLy/gOY
+icOdCAtv0AoU+UuWUps9U01X+UUmWJKrL7F1MZDNzsfVoOylDb4+vtQ9skJrQ4md
+5Me/+0KPHGjSZRZ3Cc60C2i/VtQiciu43peatiSPCkp2nYjLbdiMLfwC1B/U0+li
+LFD9yAtObouXnJ0/XO1R2q+68sEJWTSUgtlOoqvCxMyCggVKbv/40kmJ3mQqTZ4O
+tbcjxBMfeGNCKjQy/nN/TGmVbom+XzSHarjpTZRsEYeTyvAQ3EHM66soyO7fs57h
+t4/kgoXKdJAs0alDTmkMRIcypMg7GVbPHdalSNSUqcnfPQdJxfdLalsUrbbpXnUH
+FnK8GtwSVIYOTB87g1uEcTYsZFOaXzgJfO8s1i7P9OgvANmDjwBLPZmUJKUgBtf+
+SJ6dUw3SRBo3yFNlfxJ00e0camGsrssQEL4e13ITmgxMpWvfjj3gYeMNnyMdCCog
+/RNTm5LX+cvDoOM6WZJplvydYADGAW5UeECeKvj2W697Cs63q/4SaXI5IQ3uBDe4
+Nb0Z6U8nNnkKC5baOmwIl60CwMKkvCIegxDatKQGbDaFesPcakOOTir94sbHBbgM
+ivxj+H25ng79SYx4J/kDU7fwgdycnL0nfnmseWpJC19dexLvE0mSQVj8QWUbL8o1
+SWyXu2Z+Y531s9YoVixDwBxmaCshLk2nhpFEHspNGRtwMo04/D/mks/g7/Xo9xl1
+CdLolA/0bJFukKPP07mppT9cUMe7kogawcshfGYyn0TWSu6wXuvsgA4gaX9Z3XEb
+CLP4sDDGcdi0+BA0jw/PEjm0547Y8j12/oB/K6oyDHuyZXDNNGIDdr7EUz5dKITp
+PJC/lL7jqv+OnfDehBrc8Vk0orGHt3mxulM+LGwTXctv2WTGdAm47y74OaS4l0Cf
+OFrXz/8nOqmNvoGH11EASqUp2IbBOwN5/prRW5xqek6E3mjjypLPQYyqCBi32jzs
+thXCfS2X/uog4MD60epHgtyh4CH5EzYIbLjWvLz0UOguL5uZkv06KV+RZZgNQPNl
+IIxPO1WS+7W5qHOcoJKTkox/aave2C+ZCh32ihLOUSVMovf8Yd7uddrBaAIrE6JK
+bTBCpF5oSrkw+FBAs/UeNIIppRA2v3b1HIpBM4M09DbdIMCvvKjis9loKD9Ba60i
+oHOS9Peos3WBbznBhOK146jnz9Ni1hHgiaqE2pKzZB19L9fgdTRWmPYG7korz/K8
+WCMvCjsau3494j4i6+eKZDdqQtJGjcFkK/pV/hN9sqeg6dDY3qkATMQoV5AXWWLD
+ZQjC2sKpJa47OK8Zbn0vuKMEfSYm7/LKJY5gR6B3pp1rluZVWXxq411dFra9+fpo
+zxCgFkXGmj/FDDhkeuXXj1Roy0USUbiqfbUkac6y1hAqRwMxciMJmAmlINdR2SJE
+ZO+xWU+xFua3GdVLdNH4Ho6ePZ8/wbs7C0PftccorbxDrvZulbjCsf/VO75JM0Kk
+Cnpfvlq8OP592BAigeKgDyiNqJMS4N6JjmDFREtad+ESJF4BLYrOrsIw9uOgmybK
+gr85f0ahyWezGvAKUNuHu7WaA4xLjE+lCJtLnUla8Px/GwvjJdbxbCENO5A3bo3o
+tsRDup/VKcwRRucSoA54zRkVIWSWLeOqYV1u1hyZji6HrxbM88Kyi4FrsUyY7S1k
+jMIxDMkno7lim7xOFqXKYeFNNjSG98gkrIaI7gKeMcsLN4F33sReCahglITwBb+i
+KOrQXrK/bs5fQHeR8JemYAsl5I5XJMqe0/pWw+JkkvjA40mEAseFwqx+Rhzkt9ho
+PxQgKzLWZx+vqvxD2DdoAU3OPcRMzHQvWlhEMc+K0O+8pZpJGHKoZB7ecYehSLnS
+8sy3m+lu6axm37Opo5IZR/QvAz7bAX/V9MmM/WtKPHC7MkZNRjenN+OtKpH4m3OE
+Irvd2QP4UCfIHToa/oGdQOu3ENzWyTB0pbBlL/gTzyiHqTR7ExRYxcBLZ7u8YV/D
+1zpwQLefVZ3WNP807aGOIyjW46mDqJpiI++lrl+G806TwhIygpybEWJEurxUGhVY
+FdiQCyCR3+IHKTPzGqj3fwaP8DXF35VRY/zdy6XBzoqedff3Y39Q4aUQI/YMOLfL
+R44Z1BDdSmVAOdlyG4vq0wf3/LMsj2YUYX8T5UJsMR+zzlfudy4J6ZLK8SQfHJZd
++harjTMkuCr35/cPpj08hAwWnH7VEpr6cN2zH3A38HHoPispUDRv+B2NUbNMjswY
+wf+35OMoggK0qwiVwgVA5q5vcWFakUjXKh7NGoOyOmiaqkiPr6jk3Pkpn1k0+n5r
+knRWgbx+kcArkSSqC4NmQTuFsuO9tH1aur8wtvogyccbv6KhCN6yv6UlDs1dgSRC
+saFaxlO6MVrv8cbK4JGByEMyCZni94VcFvX5dTFqitEFbDR2aplP/7jLqOCnfyHp
+W7zBHzisdcfQLuDzQxMIyMloofOQTw1AvmNpDBvnyM7G493pNdjPPWfpAzVsCjVx
+SToJ1u3HnD3dOUSZ/alz8IxWH2IgGnirQtm7ZrGsG/zzoDHzoDt64GbiI6tEpVto
+gKQn86EGQbuomB6g51/d6hxFp/k1AgJOa+JPUQoBCJoQrcHxZ5792DSsKbqqan0H
+OBoB4873CkhHK49GwMkk71RYSXycEzA0Qa1lygJj+AbFHSfsC/Ga4YpM7ZKsq8IG
+uiM/Qbqwg5pUrZ4vqz59pb418KGkMMpGs90z/fM37VYtYZOsjJqn56K3gHjLBg8o
+epIdi6jf8RcpZbEYT6t7znmry6jMcNVNSPWIXuvREOOSGMr5rWENPt3eTeT2UTWo
+7G890UpCs16o65AZGg+fWTgEEiiVxaUmpqZ9WTCd/EJkY7o2jYf5n1ts6zK02uxY
+vdmqEwMKs9tonJr3eOKU/eBRvHdr0Zw7nAsbYE2ASki2dBE1jxVbE19mAu7Jq/gk
+lzUKUl93IqT4gMdXJID8G7zFft/9NhBRo4WwvCwEvfAi3kyglcTK1MmOhhjstZ2a
+ZBodUU+wkQ0PkyQALUofGjLDvO1Arg37bIMrFKbs9PtPO8L5jIP/2M8jBgLEBLBi
+kyYFz6OpNdBGLL4LNUNlRmQ/J9mswo5juvkvYkrLfOCpVYk8l82i6T5T4xpB0kg2
+3SCh5Gz46FqSpOAYdCWXFaxiZsye1EuxJfS0ovm9knSUbd/1x9+6SgoiPa5hEF0M
+EWA5iRIaGAOGb49Gxj0x/xTYTGxAHpr45lrc9Bq0gFi0Dot7TmB/52A7ncUbzfKV
+DJTrk6okstBfHue81UKuUScJEnkY+vGHOQFyxOrrZtGxKSSMTIq1TGW6OOm6UmFQ
+zgKaW1FxTEcAFtzlp+l85YvgssOY0dTLNss2xKs9xm315Gye3T+CZdQt1tmcUoYE
+BcMF+Z18sJZleVN7+kXlEM5lURTNgsHvvHyWwt2Of5STGM+dS6rl9/P/2uSZTVSp
+UlWYcloAqK/vLAmUCv6NyXwmu0JyBxLDSlFvFmmcjCM/VebdPsasDNmyD/ZBeuXv
+WxnFHtmtGCZm/iaENUjQQRxdbhoBDm0Qq3HTnnDbyNHhkNgtL1uzhuwx/ogNa83/
+WOt/dtWvTiuTdz9blPQtgEn6Q0tNIjRo/B5Dk+bZ2biEoXRCMfRq8WfQMwXzhTab
+XFTTVMvXTXMlW5aaofyXNMCP+ck7Yzzdl4jeTjPXn4kkSyfoCLL/pY1EA4bUD3a4
+wXJ/OBRSRX3f5qqgaZo1dvrCw6O4RMtNENcj9KToDBHrs3s32kLyRVlAzJBoQsM6
+VitMAk9xbmOPINLMgHUZC/M+tYoH1v19J1Z0o2EQfm6gBe/+5B+r7n+JzCoxUxKr
+rdqEFLzYnMBtUN4xNNUpUHJeNvIKIVJOLT6Y8lyI3s8cPqvRDwBpES66eqWXlOYR
+Xp0HH1j6g+LG/+65DNfIiaXvSJJf/7oaW5ayISGE6FIw6tKWsUh2wsLi7eOpOLAo
+hqG/ln4gtu8l+gkc+TXEZVq8Ao0nz0GayJc5uEuiASYZpnfh14FYKEwTN21SbFbq
+ZiVeTaZcjIsteXloXbiMAcg5qGteQbdu1HAGulfvQDg0tX0wuZWactaAShDhnviv
+wD/db2YbhRWmDgCG1OfgVddMulaWyrLp7fsG6kffpRwmUg+/5zNLE+fG+p4VW07d
+koeT3RscbUWt/3FLfJDgMAyyvnruLeyGlLnjXtjZaQeP6z9RGCPiNwJAeaTCOtV7
+/jFJyw7TBl7Gk/L8NxN2rv2OdlSKWPj9p7okUqzPXFnrysSFBnuEaILSM9Ni6H1k
+egL+gRie1T7dGCKE1xNF7r2XzjdfvY8XJdSo9tn2CtWz6o5eWoPlqIVSJqUz14tz
+BrsiTgZZmpiyO3rJ4IScT3K2m7X80TcAf4WmWmqU+XQtPSTKWi/BdzK4XOA2cSIb
+Ggk1z6XlWNVaYgcujHxyhNzdMUKk1bkS7N9pQvaa8CXpxSk2cobKBCevEelJyzXO
+62xJQ81zB91ugo0Oy4Wdp6AfQR4kKADY7MhcMAbLATtz8t1Vu9ML/j0tncYop6mz
+QNgvz3JxJ+XgYIjFe8tfqQOt8oRkHY4CYOBJXa0dVcdkRN4rKQ3wAL91/PwipbMf
+huIPA2JJ46EXT9L4fovraeJXB2yp5q12cCn7s5kuCxcji7Qe7VUKOr3Qat7Ws73G
+2bH8Lbfippv9xmeHEhDroCdiBH/YxGRe+rXchAXhkJxKl5q4m1gzr3o3sXvUVrwG
+6qTuTMsQrLBWnlbtKkVdDBN4DVvruvAAxwCVDD7aQZt33vitu/rnX4Kgb6rEa1Ez
+McdaHQ0IUTw6DOGypiYQCNnfMAUweNZonkSRDR+0r2Aa7YCwgdwrza3FFOXF43lV
+Fp/Uk/7cwjDmQUtyE3n4mEkkRWeJt3N+ipdcgWYUVUbYpHWZ4VhEkXWyL3Lb9t3y
+quef0GDgj7aCifag/clUfcEf7B78jbaSZs+xGOjYQV4dgCuiu6f1TyFBULbjv2hg
+4OeBlyhbkBZPNLXN8iSznug1rwQH3bnyqu8+4h9oLhVcC429NxzoMpVlB6ZzlYBg
+cY+X0/DXnCeXTHKzXNioiUy+XSLzE2c9a46H1V308Sh7E4j81vzaD8ojxmwLLyMo
+FHTZTcTe1BoxklV/rB0GoGEtusTkY/6n+EK2ybPQ94+XTvSwyQeSsXJz9OHbF9jM
+VER4p2SuSnuUsud61sYc+my2c2XZDtInR2V0XEvTCazVa5OlzFS4X4LINptPR+qg
+dH4Sjyo/LPx87DTQ6a9K9HsnYwFTO9OfaguWJFMheGK26JRm0cNVsSCi9fWlJv3D
+CSJUujwQo6rHTAgwbCP6GAB/VdNC1noW7gRU3YEP3h4CMngBmwnns03/wGM4AnX9
+cpr4KABH6Sgzlca7GRMTAfikuJD52FddBcD6XY06oD+oYVnaFm2AmzNqhulzRrmp
+OJYEyGCGOyJ8cc2QB+VVMIppk7HeAONjPc7+G7Nd1cJx61nJXAvBHnO2uvf2of0y
++/JHQfI4YkYmKwgKN1BpdVmR7+giGDEgF7otmra1H2KrlvKyGfAuV0AfQjyPoEVf
+p5abp+2KLGwqDsHplyi6jJWa6JkjLYSoZarUboIol50+jCKwudyt+UKGifeghDnz
+w17/MTMMSZ96AXMk8M/7L3YU4mgPA4py8qrsVYi4KFYqMl93tdKxoU/ezCgE2EbF
+6gslOwRbLenY6oJmMsje+h+I4O1DB4bbHfQ4V7k7bWR8pMUO64IAvGK1xMc/p8Hh
+5HYZ0OMS6O99ZQjkjl+Vj0ciznT0Xrm8Ps3W/8MjiLPEJ+S7SD3CfX1d3FJHtNn4
+yFWHogRLDYvoq/cgLezUY8Uurv6Y8tnVhfMkuw0E+55A01uHTJF8g5Q+z752z8oV
+0HkN0VDllm62cBKaAUmSpBQ82eqRGeqSS8eEz2p5UbmAMjCab79h9O0ZXPv5TVBq
+p29auxoGIMAYEKYzFDn6t34nFHHS1IXobs1d4KphxmCFatDhwUEXOGK0iDOtGYCu
+3By57zlhxutMdDV1zUzGz+6c/xGw8Y63+3N4lTfaD1JxEy7uS9TxM0XURcKyXcqj
+8vhLcGqx6Q9LRwvvYO5xLPb7ejCuTqa2Y/7b7JErGGgXnZoZenFA1BHIdcSMo6ap
+vRlQXOtVy8K/TTkM981j69YlKtOiVLkNXc90KOPt/Jmtb65UtCli8QPDYfAkPDHa
+CWsi4V4HRBmjO4hetHRIt1YR14xP6dyI3SgULiQ9aRM+b1sNextpGfFSAQqdd+so
+10nrpYVe/5sZNqfSMy7wJB7akVQxEj4Wba7WJmNpasSa4YMcz+i8eXYgqqB2XOD6
+NocGfBWqRCo13InCBwHt3XYgDDq1+vYApJ2L03W9UbFRhPlb8eCK/GHSpxK98SzX
+bWaBpw6FwwpkVIfWHs1j3WLU6niUemOmq/jeiXRkrBPSGadfKymRfulBRvqedHBA
+NwfvJDXzSSxBx2Aip5hQ7wH2J/gWjZktcu2DA97h2OzMu2n5Crt3P2XD0nqa9s4h
+6Xpbx33BzkjQtfvt+vvG9Nvm1qT8Y5Jc1dHyAko5nTUxIx9RxollRQcpMtbR9rq+
+8CWUfODwqixN44hvrf2oo0o6MIbE9DPc5u0z4Du3rwX5zHzhjaoqssEaWST7E8B6
+Bd6ToXmEWSM02iSwp+o4gc90z7jeJnstodNpGZe8a5eh1QZw/jmI68QtUGLl9L5g
+hPN0mkiumFtoM2X2xNXtuOLBbYQygtXQHzG8Pf+SP8tcY95wYbjCYQfcEdJcybN0
+xuF2zfHO8oHmcZwxVO6vVZeLxUOY91iQmvtv+zSSAjplxVJrtghhKLns0Lmod6AT
+7lHXGZ8S/cyf7RUvLuodsN7Jvdjb4PT44Z+4+yd/oz3RejHoZ6Gw52Tf9z6LWB0P
+KH4ppZn1/Dhl9GQelPT84PuF8/W//1oW18zvMrCIH2rU5yElq2LwG4ToRcWUkAST
+Fps0I2qLeb0mPZOi/l6OhJ2ZW+kRxD9oM7Inq2FCtErM7PgzcE6cUdiQqjhH9c/K
+tuVGbHfPjgk2XD0nQK6YsDf98jxVhL5h65dcGq6/oXTKIVm6nCTBe+fzBB3g7j96
+CVCWsdBFvPkb1DOz/zAN03cvEFQW4pVvHG42KkstDJeAIQ97cg8tynb7ceGUEo2g
+m7sk9/aB3Ou9QNSTBomNSghX7MblFty+piC8EgB+vu+2+IOYin/FP4VKjCjIALE6
+aNFo/iM+jXCHrq0gbqcghd0jUnzV8DQaAZtiWf/R4MripoU4qTHhX6+1muInffgW
+fPW/Kq50/2qBb78bVbHjUSWgOxigv4PAjjWR4yfsNaWoMfObsIDCTq3UfMMsHq1i
+lHtPvou6qpeT7xv5hNUG7ONYdWuLem+bpRqc/RlA/rLf0lMD5CWPCpWa/WCDxpmP
+FsxS4Wdmv6mtUGnmwhQVa4+CtbRgIp/YLGPj6NRTBd58m+A3LQmOR7xkb8mPec/S
+1thjehidTL0MaL8myWaprSt7efOEl/Jf+3BCLiEIn8+MbtQytQ6wQ68CCn8NRU73
+wuIk8hjgPr+qA4JBGR0+FbbJpC0j6l0tqS/y/jwJaTNgyWd5MHUJHXhFhs0BX/Ir
+PJa1NcOD77XlGXZT4zw29P/w8+QwBqCFcJRyoxBOz//KhSGldVXHIX5vz6WzTJ79
+UIu3ajboqtLij0zpQnlEd/X9wvzmL1a9G7TAGEHM7yov7yAyU2IY1hFyQL9tsIjj
+cF3E3g7cCuaCRC4X1bG+cFyeTUL0aF/nORSWtvhdp3L5ZF6YLKunXuBnRMVRXY95
+wMP1QXV8Wfz3eHxQ0XnI5iZ6rcyHf4Fte4SBQVWgDpbeTQxB3geyQFJGsrTxR22D
+F7MNLo0d9KPrdpFMpYggS91j/zKEolexYpIRV7tK0qAr5Zq+eB/deTWb4TGz1Wj8
+9t3VNL8/YZ2NTUK819yldxHoJ1g+ulSl1sUuxBUGs1H9UwwqOwIwCiJ+So96R9XQ
+IM/THdq7QHTG23IDiCVXzyuXcysFyOLPeVRnkw2A6WjZeEsf4gRwF2Uk8n1CgT4j
+I/ftuc6+iQ8LhFqLdEMA8F9uFSN+xgR792el7ABjzuDftDW4vvYrPHYR0BweeiPS
+SZ5srkDPdlGStPokpC7CkrTh0N4eaqtG4SuyNX3XX5zFqn2BiyfrRNjX8VwD54i5
+DsZ0pNpth8vvVw5KwQZq2Nql0P4HKZ240TprYde/Y6ZzvzIayN2J7VQ0+azSNPiA
+/j4UdkesCFZi6jm5FDqTCDBsWgaBaLiy3NwuCa4oeGJDGxmgUnLWCV3y7jx0cfxu
+tHtYxREvYdTYV+XacG33P2h8WLCV+C+WhdL4XTjvMJaF8lEWUclvBppJHQiaP8Qg
+ia91OilrneL1i6a39r7U7ggOWQNidv7TTpOGoM66Dx1aZXZqQgsPUQfSGHHwFD7y
+NbxHAz8EeZhEHH6ryMZUgImPEEfJfZYUlfFYjdCv4QqmGD9AUCtjaPdJ+uWoxsEr
+TSn2dc+TzHk2v054LHoebspByjYAA6h3WE+LzxCheim5xXvtvbDldzx5i4Cyf63+
+W1o24m6tPJLf+IyzBK7ohzv2FO8c0071CHivra0ZqxFbRsNe6SZYw55GYp8PZ4F9
+2atzKCqtfIolHYoPFoUxfgkba2aCTw7tMp51K1YEDBvoAmonBCKn4o7QgUxsLrhc
+385F+tGIgBpQt9YFRTr25LaN+25bD4bSFm4fm/HWVBVGBpNO0j+EZMUhXG5YTaq+
+RSsTPWl7ZAdIWF1HtLDFPXi70Zi7/K0UgetazA9npwky1Zit5Dx81tumdVcvOkho
+TTvzwnjd/MDXYtL7xoXDwGZTJdMZ5Bk923PrPMmnpj46Mmsa6yjKYoCzn4OTqVog
+PbbOBhX2nypfR5WCWdzH7ND0c7AoeQgCLrybyZm3y6KrwZe18DEvYLa28DZpJztw
+x5kTaL3VcS1Cum/6P2KgevhhObIlaXQ/TLVk/xZGPRUEJPSWycrl/0qmTXYcr8iC
+hZbs/+RceCOJ8v7+DiwRa1HmzLKtycoDm+dW5NsdivqDspY8IKtP0Rptd3NXmK5Z
+Dit1G54MK6HkgHDBWRW2IAiBJajmHK+voUXjjszun6wDDzXQMjMxhSBDa/+WbxCj
+L4N6A6x2SFezsSS93QuNjeUWGu/iWdktEHOLV12GAE4ss3LSZSvTrjAiUqOK4aqA
+Gf7lGvZqOhefhj8jrQ3jWsuf2xB8RD0HcKvX9GkEic9wXTcYBCd0NqJGV8d5Oh1v
+BGflb1Oa4e9tinXJc8JGLSyuzuFZbQuiWWLhhjeGpJ9rncWGpuVvqtJe64Lkjgl0
+Lz8XPQz34+20J3qNK2emoE6BchBUfy7XrE7+2c7752t5YNfiUAIOYhzXszOgC4kD
+vpQBf1sfhVwhKcKh33LQmlolo65vHqY8BW+593jxAWXYYNCUWhaXj0AbWvgzlV8/
+kKMfzhHSu/RBfdi4T0Z2zCq1tKFmb0a1gbNe+3dkRBw4AP78x3CZzbqtZZ3kndF8
+Es8mCmlYIyHXEWtNuks6SARg0rhm44oP7+goCRQ7SGivU8gCiVDJGtpEV7OwfXp9
+R7yxfLcS0t3mWOBWLPXtkMVjYCfoGs9HgE6Iazghys3R7jh6BAmTJo8iCY9YBZMM
+dassahARI+IX+Fxgx80RWUCFtgQ1zzG4gUJ08acFx0kSyyjgjukBHrIKnWFxQCwJ
+g5ToafXbFeWWD0SuxYzyAFT23q5RzzFdXgEPRADHZXAiE5FrAbRhN5dW/piCjvbP
+UoGkHWO1gnOq5uIMegzUhS8qsI14ghWTX031Sr5+AXxeUIYatwK6+4giJpf3hXMO
+moBOTSbpixPG62c+tb0sxrxZSJaPI8X4sqZitCiojoyEpVh+YvINIY+ifV/Dxi4+
+Ln5Oo4h5Yk3U+bGK9iV1i3g2CmJ+gE7VscDq+v4EWOuwJKL69L4028dRBjD03uex
+Ng/2HfNzDfdlhG347dqiS44VXdmtRY8O875g5RkEhMBPHIblqAzCSImAN3pl8EqI
+fzvGyeKXoR19DiFhldZdF2MbubYmcRiOJakR8u7/SnnOR8pFeWZriX3HaR5I6IwQ
+C6tqhcKmFmwf8lUCFaFUkId+zPlGSWvV10FHqdPli8bFCYWdIjFMv1e/n7Ax0FUa
+jNNOPstp6mC+PRarp0KoQeAPOa6f0Kkxha9yu8KSkXUtwI2Tzd2W5cORTzHyCK4Q
+k25tOHqJ5yKcJf0eqAEx0zPVtvXVVj4AiNTC/qzox370gEG7SG+RJ946fCYAO/oP
+nTHeWgMmm3DG/hiZWB/8McRYxQcQQaxNjBRcjQ3WYolwHJuB5jrWIGhKYH7nRRc5
+YFp7+8nENNqKvkgA+9hv8Qr6wfT7I5bFCYcxFh5NX5i29l3bGAZfTwDoB8NehwCL
+nhAvZ7WedITJhq9rcTc5s8ZtjvXc4Yw0LxLUQhG2nq4WAN7mKK1OE8s+t4IZVxq+
+u5YNCSRHlsbbbGSXw2KeZl7HhJD3ad2UpyIoujucannKfrKG+GLT/9h3CEdjkfzY
+1igBZtkJo5Yskm4jkpjWxsfkzxisz7X+H0y1Fliev32v4r+CkKKLzDtFPZhH2Kn1
+aKKE7CxSXgwTqEaNfS4Xm4iOzeXFXT3GlwaU5mYAGm5wakWgoCdeSBqOKQYff7fS
+Tkf3E793XOEI+i4ypQqN1LF3g/uuee4YH5rtoSKF6tDDC+Ofox5XqIzAo90AtLlD
+ixy97fCnZJUVOrI+Bw5bUpUJXIrJfiX7eeuY05qS0GCI2hzvSpeYFswz8k2yz3DA
+DeaKVaRI3RRCfb8ZTIXWFdHqaj6IVTHohXZh1J8kTl5bf833gmJOj3BmtMg18yvp
+se6DuyEvahaZQ20qWnduNhRdHo9fMwqFa6U+vNdN2ZY0M2bzTugST5ttrlPhtPRI
+nrnIdiY8poeanUCM289GrMW6F9B301N76YNWgAnxQ6D78QH879fxfjZ6o6UdQp31
+FDpdIDIt4hNESPXv0DDb+vTmOIS7Qd5HyZMDh+f2yeQTmsvzapVlS17eeXqDdlRH
+/VVVq1ta4A65P5SOm2ioxSAoScKXFW9mWMGSY4muEJr52SJ1eQzdGmegy2ae6c6M
+VmsuDLmwFtNJPaeIezmC/fKVtf/Pzzxf4a5gR8/bfn/7L8YjwdU+9wOTTLnFgTkC
+n5esXEYvDIo4Le7Y2xvxzhjMTCXJU4Ft00JA1AuldLwwS2HMOjhyTaVHPbThen8K
+xwVuk5qbBgGQbpDlTjuFdMh0TdevCzFSPmcBhUMsdCPv+Bkm2rD4me3xqt40EO1S
+6dy3c0I7H9J3NPL9dTArCcjoG6210I2FIUHmgCexdCuSg94eEDqQZC08EpwjXJik
+QZWktVtI4Swe9OT/gocFeif3VYuJAwN9heUFkuS7/HD7LFXS2lDnVe/LRuG0rxrR
+ORydXAYWtgf8+Ij2ol652sreiN0qV+DLMostBbdh5m7+qjhnZeyyvMRWtq92mX09
+Fby/baR1RTPWizYbreqq276Q1ajZiOi4ya535JPG6x6L3MUMYhud00YLpyaT/Fpy
+nAEO0KQCrGeTPsZyF8kllWHVW0xcFlB/zEDmiy/4nTDFYHu1+gW1gPUpVAu0XIQ0
+h8ker8CYDs6DPLbbziomDZIkCQPiD+7gdC6fzXVHPkQN9qu1E3TSEfWUHf17kjvS
+2SQHLQDTBvzFXh/RfwnTaHlHYZfpFJuVnuwtKUL3SZcDrn4NGWZyOHMg+Mzj8M8j
+n+n0EAi0rbOMVXXLHNgTeOJ5Ft4YtQ5hk981ovow2MdexBggG8s/9s7tHYOpoXA7
+1MGQZzdtCfMxROq89XjkHjS60ahNdTkEWjAyBB0+ZpB7CgP8l8betQqB/VOrpXGT
+0RbO5tmArYIOvONl1ZDMYPEQfOtgb3vlCzDwxD3QRAZIC2BICGOB5HtBRwsgZW6Y
+68uM4kVR5SFAeYU8j7VFWVo9lG8InyVnIh+8D9PqkrLJEwuPm8IFB8aljiAdZ8t3
+hgeBqWAu9MhUhqHu01ArKFIB0Lb7rB20iSFWWAVi7Wwn4pp8XS9gcCcckO7EGeJO
+ofa550YuuXYGlgyYAjgQ+8uij8nAyYDyqBOVwJEkAQ8XDXPZK+pgZ5DmYNmG47Yr
+zv17tfDUOaUFL7hfIIhV+57LOYYRDSbTDqkkZs7wO3StPFaEhWcnO8KUfItG4emH
+p23NzQsVi/Gs7UKFUVSwjjBOVTBvwmh1xS5e6LGGFWgKmhp/C//ZkNPIky/MJ1J6
+Hp7hUsm1YeUcX0WroxdPtVJo+h09f5bYq07IGFLQmpVXC/QlTyr/W157UaOrEK8j
+X+ySumok98inq/t+gnjpV6nM1UB0nMVvGtqvecWWvLipNGWLFq0caXsyVWXMjJk6
+3ow//dLOygFDRGirEFq9VbqjB+LXqVdLU1SjKjkaTiuY2yGRwP6wm8zE/2zfR0IV
+1ErZVqgMuG2ygK1lubZrnFO7j3U66IgbxGeAinKZEhCiXu6qxlfsUEx0J9QS9eQ7
+Q12k/5JYu/NBJORUdq07exSfKiGilzCH5tU8rpeNwCvDJ5Xar2QWO/rAfcH5QDcJ
+JdDuN/knGBYS2MA7Z+eyw7kLL/40I7jT4zICZYm0lViPynbZkSTCxJOtqLTAQE9A
+d8+pQAqjsu0P0nUH1ND4X5RemIQtwzvmNWJj94hG1G2AI1MW1zjHBirSqrj2ltiw
+j74t+38AJXTB1Ji/VCuOqC02FpfBRiz/tFKodrRVwB8+XoK3Eq407xLc2pKyF4wY
+zgGMYEK0ygAPJjXwtUMtDRk/VzBxi7jlnbxrzFoYiV0qV5gmDFeEe+fiRyfbBoJl
+97CZauI76mMfUXh+bJICltQAsDx6YXj8iccX5/vv0e/P3i3KAK7Kk57MKapKQUN5
+OeEHcsk1sLsz9kJ4xDjQptsdXBBGVISyQHnW06sHP7lKg1ZNiQFDnxqXkoH0k3v5
+e3JF+iktDCarpjt8XzvoD8s2ugUxjmKlW6x7IaKqOQTchk26wzC9nGbBx45puB0m
+/yzUy+ZmZMbb08cG9Oawcc12ghszNdm1dIop+Z6fuDNqqq5OR9wkUoTIvIh0V9iA
+Rl9mLtdaT/ZIACYV7GK+dBjq0jNvMbUJpD1py1HcgcDBiTgpq2AjdmcVA1pwQCPg
+XGUpUOsYWLWBlkJPwxsT3kVvNeuPLjTb31oOyYh9s1PSVvQCmTpfvoe6/pvZju+/
+ygfYGykaiCyi7etW0dLJaKYUVWM05Z4Xc1Xd9nXcRmMbuE6VNhCcuWtCycNzdgcu
+ld+8wZZC8PkM/p+a9gta9XGtyIs4Mtw+aL7Z5V6qvQs/KZyNoiafHANyEmSSMWDq
+PW3DmmmoRte1lR2SrrlAH1k8/Jm/B9QrNO43/2APFoZ3Bt3GEttLBACALEKCBr9j
+lTle5ZYNjrqDBFgbvPT1QkJas297UPmGXHHKiEeKeD9Mgzq46AUVT6Es6eCMX8oD
+hEe8MLmd6rm8oFibPdJMzzmHRov7IyqkNcW3texdWklI1kVdJbKVeqryzeTrQ4hG
+VvBejzY7FSFvQwdpZc3ZZRwt+3H9eeDRlN4AXF1YBiqRUVTFlYrYn5a7XmiOHBcC
+JNWnGbLDQUPP3fub1bolyy/2QdxZR87Fzy829xtpFIUfQs34ZD6XXilLOwqlMGoi
+D9txVXnuFilakXFSeO3fFUPD+WUcXBBq8x9iy078UYqYmeynRfECZI13XNqhL9wI
+LvBpsM/kA0R1VLyEFtRU2W6dkx9HNhmLSwVbAkf8Qx5xZaAsC521kK6WrSKb+khO
++SX2EEFuqTVWYXrV1XWgMDcKZhV1WJnEMAoUITDlJ1KjeMf5025fOYTzqyRKh+Zo
+dd5OFjThTII2xXfvl+by3af8yZ/r7tIcXgAxDqXZmMyBx8iqby+Yh+Bt4ea1pLFf
+tuEuAftAEGy8C7ogFud+ax38CV5ID33dEJ6Z+7FSj9O1hwSmnqM9h3qffC7OrGqc
+niswGialNWCJJEJiBjZP+bcG7oRXM5H9NLEIqpJgpuVB9cC6kndItabjcnEcZNxw
++CJ//Cw8oyQ9NuMSjV1brVXg0975xD4HSXqcLPL8NTbXuv9XNios0i66fKBsCsTn
+uX3hRmIm/RYvmv/l8bGkO2bJ2mstMhRaPBWWySCA18C1/eFfW4fvNv7Wz7/B1O+7
+ySxi3btH2xmTM0gxAudIUGGHO77lI7Ln33OIOdADSrWMmkNOOTgYNHLI0ZQ3B5F6
+Rkt62FWZYYFgWS+Zs7YDNqKZpvxgtV/EhXNVk+Re9GrhVgyNhL8QfqPzd8B8x86u
+bRdAk7wfEvfXsLo4Z+uvSRt+dX8F0ZU7wIWG3fpStAWPZNG+1zIXuHeNWv7YEIHl
+uutRrm51rX8sQyQE61dwkx4ZiB4hoXCEnJvHGnYLlOQTxbAeuswj+whytXxwXgZL
+clz8ASw6PvwZYwdyk/iSMXgJ24v5BBQTY6K9tJllhFGc/7+ouD1/uYuURrINLA2H
+6t4+wKc9zB4+ygMaC2eLVaeNRoTAbIb4uDztpXkhsnxQXTupy1CZMyvszKanlcGp
+9vEpC++KJRDksVSGFb7Rf6ph0yIzj8tszIcVMRa4MGQL/Q/bKDWPzFSCJpTQi2i4
+ro++eBlJ4CYQ4YCLCFAPQqAnGZ65w2/ioSCXhF74zVYA1KQoS+PqFk8ALzoSMppP
+WSvsjr9Uedzdf/dxjt96jx6wztNWD/2NCq6Dv7wi+7+54tJB5V4jNe3/lWM8AqRS
+20kIQ7OFj1OmodVSpruoj4Fcs3uINwAZS+crx3ixq015L4fm1ewYFn4drnumPi2a
+y3+/c7aLm09v6cwEYVVR2YPqQ78ZDO6lMq1r6HAcRdeJakaYWygTiBcfAjEfIMCr
+t8intQEDQ3NxjnJy7idGwcfFGsFYWaJm9R+5hOu8g6O9yHFQV6rOEFpMiMkOaBBs
+mUesjtfp+/O32zPOEoBpjw2judP53W3UTjlNu0f7pElGKlCNU41GR9pA3UGDLtZd
+xHf7s2Xwd3LfnREeJ49+4ly5C5Gk+QtBlccH0XupDaO/oJT86seFSpO0N5GTUKZ3
+4gcEowO9PhvB6VgynYhjyXaPXrRIKqWdNOR76e+puT+60m7Q1VjNLAJrUrZD8tJx
+9JAHix0U50VOYcpAOlBCvowPX/ttP4B2KlNHBZDoTSpUi3oTxGXFXfllvxBhJ9se
+Gc/zHm/U3FQx+a5sdPIU1AZfOJ7ucm2ER6745NbJBcscQOIdLUnXn7nh+8/d9AoE
+4cb3O81ViH1hqwpjsba4o9El5QXI472y7GENV4KgwMB40q92SAjVc3LxA9Q/Hdz7
+MIGQ+P0mgWItAiUsEFxA8vPfz029c7gLYZOHuq91LO47qK4HiM1MBOkkF4gCDihT
+zJNZN/SXp4p7p0UoLZcuFspWdjhxM8NZiTwC2zKO8L6LWiIR2wV2u49XnFub1Og/
+EoJxzv3Wo5ftiZse+FOH0lsiYk+WytB4+K1MCZ8zCpW1LtAnvSNbF8p12OmtJqe2
+gDwEXsPC8IZIOeVY+INcvlrA4bRdzw1ZabXtSjZKA+Absp4EjzWlT/t93v5ho6v6
+gWEIeHSXwKkuVESQu0gORR7LoDTvvFArdN8dd3KC5r/P6EUflPrmPf+MneQac0VQ
+w5x5efz8dkuWpxYBthvR/VVwK6GPSR0dfzoM4I8KSmroKVo9B3/SKmAlQx/hdz9/
+Fy6gwBF4AHxEmBagZza5Ci2y8uyDEj+uY91wseWlUjhgezo7F13IdpJmGcJmthuV
+DPGSBq1BfiQIyKhMe9C4jjUe+dn5cQYAsMdPgMNInHeAobHmWz0dDTgyt22HKHux
+nVRHB5ikw3KzjVenkbCGd1Wl5o233rp4+LA0uOZD/KXcglGZI16E12TAr1lvKRJs
+6cUoFKRxwq2lNTOSbgf29Y3gFqgP7m8AoJ11cu+OLgKGVuHtAWXkzKQ5xXEjxJIf
+XLYiKFhg0HAMYl8W5TkMnDsN4+yjjr/G3zTN72bvC1qEeLuR2vge8YoMchmHKVpf
+XYg1YzZm3Cjhv9UKv42LbUFQ9evElx2wIgeDJqqnqCErngvWLtFsgfePhwnxbsxl
+Jqqu3B/Ddswo7lcDKQcR3wG/k0vt4TDp18v+v1+slymn9ZsS1oFdoZT5BwgEnz58
+gsjCkLFHx1b1rTI89dcidGoAie+hKfl/APJEe3iX/hgTjBs8ampbtBvqsKV7GWmJ
+MYqfZBhBoQpH2RX2TKnpzWRE8LVBbn1sm7N5Sc4s8rZVjDZ9f4kGeOPzve7YUkTx
+DeEVeXrJ7fT7y8OSoSXyyVpakWYGJPXOiMCrIIRANCZHZ/euapHhsWewS5pYaCpr
+xigyy+VYcaOobbjqiXeCUXecMGUO52YCij5QDVffwDTeFSjfq6gh1VQBzhJisKY4
+mPM86bgFllbemMwVLOUMj87R+hC5jzbjmEELB4d2v/z8y3Dx8Zqs5QpWaCwYrwLa
+D/YhEuMKlTX2Os8xOEO4E/2zN4bmkRCjidHPu4c0lKL8ztpXN8JVMAzacYhpW3my
+tdFYlst8BdkZwnjCgMhMZEsF12imz/39cBswo0vF83iEyMMi2VjKwMlbdpuCqWPL
+bLqaNnhmtumQgZz6w4+G+Q6URaYlvC0Q//DLigYf1EeTZT8kYyubM03H8qZea+Ac
+UTKQELqXajf3RkUquPEZanoe/iDwHdPngeV8G+YpWxOylOFT7IdKUw+Fu/PTVufd
+92gSQkzu8I9oVcr5uPac7iMmKux8LFGDjn7EDrg9P/leJ/MrVDZcvDGeYXnAAvUI
+6VlbwEOkUy8RF/WVBANbxnklbNsS5yC7xKzb6JwTy8Tlxx/KyCaZpgBJKgMLLQ0t
+t1GixKuyqapVXcmQCD3p0WVMfVxcJ7dHAUWFbHBBLq3T+wyEE65xIZhuoUn/slsW
+rgy+T80XTUIuPsrQ2jzinUImtdS6zFeil1tnTQz4nODaYHCvf72gNdBiqheDowzA
+9ux7mARn0dpjxvRtjYA/r1xdux7bI+OwButqvaQmTw6R0RIakWppir1vnHhyFOOz
+bt+MyOwe3RzyL1UdVql/5I95rhh2UkyOldzxjqq+ADOHLvraRyTjzGhkxOYx6b4j
+0TvqV4erjxEjVXYxQKdcbZU7jBUTQjuyiHcONvUxfDBizJDtMBv9G9nfSzlUmxP6
+pfk+29se6J1HyoFQTZrlMhWV8aLmniI0Y3impUKwUvZo7ubwr0gL2yqIIJroxRzI
+BdeECqXZ7SBGwhzTbPp5m9AGa1WGaaotvDYKtiSNLIh4jXLi/Tv7xSHmGU8Pap8x
+ScfNZnxlMq7TiSWvM/RaSJyYyJJCVC7cEvnZX3FERdjbMzXcFGNA3enUt+sKw6/t
+YvIIn2uB5Ov5Pv35sDDuinS/QC3CaMUa5KP4fBLWBOSy0rEMWgY4745ILU2c8o5S
+2TO8v5uuvO0G25rtx+SCOWCyQ0Ig2Qzhig5aJKZOBIdERhbs66tK2cfnIOusxqcz
+dfYyVYlbrkY7Xcx2G0cz/3JDNTsHAWjwt29XOu+AYRypu+GcsFopXk+NKuSTbmF9
+ZeGrZq3jaAGmdpFL4SGvaUluYfL1Nh8LKCyn+NReS5W+oIJwTvjjQjga7VvVo8U4
+tFocl97OPxVVN33JMJWVsCB1gletkPoR7bFmaZOKATP7isyzNQuKCgWih27fIAeX
+ukGTPoNIQeuKh1EPJ/Bl+L61gQT/RPdNw35GN8xAW8QR/24JUB8rhQFYdHHKetqJ
+S9g2pL/xtwNHskzQRGTVOfcRolKozvMTP2epMcENtAKaxspgG3suzjKW9CpKAXpf
+rAFXPRHfO+2CKqCN6x2JpAyXNXIM8HI24qVipjWS8aCZa5VBluRKRf3WdE8fBAjM
+AzK8VepdkcxO3whwrL+OkK8ydLGgL/hzRUribG+IfPayvC1mPftdA6mERALCQSGP
+cIPuJE+P1eD+cywlSE3x1eA/gGSRWa7g3A110oXZlfXBlC/t6zgM5fd3wKI7vSgx
+mVuwYwmes3KvnUmnrwvc33/0Ik2znNw9yjsngX9BJ/OyZAMJj98wa2KCdjg7G9GZ
+lng9kSmAzCTjyh3XNjHRWrun/RcC7LzBVqXnO45RBNsBIay2llh35z1QM3PWVTXW
+mXGyuRRp7WgNYBxl/pv/O8yioWMQ3HSashsLRYXn/gAluZVFwwQg6HWHGiQ9TdxS
+FsQF7puPk4TbsMDJgQSbqXV5/GWXtio3eK4iWDyjEG0wDs0wPSbNXsxKu5fNCcg5
+ttlqC0jelF7MdIwKOsEVIovavpvvgbVtYjmgC13OuDXUZgcB8wcNkKXsxltdw71H
+6bBsG0WZYO7F/w1TREOSN3RwVeTHXa3ZdhoCZNaYufXJKSLf40sXvgXp6x8ominn
+jwDJqCVjVLerk6Z+vROWJDwbtEl0QSNiFlnmG/v6/xRlF7ubrWl7r4MUmRjHgQwO
+U4ejyrh4PlpBzmOgIwXleoB+2VX8NMmNmjycxbCFCpDV+ckcAkFy2D++KQYgGJBT
+TRThRh5RCnCt4AzPsabSC1DH5rUg4EB8ZoQxNp+HUvF5+CN1FaOX993SFFCNeH70
+NCbDKqVC6tHEkfE58STVTQsoKLAHVhFKklBQu2Yp35JXW5sVyNh4psOlNF4qt6Xu
+siBj181DfR036hE1fskfezq2j7th9gFikApJEaoKGGlJwGsY0gflvobQEAi2c2y3
+n3ySc9ERp+MaqezVtSjyY0IIlZEQ3olglJx3S69dJu+wtcUKUPxEoSxEKcI1//Q8
+1PX+xzb2wFZ6JXzSS6ICxC22tz1MArL4/+8k99VuaA3IFXBD78zTxKEnmJ5y4hvF
+ZGWmslY4epyRGQdz25X07xPm9jqlUQ6JuUDM9oYNaFHydmBEBpDB86WDPp9l24In
+KPlpmkUW7DSWfEldOE0hgP81ZN9SaWB7yxU9rjuTq1tCNa1Y9lFWUYKj6V60U7Ss
+HKfcE7jIYz1Kcvyd9S2tHLM+TMUyv0kGyMt/mnTlOx/6rHBb4r9qG9axqNf5MMdR
+lQytRAZrdFjph3T0ys+GtnPX0Y5jjyvKdBScI1oXouv+q+kJPK0Ph/fBg/mvLDux
+Fc6Y2ZrSEZm8DKwC1u97fjAY9VK8qgH5leikuyS6tO9dvpeG8OwL6+0xL2a4fJfe
+dr+3iH7AYWbVWiFaA+Ic8Lb1oIUBjyX85Aw9WknCBipKmwFuKZYXjNxHDD8ZgHgm
+hBa/tts0qdohZSwwld0A8KuGIupC1czILl/mFCGMcgY8DZYI5Rxw4qMl3i+C+pga
+coL460QSR2P2acJW/ucsIY6hYyDOAvfWNx+Xk4jt9kO1kiSToSSIqCZ5WI+03ilY
+sU3kLqhVRBhj2Gjn3h78Uc2phQfD6RBRL8d/ZsLvMrEFU1Pijtc0BxK2l5PUkPVx
+hl0hozb1kwi2NVV7EynFPVEembwSHflj8qOd+tM9iWq5aR4PzvriZ2+wR2WkTmf/
+KYvBBVHeOnMVlSm2/lIGXGR4aIp941FgKoRZSZH54tUZUq/rPIfSRsMcXYoGChIf
+zzXOIG6HEyxs/VFO8G4rObyvKbBV1a9BfJuNRzjQr8WfYstwrLTufhMmYZ9ogTnZ
+yljMBHZ73HnVe0XUOcTLm4a0dsKOXp5EMc7ET6gXbDNGbJy5cUPgO6chIqM7kD+A
+GtwJg/YnZfRNKoGULwAWkXB1LqKIaFqD/R655gCf6RVcyhZ11KULZ8fgVO/PynvB
+iQEhAIYjbzOCrXurJ3QIGNtWGr0+Y7IYbc+Uvdqxh2At2CPK3nTd/qsQyUrE8IYp
+OfkrByK3rep4ntcNakiF4S/aGiYqwMon0cC4ECz2ZFkYUO3OljQL6i6884kdr12N
+4piqbW6JQ9/mfB/o88QDg3rVSRvedHYw7u3VPWVWSGNznccVzcLHvcfcctszC7nw
+gZGddgFJxMnlVUJrZ8Td6Fv6aXvjgrEppKgYXrSwKg4VounNxXQrEAeD2iEtMoci
+JHU+vDjVv6aCG9pAeDxQN+KITRKpX4sP1Az9J9B889UPlrBioFZtUPae/pUnMvtZ
+3UuKY71kneb4LExcTx50NMz84TeO+DO2Pvguv84FtVQfNZ3uB26A/MHGKIzjd8e6
+UrMswpv0cOyLRsN0IVmC98Swm+IZRjKBnS+V7EQkbtEGNt81hwZ9pF+3ikNBnO2r
+qif0zkZI2jaejRSiR1vRTPqc4Fah4ewFRWZDFk+lL9fQkzqXq1pSDrf+CuE9Nqw2
+DpYk4f7If3fJk+Cb6vSe7z37qBOftvUmCVzCmsyQUJn2c0UBfjK7I4zGgqMpPuAz
+AfGufjAPUw63563BbaCJveivaJG8Am+fmIflbHvhGRB4FNwd6C3HeMMuCCn5xefA
+BPSrudVNepALqszDyPshmUZAI83+3kJuI1bdNMaInc42Vz0rxk6qZCzod7CV/p2L
+2vbH4uXZX6M/cFMAgbYA0feFvSMjtC7a5hHvFPv9wB+Ea8nF8lKevpXAS3+cJZQ3
+T3CEl4NPFsSU6RWEmhswoEU9CgHtBRP+I63ZKdE5foZSyFJt5i7av3KcNuBsCMHx
+ph3Aka3+kQpXyuvJjXzpSVMouKdSXTAoT09DJZltNYwAY9lEJyG1Lqh9arFVrTZV
+qzpDfusPGMDI0ajJZMizRvHlZF2N6OFsfNjmCR5DQUwMVfPX/CbiFROErcfeHuBn
+JbQQWJ1qDLZ/WRCVH1kLXkvLYyTDjcpZqrHezVIH+454eQRTD1xkQlDmYe9eHR/f
+UzL7GHDLh1u5mNx/gyCOiCsOI7JBkzSVqJU2vQcKM1aop985Gcr8vUF8XCuOx/8F
+yibJgVgQwCOrhAtmliYkUGQd7NnCbItNMNmkbJUm2QNCOgbOWqx7gThtmZCdLr25
+hj+6vZa0bLE2UqpjYwzw9nI/5tYHQaHmpWZbsoms/teeWsw9PPTz7bk4B8C5qcIL
+qH0WrtESIznL9wBJDASvLxNhgsW3hC6wWDETxoCifnRfYSkTsVwB4kVuHBwyVMed
+AHDjvaCGnJobVD24OcK1mkwlxbyRsuSIVTOEaR9AwCc+dHNV4qATKR2c2Rr9r/bX
++Hi4+xUjPc0ep96uCbGXtm+eYrNuz7oeaeQls7IlepDbOQ4DY49Gto9Z908XdkUw
+0mgvMsgeCisbmFIxZS1tZyBjn9LeyyNN1b2GZ5smpnYJnlc4W7U6u+knX5G21JmM
+uWFalTa1CtBhZ87wR3BfoDhCF0Bv+qRBI6m+8cRk/A4lI5GggEz+0LBDlLjvCtr4
+JquCSGFOIL7Lv/oY4rjq6P6dQaZdpbWzzpVTJbGe3R+x+ZUBetMb3gefnqSuVomq
+DVuI6fha1U9Xfloky0mcpXn2RGFBCDO5rQvpppL5txNEtq1VgEAb2h3LWXBgs/v0
+ZYOJNMhf4R6rwJYsx4DMG0iyaCIEBzP4rX3clwCEt2aEyDAHYF78XHsUa193pxR7
+A5r8Pq1zeNszwIX5EsgvHp97h+0O+694F5+oIEp7rQiEYlt58VhKnWkqvh+DzDi3
+iE+Oo/Fo5Rva2cdUZabwlCcZh2/AhO8Tnsvi1HUzYj5rB6v2XLWqsDAc+P7cVoZK
+Q8dhKXW+kQDp0vSvcsZQP0vRL3foWctx909ZP9Pgw/tlY12Qog/PrHMoMKIyeHmo
+qZ90WuHJ8htyi84dN95XvfI+vTm3TjzCuRXkSocX/YvakYhD+kD1R9jdAaKByPf7
+6CcLu8iM4nasvgnA6TjqUnZtRkK/MwwfFkLAmYO1JMQV/hklVtT2R3aEpSTDOx/h
+Ga0f6CoT40EL/F9Iv5g/s0Z3x0zxSn5Rb/0XWNHdVfc9pAcMZWZytw++W0XMXE6H
+hVNGTZY1bAYyhNjygDrXb1k4AYi3jXYspmqSmy4PHrkZxmEFoe7Z9oOHgJCd9EdF
+TSBP/GnVNCal54/X9tHgSZ4ZjulzGFhMVfx/NrBOsEM9tZMgr7Zj8U6S/IwrEg6Z
+dFnJQ4oQSC0QjDiXm3VwNeDT6/qDLcbsHo2Op6sPxUVuyRoWph0bodG/qpTHWNLK
+93TUEzhKycZmAK/slsGD/QgqpoMxjbrm5hCraqPQ9581qIXwbGq5SPG2b8+noMbv
+StPTctaDdYk4A5LtDqj8eyApPCbxH0fHriiPlo6uwvAdC6kLEXr9Nqk2SRFywAOX
+DaSH24eC9YS0VmLm3cKdR4ibfIQ5V6HpzOe39CiNQvj7Fnph6SwFqq0W2mI9lcDV
+gAlLYxiFscvnbsI4lEsyBWhmRB5H5L5Co+f1w991i7eJ1JZWGrQiXMWcymiAp4Ho
+5ocjdIWFPafDuUelSE4sbA2DA3U2q4crdaouMSxuu4TJT3viPaXyBxTF+YQHKWA8
+4w3uh/XRj/vNfvHMZ9tt2X5a3gwnahx/ZrGWHLU6Q4Xq2zDLCsFTZlV/VhmFE4t6
+F/9XxjPqHPjtm1s8ObiQy2jtbl4xEi/N4p5nzzyvx/JKJZawcMOjZmY728zUV8ut
+Vq5+fOkHmpIAVdRtj1FLmDcoSRZ16WM9FT6jF3/K0qP0zhwAACOSL8Hm+Z1T5FLU
+LZhibrmIK2EEXJ4yvpfrRmVNCZc5UbecH3pLj9Xfo0pXCGqJ4ftrvaiF8MmI1v/B
+CkQKpdHwh3M7SWzn3d7oNVxEcX995/EnNPsIUHn/FEdp954u0OvmoVhPGhriu0JB
+KKGgozZWLeshPucXQzTB3wcdybv5q9k1Gz5uJbgYGOT4EMwNGptR1P48MHy6JKfn
+Ka+N9jqwLtS1o4uEjS0qsKQQd7W10xvXpKtkBD2dO8ItkvuuLaUCl1RgEwAtv6nu
+ojZtY1RVJecvFAAA0iPUnko3kePQkoaGY5VXyKgRrPssWn9MRqs+V9KK1cgYg2pF
+o/eSayF66sE2SeEI01Ju04m0BGnmLf4do2gsup+dlNqici9nqGJNrREZzwI+y0kQ
+2Bl+gFvX10rpXlacqK0JzV+MmKPP14N60/YZo299KAlzI7YpVvpExyIdsS+9mhIt
+MCpTghrXlJ1oF2C9/162Ml3HUKozqe7OQF2EUJSxAXYYwc+8BoSSD6QDenrSUTvC
+vUWfGwah/Af2dqwAEBUVvWaynFU8RzHb3sVTAlfdk4cQxc3GWO7+rDcIWib6sSch
+AHpDCzPzxjpD+GQKz5n3C6hlfOGHzu3nR/fZJE7KMxNAxWd+gWIayloUVHufK+GE
+ACnovX7hcbpoJ2KfeEepTEv06YPFgz+YCRobRWrL7lWVoV/+qX4BM6MvoBbtLMG9
+oDkFgnZJQvUhksZfWb7qk9zWGyOEDdt0tW7I1I+KtA5kP4/xfOwgwcvtvVucwfje
+9XW4acW1KiSPZSqCDmBnT3+6IT2Z2anfz2duk/+5S8D5nz1oTulTJMLy+Ao6gQai
+xjtGemPXta6r0DgWliPRs/6jAw/N0Fq4r8DJ4HUX0IEG7u2DWkLCDnuwTX8uNj0T
+gfX0TageEYZJlGAd8oT6oyTxEdHkfGP6Z3olpyJRh1h9IsguZcDeC/Eg2HZHHk0Y
+fqrHt0Gw+ejmE4oA0I6klBsfzgJ88/lqFGP/V2OmHLwCjEanxbr5eYtzO2IlKKzY
++S34twicTUXlUGZCblcr+amSoV1G1faDtVCTZyxZM0U5vD1s83WUhVJK0KNH21WC
+7vYJpF+/9rd13Qj/Ta10uClskmuMw5yMoYFY0FLtCRIZ1/2UyXXSxrN2eelmjwfb
+DKmZm5OsKPlkxZc5x/6QuPXgMy6a2vlLWc301OBDOxJ2q1qcKkXbJ0vU6ZUAoBVF
+IdOLB/cV6In5BKVJtvjUsH3JXs2JVJIAp735n6+u56FF4RIUu9KZbRkLkrWyejpE
+fF86Y0lBNiCGoDiJK4CLvaIVmI8MFWvc0VovziRAqlma7Iq7JLRORmJZxxIGAQLK
+AWfvIjXUcLY8z2GD0QTPWi5bUQ1tl4mh8JQHLYBAMGwW8N5SGt2s6Un8K0hMd1SP
+Xp5onwmNczu8INmGFwPOP2EP/MTvmYTuNJZpfXGn6TITMOMUhdctvjuooPDFXTdH
+3lBD7Kf1/+/iw8M4bS290NBWdrQpmGDUNMSwZ/glmCDTBnsdU28HSf3LyyxznoFj
+92Q+W4VREWg0riL9YdrVJsuoB2oqyCdaYW/UeuD+6omn8z4DhfHrt/I5DQ9sEUjz
+NMjP8aP73vLAsvA78HtO1aVV/WgKY3VXTMEOe+6ARK1dr4LMeg+FDy1cse/pj9DN
+xDSa2I6m9mCJy2ikwFuNxUnFNDIKCwzRmMcK17HnyEGzpqJc+VKqYcMuVLWU3gdK
+y5yQUFYifMQwDdH/Xta7v2DWn3C074nqVaCDZzoNv+aCohrvGjYJ+vwBiHdj2DFG
+F30FQzZLKsaN+uPnuOP9W6mEke88ywNF+cg/rUSZMGtd+X+bOvSjUF7z8QgkBdLG
+0Y9CHkjiUSKojItvj7uCY3izTfWgOeqJ7mXv+VgReRqK35fXeK4VeXjfMVJ8dyTO
+Pl4B5LgHOdBVGjaIBODoTXGoMwTslnlNKYpSkBolfGQ94F4JrZCbPXTxZbRR0eE2
+1pl5vbqqfMy5JEHOi4NkWun36zQZh9+kN0y4MokrhehAJQoMzSjYsmA2lKGG+Je6
+g65P5qQk+gj3TYBj95irVkHLC2zxvkqCael2l6m9Iunt8HGWkmnNXu3hRh07xBR6
+0adfXilQkaXkuThf2qJfzOxiLVJGUAjoapI3wZi8+OkkF2NnrV/sRjZfUjfIiZOF
+BFDhLAkcH6xLi5+jgnwK/E1kAnBCrNUHx3nNCN1g5hCWmEyIt//h0HNnyoz3wxEe
+qLURvCa7ZuoZ79fRBmLzPkun7LshFGNTLLhNAqK7zo/1UTCoVPwPt3P2v0qWLJgc
+6daGdPKDEy+zolotjABfKjUgucNKR8QzWLADm7mZ1DUSj7vUy8L/rKQ/Iqa8fQEE
+RwPHDWClmvSJWvN75wS7y41hZOIeDrjiLBq5s7pSfTIxtDaOxLrLTnT3G5yn81LQ
+r/pgEaenbYojhHmrNnUZ2BiPOGzDwCCRuhTgLxyIAKeaQEbgnhm+j4869JqSvCq+
+DilhWIWiwpjPsc5o9LKG6Gn3aodWJov3k1LyxB/yW0pOLqnmIChalAFbRHowxX2E
+T4FisT9ub1GUFK2CYB5cq7DdbVaYAUAgp6n7hincdlfuwPF20pmbMtgOnYKQ431q
+sQKNbVb2aCluDw4pFNLqTYCQh/qGjC80Pw/d9IOl75Z+j3OedADFSaU/RbTD8fb/
+pa3kZb9kZbFXf/T0acXBmfCxn//lTZyrEl5BZs6ZK3szf5ZO17oTiPuccjN/khqT
+GcTpm8FsXjtpvB3Qn4QQHWy4TkFQSBvNqVTdUdLfQmg+QVGiOYPtMmDzxWxr3Hj1
+Ni4GGhZ3P5TlwxgayKpXqxYJsBVj6OP0/b77GpiCqPvivA2vFCYnRXrGqITXRZDR
+UAuP+QWn8+1Pc8fhBA/P2BqgF5UeYgupsbOAiDCGlE85dkqDN4ec3wLJansYyFKq
+B1+uTxvi5ToWfhgFTb7/olSJfKJemM9BomXrVWEbJiWBA1x+6O/SgAb8I69zPI5X
+qjvV1/+cJafFbPaghcEYgIL6U7rznXLUTXFEIbjrmFt6YCyQzTgUyT2zKQvxNr/k
+oOkzgwG3WPn2kzGEnfIz7p4EqPp+U6rTJlzu6aCqFrBCtBnnZi3PTvqKU+5PbuWY
+shWCjE0xQS2X3R1mFgnQ2bCwMBJx1s95xMiF2S3U8iTu2nxai4gwRznveS8L6oiV
+QJGMsbI8CBIT1QAFhuNwAf1mirVFHO9bl1Anxki2zrN0VsOgHQ89msEv9nOa2kiu
+8u0onsIyGYtnmv3qdzF9HUGpXbDjiN3G0GFWCU+KQ/nKdtkKzVYtdJnU5PxhW1/H
+FJhdhoXx39Q3N8ZdNqFQFsc7O4V1m4XCA+3mZJGsS7fDK85z9ys/Q0VBEzx1phqZ
+zYuiU0JMquNsyCYd6UNH1GNFZwwZJaGfSYue71yA9RMYrg9cfOTyL7YNInxG88iQ
+IFwoqw2TQwutLGjXRFwycdlpNiEi+KbQdnzkQsPfD/gWbPjx+UHVeV0XrLzgBbq8
+CBrFK1o8u5wzxqkVx4HLySicAAoEC0N4IFG2Yy958xLYpMYKxGOqyt1CJxVJEbVg
+30WjNYPOxalzPwMxoQvKz5tTarxEP2JsVpvwb6iOL2PKKaMEg9gDBMogNmGY9+Wr
+FPscb0jx9xTfmDXtmT+bNcOcvDIfli9ydZkuTII/Y9z/eKVTarQrs7BUO32Shfjd
+kjstC3VsfkB0x02GrELZzDXrkMGkBLZWjUadq4F1aOeGE+b/W3P/nrNDYZJJ5ius
+HT4uVgHR3pYecjYG731T/zof4+QtGwY3F2rsdGpPpYoeMwrhuh+FXfhus6kWUF4y
+YSOFk1idqjGzC/dIZPgZNm7Ihns+1fJLwadltpYh79VEkZJAA+FQRevGUQn1cNyx
+pmID/zmLpOyONXDnTCXvtoMGFPLkhoiTxqC/ngRz9MCdd9G9bPUQFNCSIDat9eU4
+gkzL3MXyE+91XuAaXmfQTuLTyehZEhEyUUOgiP+tnUNgKNQbar4Ie2ApaC1T+CFu
+MxOd3UwsP+SmRqXDcC59qJqpPU9+gomzigS0RZRWk757bKVxR0tbf2v4rll7pOvL
+22Llfy3vNQTlrxdXRzeR7YmfV0jr8IQ5YZ/D96QkhAi/qP4N+pQQTgsjxzqbxvbk
+ZgRv6IUhNuLgGd1QvtbRHDvGXbDCDEfIQ2Vv9uodTN5HPLM/64iEx07Y1zMOdDsy
+ofijZkzotGgu7N/Jlh52z1oFYqvmf2PTDKDUHyUGxU18iQ4d4WZ5uRSg+wvqy6/U
+RCoUUO75krbT4zVpsIiiRLMZyJpfpHWwU+OvghnI8AiVfk1tZy23h3himOjO7RUo
+3B1BIgRuAOcUL+2xPFqAiqEk5TtT/6K6DUcV3jfYdk6hqCQhF/FDNcQmSukTzXU+
+kE2kMNuRol3SKHPvS8OVjVR/6SSQ5gSTrqXsZm6k94007z9GYYbWp2Ln2PlY7xc3
+McMfv8HUUzrhtbSllr6kBB+uuMl/Uo/tmuVA0SI6xb2eI8TOoVwAXpJdEFO5I+jx
+Z6CyqK+rA0bJi5sVBBU+CD8xlutvRKr28RFDLtR236OR/u2s+s44AJ74na+CMSRL
+f8gCKqeDLCH2gyARxFKjXKoUMz01TlqgyF2FPU17qu3hDp6kpzxNnG9pD4qhJpXD
+7VoAPpy0JX5Q71iqosO7VK7i4f5Nu/luU8lz5NJYVunzT1UKOJ79xn0/iAXfyKEG
+lj/lTOYcjDfH4TpGpFWDNL3t7oR5r5wtBhBfkptN+8TcBErzY1UbgA343Z6NR58C
+7ZHwTzVNnCaRHn68jBDbVLglA2/Dge8xMT10dZi97N2hkUGrnekTeu7iW771+x5S
+N2Y+6JOBNrlVdvUZ2ER0j+ifWr+NMMebgK5poUbFJq2NFKbtfa2HXGtSV7DAcfmw
+x1lI/avUZLQ6i0bIsTik9l53eV1E6YDvCac/wWs0FPBj8ymG93u2tHwNe0zbvAJW
+zcbw7ZhDL0QKt8CwAMRd9nkCplqQftFG24KFCMblfkSvTCEu0r9Ne2GEcGU+zSLB
+kUK5eKKhIG+koo57DADTKLqarl09nNsSHf3b/1sFvvAmG0mRdhCcxVTkzhcQ+Vh5
+TAmBSu9ZsQ447INz2KUe4ESchHg8miijMSKdwLMu22O/a/2NN5dkjI6p/GUi7mvz
+A3Oebw0vP5QVwCJG4UEgS5vnTM7RmS77UXRkU1N22iuZ/A6n3/q81+diGOmU6X4A
+i5m/Uiuk2/hL6iYRjjD/RCBOs6NvfAplhWMPNMfXwmfGXguVSIQYOEU9i3D8xMMo
+oZpzmVIl9wETazTDEOT1zn4VZQYRWycCjVo9NW6Wye2cC6xR0FzouI6lilpwkp3m
+z2+Cd1BvBz2R3I9PqQ9Snb7CoQBjPJyT9/EVI/bKAdpZIXMJy1AZh5zAOJCf6S/t
+CuBY5zqqpbPO90ftia2VqZNHaGIRVEg3M2ID3X91p77P46hkeqW1YXcmEZAVkwJu
+L7s0fN4uI9h5YBLUBknZcqjgIjyQivKDdylF3+aOTGN4gCMOruwG1R1nzCySbE1N
+GIFUfitabMKHnwvc/AIctp8OSD0e5U4kUcR5zqr5dc7P2Nh0dkJj21VEVHVMQaaV
+RDa4Q0C9341DMnsPF6TZ/buY5nZ6CJVIgcPrlIYytDE7RriLixE0i8H03QMJAXl+
+S8HPLwtGXDCLo5RImWoQHW2rUzWALQSu4atQYqX8Sd6g6JBtkJQg7dDb3430iVgy
+C4D8SKN6Ns5t22rhniI4uymslA24leTHm5gvaSITNBMWPdiUJR3ZyFlQsMD+hogp
+O1gDx9uk35QKHX/uVrsOCi6Y79OkJpuGadP6gqyRwePKp9y1KDMT9FI4VquVBWPM
+y3bGxqYqVvhrhzDeX+YWgbKbbuAcMl8i4Imk6bku2wL1uOJ66SUiOy+UQmlxyihb
+nctxiI0U1CLrf6yxjMfk31bbcaBWkajKMYVsDRenCzXvDQTh8KaT/QXn8wZudvnW
+M7MYY8IQ020fB7GFvbrFvug2dvHiNupDpcm8n6KY9H1NqXq1zLFVGBaqP3B1Okqi
+5uXUdiIioiclwRvgSl/OzCc6X6y/dMMNbqXrN3E/sWUzMerSP5MzLGCkCO+OlGbl
+2GGH8Dc9LrAS945LMDxRFMl4FCnhMxIW59I4ZjXEzHOhDosSXYS2AZpPy69qrrvY
+QBQxO4bHQwLsBoOaI3exUmp9V2+ghaHb7aCfZh7oZhPcdlkTe9zCNuY8RkV2hykE
+rPTvLCdx3eGZkcfetiMWypX3VYTgQ8WZoKsQqYNSY2t+32leaKOGNKxOoGClXgrM
+Ev+GpNnPzZqNRvOleGgA0i1Eex9KJ+Q1hCSp4FGqPD+9gcvwSSKFTpdQM9Ax5E67
+1b1/toloq64MTc3vEeuYu4R1s0cAQYOmZAZ3V/BzZSSLaACPqeQTHL5ujN3fcL+N
+jyftOLbXp2shy/kSNGVj42NUhF2irrrhIeDBCbxlTpEma97a33TuSxMnJkmYCDeI
+RrJlQ9DXZtuC/G044j1aUNjCaxlbEaDpUumtX+CYrBClrdwtdZ/rz7wWpTTFGHfN
+YPzS4aq+myPZgAofkpID9T53CxZrRPCdxdC9LXu/qkrg0JIQoyb+NI/RdCJ39cYD
+ROrtKjA3OwQIGppgDCfeksRVTntMgebZKIziHLSr/YoBVxAPaxQR1fez2zwm/cMk
+op2NqF/WmThbzvBkyPi197TFgiMFoMQ0ry3g+8WGCpt457Omd8+PkyqGXkcp0RxG
+XrkQjwY2etlE3keGLMmZH/5m05MA6M39PlTgR8N/kN+GieqDXLYHGMDSA4oRD6dA
+ZLcrP4Em6n9Nwjr0TmC5CvGeRV1T4fTXqPIW1scxil+38p0fqZRL7K6V6MLIS+Qn
+jOj+5Zpg4uoAnA+xtj9oyybZW7HpOLdvwgghZSjZsAfhHzbqtlcTJp6QHnwxh3QF
+/7Lvz6ByPqUqaRkK8R7qJy287OHBFQuoBbuKxRUKJnh97QggivYJSAlEc6k45VNY
+AtNRoygeAfE5gIqikX0GTrFXWV5ONxpfpv+QV5qHmY49cRxF4y18G3F7JN38DS3r
+brxjHb879l2Ms1eHEw8R04duQy0RZdsdeXQoP8NPyYvE/lSGvVqk8vGhDQkPoDig
+y2aUlfNZjv9B4vovCKxa5PHcnouwLW7sOij0xEH3MYWHWf/UAmKAaVnAauGTs1nE
+Ji9EZM+p0tq4mUXXg2KWiP/Oqm/iw3sxYum+XBrTAvcH5uywJqdEK1mywcyuEYG8
+r4D7L9VyXDcr2sP+42wzWmrIdOn8U838QOkmrjbYo4cH/Qn/Fz1ZvXT1iSkhJhxi
+Ca0PGNjV+JqirSB7pYn4VtrbSpR0c8iC8SYIZcLvSvPU+iCbXXhu/9AOv6wbj0xu
+hA9TJTE1/d+IzP2fhCakbLAN1KxMWOWTM85MxdhKcTBp3A74du9SfsMb6/Boij1i
++B/2BTcnqAWBCBbmjuRs3JIvvkBKS2l+5hdtAkQDahEXpo7MIOe489cnHvmCzVwn
+NtJzYvQLgssUtAs+hKr2YXAAppgfndLSD9N2O59db95h0GU25Yxd0vbTQ9Q9z8+T
+LbaFi5mxDFE1+OI8FvuWhzHq/Zt5r4ndcxZ9K3VwSuOQJ4Zpg0TDO4J+mObH04Ku
+HK5DXS+vtJhc4k35fftK/JnwE9CzYO5eNBPSWCFxYfBY6TodQf0cTM5ZncIujnYG
+foiojbUSp4Y0PPosjOknN12do8bZf2xmaqbcNEg7IDVT/qPmWAKyBgcZJbRrMNv4
+9qzP2nXIYPvuQu9cIFzY0gaBiJY8/8aOpzXXt3pdnAzKzsdjxvEJYrKsxVMrC5z+
+NGJLtOGxHyDWkSjWLCZN8SExf77uJd5VqyWJ4rqreJTTJZEuAQxQ/WOlv9TKrFz5
+KL1te4foBemIvTvcCRNq0tUPVwr1D21XGNNx1PmbGnvL/p88I0eDI/ggKqxr3YUm
+siQprvpbOoJgcA+RzDurjtftIRv3rR4VuQDgzaXw/se6Bf4pLBJoYRG62rYkIfgQ
+ZbibLcywdV9ujaObFnIZP9qHviXrSae0/Nloej4f6MYysjGR/N47oTC2g9Yvqggw
+fsMQlyioBVps+C1qGF+4J+Aat50otViFhQzqUAfAs6I8VIpGDyIPp+0UcJogQKbm
+RLRotJjU4T/VUsfXqQrp+oMnw00c7tA+GwUBz50A+Pn+lyo/xmGJ3HB4GP/KsJac
+RPE5+PBA/GKvJyvXsNcG8G0+Mcrdno1W3jAcckMqk8KgfyFciKHGZXrKWnW0iJ2O
+BTohDxKiyVwQIDQoO5GBJoEq322gTL++xxnCDFKGWRKny7v2hTGPHpqflA1KqWB/
+vL9GFlKJOjZlNUwDLqgoFTdFcfONFA3XmdAVPZXdMPzaMnxZ2Si4vZdmc8PrjHtj
+eOv3aBx9K73x217mVCckF6tMXVDv2G990af64km+putM32LCp6wgby+pdtdzpCTL
+KcB6UIHEFKN+7IGCx7vjzn4+13qpGoAd4ikANGzcYbonNcHhI34IjrwT9CGTbIwd
+2xbRUfVMXbgDoXUsCUMYx4kyYeqUdDdv8pWpdlMrKFkBhWBD0/YNkrGCvKB1eKJs
+w8rpxu6quAJOzMRz+jN4TOGnN356SVsHw1MEwzBpEqcuXa3BirZ4Chb+Clyb0kp5
+Rc9HZLqZednv7hJjNcFXELfYEKYvOK2X0fXF/F39zN92w0de/xJpCJU3fmTFvTZD
+DOuUgfuthbL1l5o2vRePe8dtkpP275ybH57p+qnDnk3AzXQ32m1nWGdWQq39iXCu
+uk3Cr1w0uKvqnUIWYRXZKdcE6EbZGC84toY0em1zPiFi6V45qwipxl60teF1pZNv
+nxdnj8pB/pbiOZn1ctf0n5iyOFIsLEmL55xHRvwmP0KGdYjh2mFrrfIvzmOX6BsZ
+Xqy4qdr3HkPDcirk2qlouoKaqM/ZycVKt7KdCb5AVRLDDKfbRIL6jSSnh84wWV7Y
+XTxEPW5DzEq/82wFJZOOgMeqTcW47+W9pICHH5ibCzZMeAyYt6GYX1sg04Fa2TmI
++qakHK8ckVlvHQ+TMqJXPN4KLr39FjPKfGow4RqRCEnAIC7G+OSElcivEQyvQU10
+X4Ie1uR+VLCkYKd6bHocLrjoJ1397BPsfJdad/LzapI76JWRM8VVslN3kVo85wuf
+dJ3DROC8jfvkn90yGDOr+/Iamwe7aeNxQMqAqCoJwDcZ6xz+ItJWYN9a/cnABh35
+dZkNSumoNd/nANYizR8O0oTl68J/gVB/Z6btzFrnOnLE80B8rcqcF98c2bYFL8yG
+G2PSRY8UwrNEx3PUJcx6umJ+K2DWd+/52Tpedywe9pajdhQSqojhFxlGUJiTwZo/
+Fu//6+r7jUABDS7a5QAVJHUvl5c384Wu1379gWGj33QRW3b9gHs8l/CTuV5J6uuO
+CuYvQxyNnCSe4uHqJRm693YcCwctgaH5vXUqu8sLPRVoOcwbDe4u8dw4Z6Sc75eB
+l76coUlqanW2iIY+4msfznm+RL72pY67eBIeuiHc2QxOi2MiuHaZ6RV8MExPC70n
+SSaByT/a2OjhKtavpphiOf8TxbMC1BekIYGGSV6jIeOAO4EslgB77FARjpJ5Wryj
+VQdta1xSjZ7owdCatP6f+/M3CocgC7KcVFhiKtTPWynAmY06KyyVpquXyKlUJ1Fl
+ftaHIRg2VaEGuNQ7QUsoLFLN3uH1Sx8PLdidOkO+00vVPQdBUshGwvmw7Cp7OE69
+WD5i2cmW+Re6+FCfOZc0dSB4MipzFJhXQKqo9LnGNZg8FvxOh0gSkKRY+giGPmWV
+jT/8pghgvG2CAoGMhFSMum5HVxo6gifIy7D3eShdzw1V0mFLqOTVQHGZlm4DU1Vw
+zaTTvod8ga2sd8yX057kIE4YDEHmyYnMkd/mWZhZLwgWMRCyZh26JHJrFfRl+a4X
+G7UDXGOfOk7dVMixHzpQ/EbQHf0bgMg4DbLQq+7lNP3LWWwudihCtjX8zeXygsif
+G0PtKD0860rbl44qaQX7Y0DXD0fdDm+uOrc8YbzSlyBZraqXm3VlbsHvFaS+yvNl
+jM3Gk1/zs/sXOOHppvjaKNRE8FAKwuID2+wu7vGmlE4usL1ZE4BwDWfu/jl9z7qY
+TFKwnMhvruxakwq2iTDy9i2t4ZRp0OkpifRqXht2aE60N9qrp51Lqg77B1b+joM2
+JyGWoreXju6E6WcGE8S5yYHN+jfe9E5X/eexN76Qdn4p5IhmV4j+YrXLy68hbbYX
+vkE+zxGMUBedN2yaaWt1Pn6o/bXLYvLiVaCnnZZELoxjE6uAt17BWnyyMOlQJL1S
+led7mRF5LB4RObEYvDdzpMYEGe/ehO1WiOjB8SEMEGuWafrcYhpBscIUH6lIq1KF
+LvjNEY8BAoYhzeL8az0q5QG0c1qcvfeMO6IQVYY1zO9JC9jcP38vL7P9ftjGV/Tx
+rA3LUjHt6heZmZ14ZTC+Bcwu5KepojLTVtFcK0Jp44My4l1rdyD08AY8h4fZwzQj
+a4EXxLFjVL4bWierN8ZXcK2TWtM7LEZGlwTGB5MTl1sWNO/bknKAngBIrMwoe4yV
+3tHiiGF68D/Fch/1KG+cnn+qb5zVZgCirxLTx+9oYIlGRqoHLS+tOXDLt6u+pcL5
+TUKTGaMW44e9+pG5UsOFhbbKKK7ffeK4+QfYDX1WgjFRl1uiQjNjfRJthsmI1vZo
+1bCwsNANkM/Kq9WqVxFtUdahY4Bz514b5fWIf8NDD56OfcgQjcl/tmjQ4RH7iDhS
+S1qgZpRBzn7cFopxhGQyvG8lUiJsrn9njP7cgIJbBdVyQ6zMAnF2Hvyfh86m6FkK
+j1k0VGoYjb2MpmzbMkIehDzlGIuLEFuyemzUo0/EUwaTkHP05FAXEOYmp74DBIEk
+qAfKc10bh16vu9WGVXDn/LoelCKvW338KbIuJbneUZm/hMwhfJ+WicqEZnqwZVDq
+jGyJpAu50DFXmlxyNjToc6hFKvBMaxpLM4742PPbffvuXx41mb3/aPvU5Rt3VROB
+iNTqK4D7BMlDorfgGH9QW1YxTIrDakmRPgwRLrUUeaRH6HC/Ey2Nc9CWUznz+mO3
+gFikW4Z/8q+zeSe5T2GqDvdbj187PkORqhifvnc501j3sRd2Osg05S52uZnh8WK9
+e5jwmDAK6pOqmBztwLMMLDTnXlYNTPbc5wUvt68Vaf7nhkdEjGKmLdxri9ojCbh1
++4U7ci/+rsFOXZLhRh6ECi/j0ELqCSVyJHQOPo7Nhz7A873Q4ACTcYPf1L45aWsQ
+iTT96YHjgZUnjcjjEm/1mk9SPO3hJbLy89W6il8GUzK43snrV6E5k8qbtRs44+Gk
+1yjISc4yVLSvEAbPfE2w4bGYOTl/zkawbjSS35o5TwyS4ecbKTa33jDRe1hP2INi
+6izMTeOzFvadJKDe4cRfj7nmHQghn+zhE1mxE2dIwrMIIpLiwbG7vDxPGMBip6U3
+0xS89IeKn2imxsU1yY/+SM6FRRz8n6K0HmySryXYLxvFgrMOrHJ6/biDEO+ji703
+GrnhrvQQgxNVkv2dX0sscurES87fcLCg+Dd79Tea1Z4qNbaemaSwlpbMYwHmkpsv
+amF/1oIElGjl/GpQQ87R4OqtB+WE6ABiYgqikC1zEzHwCQWWr9EWD5/9Ma8erdNX
+FxjZJfCUY6znCY0Raocz9XsV2n1IB14yCZcxUzVRQJsIfZogX8bnv1nZZiXVpa6k
+0y97I9JVbWYHznA+LW8tFvl95Ja8NWZC/WC7TvCwigdNofKs82B85w3cdx7QNu/6
+KI5/Thm6OZWI6N8VNbTxzAjsXG8300pJsNpgGpThz4hC3CUtmPZkQegNgwSrxFFU
+uAIIHOwqrrRUCBydRY1PxC9VsLdO3b3l/Pi9kmNYPB3FV9Amo1IlCfaZwCYZyk4Y
+2DGw5T95ZnvUHBS2HlbHqLF64ftvxOumNSpseokBBnsTgpJNk+pu08OuciMa7Bbw
+BMbVjxNUiIXkqh7O0yK0WXkhW1Z2cz+dfzIP+3fK0hZqeNpFAkicC4CMQMYmmHPm
+BaQY0BaZ1FPNsp4doXYxvcFBcWUwdhf9mPxLb9iUh34Q6h8OT3Ka97eJ1C9Niz1f
+iVeyZJjwRs9R+6X68o+vZZANvcSYcBpBFGY8+2CHxPpg8/bSlPzyiVBchkCl2U4q
+AM5r3yxJrzYyV7cq+1VkzMNYIrd3tEucJcSJ5UJkCSF5MBX2a3tCB+8rlzD5CGaV
+DeIY4KH9KqVG6XaBp63Kmk8uRhtmcKcV0Ncpzm2jq8XeHKFzQghezLNSH2+SrQZe
+icw3PRN/Bu0SubboEZgw1DmmMX0Gc28WUlMw+KEUosa/T/nXW9ZxemMgj1GD+Ux8
+sOm4nbnAjGXhReVWwI/jn3wwtnn3ppOYEwipYJ7Pz4UNTQ1CzGLwyC6atsitEywc
+0foueSWiZDNobk48G5LB1cuCG+D6b70iI4/xGTJTYqIMgHsCU8/i7MxKj/FnGLpq
+86RhAEP42DaizargrE7R2we/iHdWQdTUX/YrSxY/dsUptN9znrOERrqSzDSmCQeb
+z0LSgGW6HzpCMT24bZlKEEGLVB6nJ7FfEQu4t3Oyl+yGqKHOCgsoGYKlQN8XFiWD
+27ZnMOLG6aN8GRwnCA8gzp9wx2xy3TzZNN/fQKV5WTsilwzLN1wmRO6AZibcx1I2
+czoGIdTTCjBvxxy3nWOaklteDvDxEv3PQs5eXopIdjdYWphcmCUWmjk7hkoj4doo
+wl9fGQG05ktdwWDH93LaAw5cYbm21dvQn+lcU2QCwGAjPI+Lb3DEf+PMWvkcY4q7
+WyL6efRrZpQvPG7jG8npIVtU0n+mpLAb15omvNKr3qB5Fk6XNq32DILyBQV6rRI8
+lX9ps6nK5pCer/vLVecZcen/vf6sj/w8rzpWZJmmkw0c5FSX3t0ZevVoPmd/zGgs
+0EZKT3aFHfAhdTND6qtfXgxu/vo4WerN4FyJZjDvqSMicG13ih8vPHThkyXa5rtz
+diA8hkT8nE903qm1aZUQLsaA5s40ckYIi2kbx5AXUnMjizgbwQJdiqtE6NNQTEnH
+196M9yqEptQjPMxytqp7mP8BuDFZCUwe10OjXybPULEsIuFHVH8vYCwZtpcL2nTo
+voFCjHHeDFhD4jXomM5ISI7rZa2dk2bxb8DZQOeHPfmZhQ55rmdMNTmXmPyvldS7
+lBJEaebRHMxI1mLuz3DvHnO2h2GCgLAf92/kD4qaoqMcchRqglIXRA6DIiXufK30
+6zqtgfrl+13XiisET6kIDAYjw/iVbnCmPHW/v1fFCDecgF/AIqAUHtQ2xboL2N66
+kNEo+VaCEq4nl81lnxvjT1Ir4SniYQImsWAgs0J/3GRDs4B6gNdumBH3nX2qfPku
+KqS94bNFvJFpS1g8k1ZVkHFGEuw4Cvnn1uGKj0pXeLTCH5kzzvh14+QqvLSSaAjK
+THG+zJkcZ8yB7qJVGzV8Trnr2lMXkaTyc73rlA3ieQYJ6ENydxsmPr38oAbiFh/b
+zl4jWt8pJ5oMpLLaICLJXfeSr73SU/zLhhSZuos7X8pyH+NtRoYLloyjLF6WrF/+
+SlDJL2B9PLkweiYZ50ALVEw+WUvQW9HeaaTxnAca92yAyNFSKqrnK6WmHRuxtd60
+PEido3PEk7xcY/4BtkjtoqQuLRXQwVzGW+4DR4JvXyiyHREeHDpPDLoUqhV6QsfN
+uGFOIH6Yhxuqhm0Rou6gR9iWaFoVdi1Uzxg7lcBZrtgLEU1HCNzp0QxOLwUUrBZf
+hv+1sSuR6Q0vAN7uXMDHoqPdZP0BDxIiey7Ux+mzjRp2Q/AHufF/1nzgiX31uy90
+ZrhZ81qY86FVXzRMk7F9AphA5K2mJTj5rCXD2dh4/Utold8mCsG7aknKMeWqGJcV
+c4Mt5MBVcdZSu574eEIxFdJwD1Z5iiXCmoXgFMKPP+IhdB30BjfWrvYJkJUiLOzB
+YuJAY+GY1S6+8Yo3HbNzw6Go5joholt31zSHNF/tGJvRuguTBGpFTPxem7fC1wB4
+45kNFgdFC8J5EysemaQejcdgnJhkt944zJ4Qyu/2dQt5qdT/mDI7roGAmPdRh5uT
+1JNemrEvCnMdWYDpaExgSfooLUYHdRXRTF8CRNMQVYUZaDHhh3rKKc7/+ARuy1RG
+VjyQH+j0z9PBrDxw9WYB/UofdJS6nWM9+LA9tUMzEF71aa2Lvok21FJvWZLbzcr1
+f10PutEIGjKGPDAO60WwCUaqxc1B2IIkI5yNZRsGEra2TiUGU1ZajtVb/IqVXtlB
+q9DqV9EI8bW7IhizxKlEIzHVqOusvMGii7jW4XPw2I9ZXgxRVatObdYG1JfYbiQg
+EadeBXHfhbaCS8vJZwh6Qqyhg31qO/FBcr4LLPXANum7zUnQL7bBaG8MMWLGMHMI
+rc01Lq61vubGGkTJuWXfRNufn0PycE0Sojvm8juICRj+g0UupgPetdy1uLxaQJA/
+tK6tsgpdm65GSBmw66QVAvbUSBqqUbs38U+otPBMqjrgJP4pwGhiO5sLAhy5oQIL
+takj1NILq2vsLCQUMgssGun665kg93Fq5Rn9c3xM65jYHB2UdxQpHSgG/zVCKNrD
+GHKXNnHqBJRnCyHOvppZpV9E1jF01Hwc0qQLJXmMCwK+RlY3RDH6Prt9n7X6CcG2
+NkO85N7qsugxPowjSzqu6VGBxig+Y6LzeLmRwk5P7P/tavisInfsjAJnJGQM+h+8
+w63+wJ/0NFRh9iyM9LZSnItoPZbsia/+Mj+VQ0Px2yse6O6cyv1sgOrVwzRKRt8W
+XdQ79ropbhsVNoktDwRiM0J3WjIpYTtFTuPa+mQkL6vLrOdbKNaUvNgswjG/Ap/t
+nUrxKrHFufMhfQNM4/s9+Gop3XhaXYgmTKhdtMpxqcvKbHym99VFrLQFldSTbWp4
+onGiYNQHHVxXsG36at98VB6I5327PepVtK3xJvgXK01j2Bqic35wVp9AsUxOCx9Q
+3gejq6Ny0Y55xawkboq0m+hmJxCEVaktRHb6VDsWqIduive0IL60g03qExoUyCs4
+ARozv7sraE7C8G34Jy2OZAlRtBFVPi70iYSUhYXR1lvvcHxMirwMHK9yMEXkVzUH
+kUX1L2FbCZcPoV+UCm7njMm6Cto2tUf+Mimt25vNgH65oq4dHpgqbdppOzKFiaom
+kzb7sDRLQ99OcchX58rvv/FK0SD1Rjr9QEXi/03KWRRnwk9Mzt2Zit7On53EDBuM
+CeiEFTuEmJlpvIHny9Fq+vQS/dY1m4xnHQU6J7gBt11MKZWwhzItCtbuy84uluI3
+p36hm0Le5ZNr0UVHaUr/uxRCd3JbOiZQqGElc+ArVeEbAYoIcFGDdBAcRXX3pRkf
+2G0kbs487Rrii9blCyfn6viVo4kAAWIcTowUDzlDln9BV0gI9n/tGmXEttOztgxp
+oj0vWvsC024in3jtLwahp65D1hFJGMrzZO4qsj3Ceuoc7M0nAXRZMIfni/IQLSyx
+EzI+DNP3y5Gbi696GjJ9JFUl/jr6r7HngV902mw4fRf0xp4mneKHsXDLOKCn8Nvi
+N/0hkdpFYHcwJ7MtgE4iayxLi1dDh7cJ+vrKcDCAbQlN4W9GY1obd9DCOT/9821c
+3nwoGahoMxEqF+Oc5HiIioLzJUxdLf/Ow16IM9GF6CgRwUBrjid4dgKUhkiH2rY/
+JXY6xYbITZMIkQEOnnpYvVUcvEBD4lyYRWK4u8p8uXMHhHbeDBflQY5HMpd8yMEB
+Ekrr4rIIuI+Ss3pOXTcCktiR2uIMW+ucWwZsL5XVfjpzhcinFnbaCOAiZFOo8yub
+7CM70+KwqMU6A47Qucr7wlTW4MFngoZqoBRXf5hfxeg/1smWhZ0m9jWq1XJ5GjGS
+yCY+NdOmB3XdZtb3QFqowClORjQbo2zg86+7pp3+UUSnly+gFGm7/U14X/13Q3Q3
+hUtU4HOSDbEShMLzUXS+YwX8YGW/Lpe1+RLq9yC3IJlGBJhJm5bixblKKJ9tywuX
+hcsqMGSUeZsAovPQ46modcpbwza16xbWRi1qycBzYy911Ygb9b4tmrmo+86AZbR3
+t/JsjdPDXVclIG3a0aIqZu8Ei+RcDGjddK9ccW7XtcKTSW45K1/EEQDjIGtN56XD
+X89hHE07ci+qW6ab051Gs0XorW8yPkUy6Dd91OdrS+3BuV3GJwfPArnYAmX0DgrL
+nJC00iU9laFn/+Vou8oEG5Mz/EU7gJAi7GmUK2Z7/r8hvWuaGLxG1tmnbMzyu7y2
+sUdqHfgDiFxUtqsdudMxMMtZelofeN8yQSNzKQVte9clYZfpsL5AZWYvytAV0ngv
+nNEbV32HKQrzs2oYB2/pqkTbZniCikux0Tk7CdiHImyznjaZacSNgNqRgICDno0Z
+szp74M9oDzKCbDqstCnlKbXWX7njXj+k4NmYiqUSuP56knKb1O5HlOs+4/cU6jDa
+jXgsgfZuZP9qjW3c5vqNq/ehc2en1WTjXvojD8Zr7hyjpWfh0OzrrDUO+k6PYTCF
+R2BTtY2mai7hd1BCBmi6vfKQvzd4O21TXWIpl/r2ese8xVRvqGziKq2seoxdkk66
+b82QHiVbTxPxQH5GXIqVj6fV2vcbZ/aBNnjcMvYAAsinieFkUSbqBeq70oeN6aHi
+YSn5L1oArY0f1CreiGoavkhTi9Lx2AKTiIq+Ix/CzCIzDgl0whx00v88f9MW1Uoq
+/DU7zFTUjmvuh8v48L/uovl9d45g8jF7Mf41fXvVMXSVvLadS94vmIaMrNGE0Nmz
+jptgHuYKQp5uDBfTqzwbrd+PEMh3AM95sX5UJOjMWLvpFDIhUGT9ym2kagbRfinn
+NIMbw9sAsfPk28F23tBdCp9e4EfiPonM5PcxPwMwOttLXQckjGqzt9ZeergjoDnn
+CB9c9AdD+eg1Hjmzbi0q10WjIBP6FyiByfGSeXdlmiM52j90sjjMBznpUsaY0RJB
+//Y4P8Ds7TIkCaaXqGZbWud1EcB9JBANciB68r9/3IzvNKTyY+h8rj2Vw7vz/PQ9
+uJ5oMQIpNCGnQMT/QG/PGriTXwpNxrbfaIcdeL4opb4q0oMCQBgHqe+f5FjjMJyj
+z4cKbIYS+lsXsNRiOO5R1nkUakdkVA6TOViSsfYOAkf0BvLAjdn7iB/yIPdXdhjT
+PR2d8QdQNLQ02frEdSZLqkB+zFIx5bTDJM9+CmyLbfdBIElC/B7h41aofzZjmmBB
+kvAhYfMcnDdrIY3+UxWWHF2y9Lh39n0EeaOa+C2nm7xrLrFD4mh9f8HnFREzQ0SX
+UFxM11qBiZYjIVY7HS/KpmWD9hsnEQcAeeUIO5GQPwhS5vi0Ws8fNbsVB7BT+Q9E
+/i0loucwExxuNLa5osYzhqXD9hwzdMbrDCsLiiJF7VHO1FSZ32/UAr5hU7JTV8El
+KExk1uuZN/0wzloscddW92J0YKJPrimNuufBt/U6WvBtUAUSVCIT9AJiFaU4s7Ft
+wG58s3Oa78TLN0xT+GINxUjszK4Nvki34bmndoGwTSvEBFxAIxa+jF/4dEiwi5dI
+yVtI3XEC9GY2waLo/408v7Uu/+YAIr/WxiVymUfq25ba3I4M4ZOjKH4JuPq8UokW
+qoYXLjeYWswz31ruJe7EDjQt8eMrAThdlsSlpyfnQij0TP9ZjoKy3jIFWbZEPQKJ
+5biNYJwqzQaSthKkTQvlhBHO6Su4cW4Ig23jmhKoiLsQZUbHyDD87KB15V+ubAaL
+EhYXY/AjNpXTyWhLwOECtWYvvcad6A4tvkDFlTel9XANRu4yEFchXI6TBk6bHNJR
+15FSu5xSjnLN2Jil6Dg3V48FMQ39y9EBec6YO4RfgbThy97lScupXBMduyrdhFQp
+p4owU2/9t+aqqfeml2gHBHtSvdmmMNpyZ4grpXmtnpX6SK3LLFeGWBpHgAo92J5u
+kAZ0q0Ro7sr/GMIBCvfdC4yTMvX7ojp8+4JJt7ATkkEdg39V8rW166rGzjjERBj7
+jjJxsE+RFvVEn7czZy0zOL2tU11tcOEH2F1/hHGyw9oBQYUP77ff4Le6binsRzKC
+ozQUcnHOy/lZCbm1wjAfqSHlfgOP15PxklXyDabuRDPP7QX5ZqKIzoZeCUGVlD4V
+2cHE/WvyNQRgipoE7C/j2octu4KIzf6rJgrJTNBILfl51o5ykh77+js5zv48bUJX
+Frm6/sHnS2Eg6H6PALyIbBIrEQq7fi/j8Daym9topYGDGfn10xDXiw245GsTuW9u
+Q46bwcn4oH8hedA7jZniMWhZtYkVXMvdqaBtcK7ejPNYaStR/9jfHDzCxRHJuqbi
+WX7zr7KeQ8zj+nHgr7rS2dXycH+0aXSYyqkHPNxmIGeSA0T4tefHE/bJlcJpToc9
+acx1/S8CgmWRCbKh/now6t+Inbv+J2CHTPZWUq9r39gN2inQjwgqKNhV6PH/Ug4M
+9yP0LPt6q0jBCx2VWkdhlGuKUEQFfBtgidgZ1S/1kA3DR7NmnRmulhhHBgaZqJzu
+AthcczhHYzhI5JpVIplxZPYHiUep41+dzcxY/S774bfLorbfzjsgcA9mpQ/Z1GrG
+7ZFqDivpJ1SMmWi6pgsc4fM8NOSf3kPeKNUS/WQ29m9g/7XBIU3JymM7aXG5AGXR
+vVqlN4BJ4YlOQBLvZDJ+UQoVcOqFHwkXbq1oC4OyXTu6fgdJOk1GUG3ZT6hTH0/U
+gYIw0GE3GiyjbzZ8bJWxhX58xP4/E8PgAmjV8WB+Iw9J+ppMAdxQaRk3qwJXCfzp
+oLElhVojf+T3Q000PRC0FCamti+RF2ICd0bejLSndAGXjq+2a6rkew9TY69moMZl
+sjwLQy+NXSgOWl5yvCFo7USYlRYC9p3UNmwiI8AwYmuO475YjwXIUiu08trK/m/6
+yBLuoUaDr2A/r1cBS2xzVygdgeRUVCXTy2La3GchiByRWcc14/7RXFuBaaFm2rXi
+VMviMyZrmsandBoIrS3CYQw7V3GjvY68SqlFiS3nrVcIgeNu5SG5GDPa9OyS1JNk
+5uYzLSQacLFFMPMH6l+ZwX4t72uIhteQdjjFD3U6eCAsFozZ+aqg97Ivhm75zVn8
+ShGm9h4/sC/37HMdyDJ1BgqTID6VIIT8yVUS2LcA9vn+FvHCKjoa9+CX7zU57ftF
+scCMWj9WIOfOC3GN7U2ktmBixsOuUERZhDY7Jui909jFiWKcFovQwgdr5E7JBVMb
+a0GaKT7SdIzCfsZsMdzOV0/iwe/3lqIehmmx8KfsizVgWXDDnG8Ro33aXf5+KoE4
+WK071qDnfRhitSFgIEKXUKDKxRV0lnNPDt0bPNyHdU6Z5MK1Hf/V100JZsvnxwjd
+sIYeahYEmSrsipFn9e4Q+VhBYo8LZaUtoAQMolJVIqDQ8ZSoLvLWEKzTdRR1C1Up
+fFUdLu55SEdXO664gT80bXohL3kzjFKvnZwgbzdVcmQKLogPTWaYNJGeR5Wt3/EE
+3VkFL3FzlzjHI1xt0SRF7hF97HxV6agyOzDv0eKMsFPwhYDiZxFxejvGYD5AudHt
+J7gb3Oop+PQWTrGl0BJ2nyHdwu1pLm/+CuXGHXwZ10r1nmoIzG7LufIAyc+KfPEd
+CDlQ9fFNzWrYeAmoI4S7bNhb003m7NDZfxbK6JOE/NvCje7DI58VIELIN2ABKCWx
+Vkf7+PQRYXPKDwD1OhX6tMC2Qiyx+97tQkRDeoERuWpabMXCJJvdwh3wRMIgpHOc
+P6y65sREw/oOyWLFQFT8w8/mGq9xF6VZASJ3oOmSnao4XsW/Ev+4RnM6TUh7vqB8
+L3zoTjjm2CYCRCQKkLoDiM+mT5lolKKf0VTXw1Mmg8IbI3Sy8RZpry7w3T3HGgnQ
+S01/DStimAdyzMeSF5kbRWClKJLTYC0q36FmOT8n50B1Bfy26iq5YWFq6+PTxU/h
+m4s/JA3iGvc22LL93cBNuW9F7UEBTwtYIcL6BKNXF7sLUZzZKOydbQJofpZxbs25
+R7C0GfyamyTEIwRAzh3XXs+g6y2m7L5u4wUPiY4jHCspuOHa7f+BfXT5bnYUd2Oi
+rVg5UaFDx7yNk7huOIAKW8lu4jOm59iHrrQcWKideBzRIJK8P9bqL+va5/oLrs4Y
+yu5SKv+s092Tvfxo/7FrI5kFFM3U0mTkGuC8SPOZEqohMfMzAuxt0yu7EW1t5CEX
+R6NZqUjAga+PsN/B1Pn/Uiq2JjM6b5S6SzmkkV72aRVenPv2RmUMPNpF05SY/rTD
+yVJYVigQVBW6Yqq17yJUtdGrZXjdd93k8Uu13i6t2R0CTLe3soAPFRPcFg4uxOyP
+XjbaagZWzOdCT9o3+I3yaYRCJT3NkDg5NNhRFxaD8iXoJ7TqLi27XwouIrMy1tfA
+Hj6qyutmnrL3kDI/zJ5B3KCNmEEun/plelejWMfJVD367upU9AUEjFXzjoUWo/1q
+cg+iAkYzEKbmH6d1J5dFm+FhIV56TdMY3RsVgfRbpuhYrrcKMld8+UrtVfh+mkRr
+nIEhb2RUXyuLkJusGecaUOdJAgPLZYNzZ5ntzl8KwIf0/vhCdgD0vVXeA70Ctx1V
+b3zPjxggd9PNmf0BbV3ifO+NSUVvH57UzyU1moSZdqgywSTA+jO7EZzPVyt6pt/S
+5C3mSF7TmFuUJ147NQsxKikRvHzraly+VeWHquHBbYA2sDiVBvG7QEJ0UPQss22D
+pvtcScsxaex9Osjxx5ntBA8hdGf3CNwV1oOQH5EyBGU5WAJqWG2bNCBoGMfurgwI
+eEejbhvFxDf/bQx2Ys/wu5lRVTvpocD+I0Lr0dR0A33dC09w25d8uB1nmtwpStcX
+J5KojEPu2eo1eBzQn7ctxYz0BDjvUbGGa49Gt0udJA38N3uPfgpnGjRrDIV9MckB
+hJVIrA2COmSbz46SDhXPRNFhrzND4dKWCN0bJRB0eFTYobEEVpWRBGaXG8cN2nBA
+ls7KreUwsNjuDi62Vxwu45eJYAgYy12cjg5RSKiBBzYbzX0j++O/SUuWSVUbvD+Y
+vIedRD7XCK7eUT45vivTtoJ9Egtw+JP7EBeFICzOHcLJNLjnL7lzu8Pw+LUSzwxg
+Ps6ot9fdOBhA3j/E6Ti/XczGghZwGGQkrNrs90TW7Qy3blRxg4dDgZPExVElvgAd
+pnannZKlrlNQXvHdiBUpFzGFxEBEeaoRVLfyEtqMinnbxsgLVC0F5ERYGMqNiJXl
+BXM1gFzic6LKUn5tHxWcgQ2mozhk61CQjhoQueVBcXhdLkKZ7wypIT2A3wL5jr33
+/ZcVy+O7ijuugcYn88d+rDevTyXIsIZnxlmdhVFqMwRTmuQivZuBZzfzrEQauVGm
+F6g8eWxodQ+PQBPLqyfqbl5lLhZouxispDU0Xksaz74YIo8GIz+58c+jJFvBKGC2
+zgPOg38URAQhCipi25LzpA8yMvnOSuMdnKZ0keA9HOv719XOKhnNI1MtI5HY4zP4
+dGAXynms0aIY2Sfdstd4AIYg6GUwO2gea00FZo6e53GQsxCi6S3xxD5viizFEFAO
+Pfx1mCtA8oh5DA+mybL4NQgxe7AIgPkbv78/0zUYiihn6n3aXp5Znq6EtjWqA1YC
+c53At16yBPYkWmZT53yuoTxSwX0vZzn1PXuNqLvfWD/QkdH795fBBJP/I+M6K4Vu
+HOUpEKLxRYqqqscM4l930OuNN9Gkpy8kVHiPnEj7qAIRZHt9H8wzlRcUaGrRdFmy
+5bGV1zmYWr9C7MS+4glmqfUIJhKm9foEgzFLT3pn4Hp2JlITtMB5tqTkeJd0/9z/
++RnDtrEkuWTYCgIAhWF2uyFNp5x2iFsfFC3iVy9HFHxxlu9+4Mne6PG1mRFMFOMB
+FLvqWyO3QkCx+6GlJLq0fXPm0skEbIB8G/I86kxLWV9IV5Nd7BsrhrO9covz1M6b
+isTxJtqoZ6aUlnOD2iowOy90qaMN0YfISYOhLnEPJ+NY7y4oW9cDEqYQGBbogMlC
+n5Fj+Kml8uqfL06ZACk/PVAZw0HD6TAFGaZmMh0V3k4KHcTAlJ9wTJdkuzAM4I05
+R202jAUGZbJxBxR54xoSTkv+y6Bh9VqU4ZEeRKoKiboqKJGmab1Xcfs4669GSHpw
+8GQNSua4N9LaYL+6lCNLMkauX54hfxGzX9vjmA8/loQ1SubNmo9Bs9R4BH8Fa5X+
+AiYM3dZuldnylkzQrpw1A/O4dlPFCkehipGDjlJjQSWCdyj2fN9daPcYT9n6OMjG
+ekgcJabr2d04KVGCp5yozHxc8ztFaKBOEnB6/cbuCf8kjdIEm+vyHSKdYQ7tQnsv
+PICqJOgNOL5vqRxZWe/ZoG36AwA+kSnmf9sFFqEZ7ryJWNNTfbCaJPJWCTR5FP9C
+ulUlm5v4YaUix8yF2gdm/D5F+7WVHI8FyYIHNg7LkpsOaY8LkiwQJMIwr+I1NdN4
+u/eMl68wuqFgc5Jzr7aDmDuX7p2mgHvPhmPDQm+/5xK7L9628UlVGgraKZ/XB7B+
+5ytnsegXZRRd8Y5e9smS15nKZXnJQ7wEXfF73fRdROWGq9h1VYCfY5yJ+n+86L29
+i4FucGkHGf1m3qDj6xg/rOAqYLGLRndsN/+w5doMfWwwKqsR5YlHaveA4WP6eafa
+NAmNwJaSqHVc+Y0nYXjJBXLoTZ8n2mhtb7Vz94J015i6aju2p4EGZYT0Fld3gYY7
+6ZLHrBLwkjD/xwVtSVj81Z6aSY1Q4ckW1KEQm1Dw6bmn10CO2mj8oknJo6lw3SB1
+DDd2dJjC6PeuvMwQ4ym2KSYv9rtiO0J8Lq65YXA6AWJNAWm65+Fe0xDq8jK0oV5+
+9dTBl/c4ZhrxtMPafINvLcBZY6FFbfV4dFiSowDe7u9C2KHTLmUabdHgCQGZN/V7
+b8tKb7QuGsvojFew8+2Xy26PTbCxIp7B2ZD2GCV+RtX7fqmP4jnPmXzNggFeq1Iv
+VYAatwOUfMuE+6i4vLA8iuMPRdBuYTeKHH5Km+WobCCuvX8JPJk1TsOiyWg4WN9c
+zlVzUittn7VJhwMpqc6qbD7EH5GSabbbZCyg3F+gApFicBSZv3cLzvIDE7uIJkgJ
+yNrXvFaV5QqqnR04e2mhufaR5nSA1tSVgrmbYd48bp8UeI3Z7UyIHGwLa0nQYSo2
+CN86Tp+jgCRPRmUebPX6J4Q7fEALRr2PCanQeRhO27N6TrEXrhzTgTbFsgPSYaNy
+NkYjFoDL+xN+ZcoOi/6UDhfMggyxbrjpfyb2AcAo2QO98S3XlmFwry4SwMq0RfOR
+FwvHRPbt9o4OaeAughop3oax0RjGf2/DP1L0Fll6pn9xC3OMdB6ZfpRm9j1qurGj
+KpfrqgvJasAaS4vBXh2quJW8D27bwTUJDAuigB1L+Myap/D1K7koun33MafRv1Pr
+aYuepw8tZz0fc0cAO5XSbnWRsfCibycuu8TVCWcHZJ7gGlF9H49vXLKbxXuLRX+m
+syeWuFzTKYm+drubrE+M9bQyCc0gngTI19BwZFfyWBHlo+GzHaehd3F4CXpTxKN5
+XqBSdZS7jUVyhJX6EHTMh2BIz7961d4+BVmfQ/H4ZYaiYVZwEPraSkWpKGDQ2ArR
+njnxpfHs90CCOOtdbSMk6TqbntMM6AH8XRgueUA6bgkwYZi0nj7Vp3XtXF0wmjbQ
+KwW/MzOtcgcGxNunLtTIug1wnVmB5h2ML1I3ZKKgVyHKpjpmXxENayoCHqnUYcIv
+OHk7dZBS1K/lI1MXtvn/F2WbAomroCSWOxqKehB9dhACH0NlHHpjzs/kBYiwlO+Q
+oTqEosr3qld0aInmbEOYJhMMNYZbMAUZUTy+BSH+HPTPuxmVGkTTOvBvdvgVqGJJ
+mJaktB3UeJYijoJBqbAdOI+FMdLBslGhovdIfa9JlqggaP2NUP77kijr/W69eIIi
+DxzdX2fwcexAfYaql59JzA==
+`protect end_protected

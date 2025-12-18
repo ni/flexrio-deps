@@ -1,147 +1,160 @@
--------------------------------------------------------------------------------
---
--- File: DFlop.vhd
--- Author: Tamas Gyorfi
--- Original Project: Vivado support for 7-series LabVIEW FPGA targets
--- Date: 16 July 2013
---
--------------------------------------------------------------------------------
--- (c) 2013 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---    This creates a flip-flop using either the FDCE or FDPE Xilinx
---    primitives, depending on the desired async. reset value of the Flop.
---    The implementation described in this component is specific to Vivado,
---    since Vivado no longer supports the FDCPE primitive on newer FPGAs (>V6).
---
---    The kAsyncReg generic is helping to set the ASYNC_REG attribute
---    for the instantiated FDCE or FDPE primitives.
---    This cannot be done from the upper levels where the DFlop is instantiated,
---    since the attribute can not propagate from the net to his driver FF.
---    We set the default value to "false" so the already existing instances
---    would not require to be updated.
-
---    The ASYNC_REG attribute affects optimization, placement, and routing to improve Mean
---    Time Between Failure (MTBF) for registers that may go metastable. If ASYNC_REG is applied,
---    the placer will ensure the flip-flops on a synchronization chain are placed closely to
---    maximize MTBF. Registers with ASYNC_REG that are directly connected will be grouped and
---    placed together into a single SLICE, assuming they have a compatible control set and the
---    number of registers does not exceed the available resources of the SLICE
---
---    Asrar Rangwala July 12 2023: Minor changes were manually made to this file to make it compile with
---    vsmake. A better long term fix would be to upgrade LV FPGA's version of NICores to the latest.
---    However, that's a non-trivial task and unlikely to be prioritized unless necessary.
---    Since, there is a quick workaround available, we have opted to apply a manual
---    change to this file rather than update it to an official export of the NICores. 
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-
-library UNISIM;
-  use UNISIM.vcomponents.all;
-
-entity DFlop is
-
-  generic (kResetVal : std_logic := '0';
-           kAsyncReg : string := "false");
-  port (
-    aReset, cEn  : in boolean;
-    Clk, cD   : in std_logic;
-    cQ   : out std_logic := kResetVal
-  );
-end DFlop;
-
-architecture rtl of DFlop is
-  attribute ASYNC_REG : string;
-begin
-
-  -- This VScan model helps VScan analyze this as a flip-flop and not
-  -- be fooled by the delta delay that occurs on the PRE and CLR signals.
-  GenVScanModel: if false generate
-    process (aReset, Clk)
-    begin
-      if aReset then
-        cQ <= '0';
-      elsif rising_edge(Clk) then
-        if cEn then cQ <= cD; end if;
-      end if;
-    end process;
-  end generate GenVScanModel;
-
-  --vscan vscan_off
-
-  -- !!NOTE:
-  -- If you change the instance names in this component, consider updating
-  -- DFlop module generator as well: vi.lib\rvi\nicores\ClockBoundaryCrossing\DFlopBaseniFpgaDflopInstanceName.vi
-
-  GenClr: if kResetVal='0' generate
-    attribute ASYNC_REG of ClearFDCPEx : label is kAsyncReg;
-    begin
-    -- Generate Flop with asynchronous clear
-
-    --vhook_i FDCE ClearFDCPEx
-    --vhook_a INIT '0'
-    --vhook_a IS_CLR_INVERTED '0'
-    --vhook_a IS_C_INVERTED '0'
-    --vhook_a IS_D_INVERTED '0'
-    --vhook_a CLR To_StdLogic(aReset)
-    --vhook_a C Clk
-    --vhook_a CE To_StdLogic(cEn)
-    --vhook_a D cD
-    --vhook_a Q cQ
-    ClearFDCPEx: FDCE
-      generic map (
-        INIT            => '0',  --bit:='0'
-        IS_CLR_INVERTED => '0',  --bit:='0'
-        IS_C_INVERTED   => '0',  --bit:='0'
-        IS_D_INVERTED   => '0')  --bit:='0'
-      port map (
-        Q   => cQ,                   --out std_ulogic:=TO_X01(INIT)
-        C   => Clk,                  --in  std_ulogic
-        CE  => To_StdLogic(cEn),     --in  std_ulogic
-        CLR => To_StdLogic(aReset),  --in  std_ulogic
-        D   => cD);                  --in  std_ulogic
-
-  end generate GenClr;
-
-  GenSet: if kResetVal='1' generate
-    attribute ASYNC_REG of PresetFDCPEx : label is kAsyncReg;
-    begin
-    -- Generate Flop with asynchronous preset
-
-    --vhook_i FDPE PresetFDCPEx
-    --vhook_a INIT '1'
-    --vhook_a IS_CLR_INVERTED '0'
-    --vhook_a IS_C_INVERTED '0'
-    --vhook_a IS_D_INVERTED '0'
-    --vhook_a IS_PRE_INVERTED '0'
-    --vhook_a PRE To_StdLogic(aReset)
-    --vhook_a C Clk
-    --vhook_a CE To_StdLogic(cEn)
-    --vhook_a D cD
-    --vhook_a Q cQ
-    PresetFDCPEx: FDPE
-      generic map (
-        INIT            => '1',  --bit:='1'
-        IS_C_INVERTED   => '0',  --bit:='0'
-        IS_D_INVERTED   => '0',  --bit:='0'
-        IS_PRE_INVERTED => '0')  --bit:='0'
-      port map (
-        Q   => cQ,                   --out std_ulogic:=TO_X01(INIT)
-        C   => Clk,                  --in  std_ulogic
-        CE  => To_StdLogic(cEn),     --in  std_ulogic
-        D   => cD,                   --in  std_ulogic
-        PRE => To_StdLogic(aReset)); --in  std_ulogic
-
-  end generate GenSet;
-
-  --vscan vscan_on
-
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+hVdJHWSfELCmA4ds+csnOQAALbB3ps7EiTSHEDd//nts1r+JQrRE4d3bDPRJpiX2
+Sl8d+xAK9BIi4i+3ruAzYvB6kuD7r+gs02Jsvd/1kn7JYK4xBxCjtdDFjVHOTEl1
+sSh1oNiYUwLuwR1yKfP+xBhqxD2Dv6pCKhH1NdGilpJQ6cvivGkSunAu0tzP76T0
+4x1pB179E7uIeRplfHWX03KzEBF+eVtfgXVp2W1BGjfAe43y1pCvNYZOh1+TY62g
+EgAFgbo7pAujZxZy/YSiZjUr2mGp7o83qMXyusx8+rQ41D3X6rxfuP0RiId2pOpC
+6oq5Dfkx04a1dk4s8w8cVg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="Sm9DkM+kBxuxXCFA+l3fFkxuSWV4xqRc4Nn7Ji3ukao="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+m2emGBqRy4AuduN4dffN8194qYvc9UXRqiQc56IrQYMiIVQPyh59I8SYabcDdspI
+7AFHnvKD5YaF6tQfxWm+mlcmMEk2Y//aUjxeiGGs+RkKgbHitJF/K7nqg1dmKvDg
+a/GaBCq4Bqh0EehlN4ntP5HxM4qcvSfh5m/Coe3drc4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="uG91daMWA1mGkhgP3oZKMYye3UAomMWgG80HuuXg2E0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 5408 )
+`protect data_block
+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
+`protect end_protected

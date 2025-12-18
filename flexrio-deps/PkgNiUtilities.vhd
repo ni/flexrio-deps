@@ -1,878 +1,736 @@
--------------------------------------------------------------------------------
---
--- File: PkgNiUtilities.vhd
--- Author: Paul Butler with substantial advice from Craig Conway
--- Original Project: CHINCH Testing
--- Date: 8 October 2003
---
--------------------------------------------------------------------------------
--- (c) 2003 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
--- PkgNiUtilities will provide some commonly needed functions that are not
--- provided by IEEE packages.
---
--- The type BooleanVector is so named to match the NI style guideline.
--- Future versions of the VHDL spec might choose to add such a type but
--- the name is likely to follow the existing IEEE pattern: boolean_vector.
--- Our name won't collide with that future name so "BooleanVector" is
--- probably a good choice for that reason also.
---
--- The conversions between boolean and std_logic are controversial since
--- '1' is not universally understood to mean "true".  Since active-high
--- logic is more common than active-low, we decided to make the
--- active-high conversions use the "simple" names "to_boolean" and
--- "to_StdLogic".  The active-low versions use the wordy names
--- "to_BooleanActiveLow".  You might prefer to invert the the active-high
--- results but I suggest using the active-low converters since the intent
--- is very explicit.
---
--- In the past, I've written "resize" functions for std_logic_vector that
--- act like the numeric_std resize function for unsigned.  That strategy
--- is weak since std_logic_vector is not always an unsigned binary number.
--- We often want to zero pad on the right instead of left, or maybe even
--- in the middle.  The two functions "Zeros" and "Ones" are intended to
--- solve that problem, especially when creating readable registers with
--- some unused bits:
---
--- signal StatusData : std_logic_vector(15 downto 0);
--- ...
--- StatusData <= Zeros(13) & InterruptStatus & DMARequest & OverflowError;
---
--- Log2 is intended to help write reusable components. Check out the
--- example comment over the Log2 function in the package body.
---
--- I think the Smaller and Larger functions might reasonably be called Min
--- and Max.  Unfortunately, the function name Min collides with the "min"
--- (minutes) defined in STD.Standard package.  To use a min function, it
--- must be called "long hand" as in WORK.PkgNiUtilities.Min(1,2).
---
--- Reviewers: Paul Butler, Craig Conway
--- ReviewBoard: http://review-board.natinst.com/r/28738/
---
--- vreview_group packages
--- vreview_closed http://review-board.natinst.com/r/257847/
--- vreview_closed http://review-board.natinst.com/r/238277/
--- vreview_closed http://review-board.natinst.com/r/218352/
--- vreview_closed http://review-board.natinst.com/r/154082/
--- vreview_closed http://review-board.natinst.com/r/151570/
--- vreview_closed http://review-board.natinst.com/r/149662/
--- vreview_closed http://review-board.natinst.com/r/112173/
--- vreview_closed http://review-board.natinst.com/r/111463/
--- vreview_closed http://review-board.natinst.com/r/90009/
--- vreview_closed http://review-board.natinst.com/r/79838/
---
--------------------------------------------------------------------------------
-library IEEE;
-  use IEEE.std_logic_1164.all;
-  use IEEE.numeric_std.all;
-
-Package PkgNiUtilities is
-
-  -----------------------------------------------------------------------------
-  -- Clock type
-  -----------------------------------------------------------------------------
-
-  type NiClk_t is record
-    -- C is the actual clock signal
-    C : std_logic;
-    -- kSyncCnt is the number of synchronizers needed when taking an asynchronous
-    -- signal into this clock domain. This number will be dependent on the clock
-    -- frequency and the target technology. You must set kSyncCnt to at least 2
-    -- (indicating 1 metastable flop and 1 flop after) and should ensure that
-    -- kSyncCnt * ClkPeriod is at least 5 ns.
-    -- Note that this field should be driven by a constant. If you drive it with
-    -- a signal, it will likely synthesize just fine, but you'll end up with a
-    -- bunch of flops and a mux. If you have not restricted the size of the
-    -- signal driving kSyncCnt, that "bunch of flops" could be integer'high.
-    kSyncCnt : positive;
-  end record;
-
-  constant kNiClkDef : NiClk_t := ('0', 2);
-
-  -- These two functions allow you to create the NiClk_t record. The intent is for
-  -- them to be used as actuals in a port map so that it is easy to connect a std_logic
-  -- clock signal to an NI module that uses NiClk_t. They can also be used to create
-  -- the initial NiClk_t record at the output of the clock generator.
-  -- It is important to try to create NiClk_t in a way that delta cycles do not get
-  -- inserted into the clock path.
-  -- Also, note that Synopsys does not support functions in actuals at all, so
-  -- if your code is to be used in an ASIC, you should associate the proper values
-  -- with the fields of the formal's record using the --vhook_af command.
-  -- Create NiClk_t record
-  function ToNiClk (ClkIn : std_logic; SyncCnt : positive) return NiClk_t;
-  -- Create NiClk_t record with kSyncCnt set to 2
-  function ToNiClk2 (ClkIn : std_logic) return NiClk_t;
-
-  -- These two functions allow an NiClk_t signal to have edge detection on the
-  -- .C field, allowing the user to do this:
-  --    if rising_edge(MyClk)
-  -- instead of this:
-  --    if rising_edge(MyClk.C)
-  function rising_edge(signal Clk : NiClk_t) return boolean;
-  function falling_edge(signal Clk : NiClk_t) return boolean;
-
-  -----------------------------------------------------------------------------
-  -- Useful array types
-  -----------------------------------------------------------------------------
-
-  type BooleanVector is array ( natural range<> ) of boolean;
-  type IntegerVector is array ( natural range <>) of integer;
-  type NaturalVector is array ( natural range <>) of natural;
-  type Slv64Ary_t is array ( natural range <> ) of std_logic_vector(63 downto 0);
-  type Slv32Ary_t is array ( natural range <> ) of std_logic_vector(31 downto 0);
-  type Slv16Ary_t is array ( natural range <> ) of std_logic_vector(15 downto 0);
-
-  -----------------------------------------------------------------------------
-  -- Type Conversion functions
-  -----------------------------------------------------------------------------
-
-  -- active high conversion, '1' -> true
-  function to_Boolean (s : std_ulogic) return boolean;
-
-  -- active low conversion, '0' -> true
-  function to_BooleanActiveLow (s : std_ulogic) return boolean;
-
-  -- active high conversion, "10" -> (true, false)
-  function to_BooleanVector(s : std_logic_vector) return BooleanVector;
-  function to_BooleanVector(s : unsigned) return BooleanVector;
-
-  -- active high conversion, "10" -> (false, true)
-  function to_BooleanVectorActiveLow(s : std_logic_vector)
-                                     return BooleanVector;
-
-  -- active high conversion, true -> '1'
-  function to_StdLogic(b : boolean) return std_ulogic;
-
-  -- active low conversion, false -> '1'
-  function to_StdLogicActiveLow(b : boolean) return std_ulogic;
-
-  -- active high conversion, (true, false) -> "10"
-  function to_StdLogicVector(b : BooleanVector) return std_logic_vector;
-  function to_Unsigned(b : BooleanVector) return unsigned;
-
-  -- active high conversion, (true, false) -> "01"
-  function to_StdLogicVectorActiveLow(b : BooleanVector) return std_logic_vector;
-  function to_UnsignedActiveLow(b : BooleanVector) return unsigned;
-
-  -----------------------------------------------------------------------------
-  -- Misc functions
-  -----------------------------------------------------------------------------
-
-  -- returns a std_logic_vector with Length bits, all set to '0'
-  function Zeros(Length : natural) return std_logic_vector;
-
-  -- returns a std_logic_vector with Length bits, all set to '1'
-  function Ones(Length : natural) return std_logic_vector;
-
-  -- returns ceiling of base-2/4 logarithm
-  function Log2(arg : positive) return natural;
-  function Log4(arg : positive) return natural;
-
-  -- returns the number of ones in a std_logic_vector
-  function CountOnes(arg : std_logic_vector) return natural;
-
-  -- returns the number of ones in an unsigned
-  function CountOnes(arg : unsigned) return natural;
-
-  -- returns true if the argument is a power of 2
-  function IsPowerOf2(arg : unsigned) return boolean;
-
-  -- returns true if the argument is a power of 2
-  function IsPowerOf2(arg : natural) return boolean;
-
-  -----------------------------------------------------------------------------
-  -- Misc global definitions
-  -----------------------------------------------------------------------------
-
-  constant kByteSize : natural := 8;
-
-  --********************************************************
-  --  Commenting this code because Talus (MAGMA) doesn't compile it.
-  --  It does not support clock statements in procedures.
-  --  Still evaluating if we will move this code somewhere else.
-  --********************************************************
-  -----------------------------------------------------------------------------
-  -- Shift Registers
-  -----------------------------------------------------------------------------
-
-  -- This procedure creates a std_logic shift register whose width
-  -- is determined by Q'length
-  -- Copy the line below to make instantiation easier:
-  -- --ShiftInSL(D=>D, Clk=>Clk, cRst=>cReset, aRst=>acReset, Q=>Q);
-  -- procedure ShiftInSL(kRstVal : in std_logic := '0';
-  --                     D : in std_logic;
-  --                     signal Clk : in std_logic;
-  --                     En : in boolean := true;
-  --                     cRst, aRst : in boolean := false;
-  --                     signal Q : inout std_logic_vector);
-
-  -- This procedure creates a boolean shift register whose width
-  -- is determined by Q'length
-  -- Copy the line below to make instantiation easier:
-  --ShiftInBool(D=>D, Clk=>Clk, cRst=>cReset, aRst=>acReset, Q=>Q);
-  -- procedure ShiftInBool(kRstVal : in boolean := false;
-  --                       D : in boolean;
-  --                       signal Clk : in std_logic;
-  --                       En : in boolean := true;
-  --                       cRst, aRst : in boolean := false;
-  --                       signal Q : inout BooleanVector);
-
-
-  -----------------------------------------------------------------------------
-  -- Size Comparison functions
-  -----------------------------------------------------------------------------
-
-  -- returns the bigger of the two inputs
-  function Larger(a,b : integer) return integer;
-
-  -- Max is just another way to call Larger.
-  -- Alias is not supported by Synplicity 7.2
-  -- Uncomment the alias declaration in the future
-  --alias Max is Larger [integer, integer return integer];
-
-  -- returns the smaller of the two inputs
-  function Smaller(a,b : integer) return integer;
-
-  -- Min is another way to call Smaller.  However, when calling Min, you
-  -- must use the expanded name "WORK.PkgNiUtilities.Min(x,y)" to avoid
-  -- collisions with the abbreviation for "minutes" defined in
-  -- STD.Standard.  Calling Smaller is probably simpler.
-  -- Alias is not supported by Synplicity 7.2
-  -- Uncomment the alias declaration in the future
-  --alias Min is Smaller [integer, integer return integer];
-
-  -----------------------------------------------------------------------------
-  -- Vector And/Or functions
-  -----------------------------------------------------------------------------
-
-  -- These functions return the "OR" of every bit of the vector passed in
-  function OrVector (arg : std_logic_vector) return std_ulogic;
-  function OrVector (arg : unsigned) return std_ulogic;
-  function OrVector (arg : BooleanVector) return boolean;
-
-  -- These functions return the "AND" of every bit of the vector passed in
-  function AndVector (arg : std_logic_vector) return std_ulogic;
-  function AndVector (arg : unsigned) return std_ulogic;
-  function AndVector (arg : BooleanVector) return boolean;
-
-  -- These functions return the "XOR" of every bit of the vector passed in
-  function XorVector (arg : std_logic_vector) return std_ulogic;
-  function XorVector (arg : unsigned) return std_ulogic;
-  function XorVector (arg : BooleanVector) return boolean;
-
-  -----------------------------------------------------------------------------
-  --  Functions for setting bits/fields within a vector
-  --  All of these functions return a std_logic_vector with a range of
-  -- (W-1 downto 0), where W defaults to 32 if it is not specified.
-  -----------------------------------------------------------------------------
-
-  -- Examples:
-  --
-  -- Return a 32-bit vector with bits 5, 16, and 18 set
-  -- kVec32 <= SetBits((5, 16, 18));
-  --
-  -- Notice that the natural array must be enclosed in parenthesis, so you
-  -- must have double parens when you call SetBits.  Here's another way to
-  -- get the same result that might make the reason for the extra parens
-  -- more clear:
-  -- kVec32 <= SetBits(Indices=>(5, 16, 18));
-  --
-  -- Return a 64-bit vector with bits 2, 4, 6, and 63 set
-  -- kVec64 <= SetBits((2, 4, 6, 63), 64);
-  --   alternatively
-  -- kVec64 <= SetBits(Indices=>(2, 4, 6, 63), W=>64);
-  --
-  -- Return a 32 bit vector with bit 3 set
-  -- kVec32 <= SetBit(3);
-  --
-  -- Return a 32 bit vector with bit kBobBit taking on the value of a signal called xBob
-  -- and bit kJoeBit taking on the value of a signal called xJoe
-  -- xVec32 <= SetBit(kBobBit, xBob) or SetBit(kJoeBit, xJoe);
-  --
-  -- Return a 32-bit vector where bit kBob is set to xBob and the xJoeField vector is
-  -- assigned to the bits starting at bit kJoe
-  -- xVec32 <= SetBit(kBobBit, xBob) or SetField(kJoe, xJoeField);
-  --
-  -- Note that xJoeField can be an integer, an unsigned, or a std_logic_vector.
-  --
-  -- Let's say we have a readable register.  Here's the old way to do it:
-  --
-  -- process (mBob, mJoeField, mIoPortIn)
-  -- begin
-  --   mVec32 <= (others => '0');
-  --   if RegSelected(MyReg, mIoPortIn) then
-  --     mVec32(kBobBit) <= xBob;
-  --     mVec32(kJoeFieldMsb downto kJoeField) <= mJoeField;
-  --   end if;
-  -- end process;
-  --
-  -- And here's the new way:
-  --
-  -- mVec32 <= SetBit(kBobBit, mBob) or SetField(kJoeField, mJoeField)
-  --              when RegSelected(MyReg, mIoPortIn) else (others => '0');
-  --
-  -- These functions are also useful in testbenches when writing and reading
-  -- registers.  Consider the old way:
-  --
-  -- Data := (others => '0');
-  -- Data(kBob) := '1';
-  -- Data(kJoeFieldMsb downto kJoeField)
-  --              := std_logic_vector(To_Unsigned(19,kJoeFieldSize));
-  -- WriteIoPort(MyReg, Data);
-  --
-  -- And now the new way:
-  --
-  -- WriteIoPort(MyReg, SetBit(kBob) or SetField(kJoeField, 19));
-
-  -- The previous version of the following SetBits and SetField
-  -- functions used to assign a default value of 32 for the W parameter.
-  -- That exposed a bug in ISE 10.1 when calling SetBit with W set to
-  -- something less than 32.  In some cases, using a W value less than
-  -- 32 would cause SetBit to return all '0'.  To work around the
-  -- problem, I duplicated each of the functions:  one version with W
-  -- (but without a default value) and another version with no W
-  -- parameter at all.  The version of the functions that omit the W
-  -- parameter all return a 32 bit result.  Existing code that relies on
-  -- the default value for W will continue to compile, but those
-  -- function calls will now match the signature of the function that
-  -- has no W parameter at all.
-  function SetBits(Indices : NaturalVector; W : natural) return std_logic_vector;
-  function SetBits(Indices : NaturalVector) return std_logic_vector;
-
-  function SetBit(Index : natural;
-                  Val : std_logic;
-                  W : natural) return std_logic_vector;
-  function SetBit(Index : natural;
-                  Val : std_logic) return std_logic_vector;
-
-  function SetBit(Index : natural; W : natural) return std_logic_vector;
-  function SetBit(Index : natural) return std_logic_vector;
-
-  function SetBit(Index : natural;
-                  Val : boolean;
-                  W : natural) return std_logic_vector;
-  function SetBit(Index : natural;
-                  Val : boolean) return std_logic_vector;
-
-  function SetField(Index : natural;
-                    Val : unsigned;
-                    W : natural) return std_logic_vector;
-  function SetField(Index : natural;
-                    Val : unsigned) return std_logic_vector;
-
-  function SetField(Index : natural;
-                    Val : std_logic_vector;
-                    W : natural) return std_logic_vector;
-  function SetField(Index : natural;
-                    Val : std_logic_vector) return std_logic_vector;
-
-  function SetField(Index : natural;
-                    Val : natural;
-                    W : natural) return std_logic_vector;
-  function SetField(Index : natural;
-                    Val : natural) return std_logic_vector;
-
-end Package PkgNiUtilities;
-
-Package body PkgNiUtilities is
-
-  -- Creat an NiClk_t record.
-  -- This function makes it easy to connect a std_logic clock
-  -- signal to a module that uses NiClk_t as its input.
-  function ToNiClk (ClkIn : std_logic; SyncCnt : positive) return NiClk_t is
-    variable ClkOut : NiClk_t;
-  begin
-    ClkOut.C := ClkIn;
-    ClkOut.kSyncCnt := SyncCnt;
-    return ClkOut;
-  end function ToNiClk;
-
-  -- Return an NiClk_t record with the kSyncCnt field set to 2.
-  -- This function makes it easy to connect a std_logic clock
-  -- signal to a module that uses NiClk_t as its input and maintain
-  -- compatibility with the original NiCores clock crossing components.
-  -- Note that this will not work for Synopsys compilers as they do
-  -- not support functions as actuals. Only use this function
-  -- as an actual for FPGAs.
-  function ToNiClk2 (ClkIn : std_logic) return NiClk_t is
-  begin
-    return ToNiClk(ClkIn, 2);
-  end function ToNiClk2;
-
-  -- Return true if the .C field of the input has a rising edge
-  function rising_edge(signal Clk : NiClk_t) return boolean is
-  begin
-    return rising_edge(Clk.C);
-  end function rising_edge;
-
-  -- Return true if the .C field of the input has a falling edge
-  function falling_edge(signal Clk : NiClk_t) return boolean is
-  begin
-    return falling_edge(Clk.C);
-  end function falling_edge;
-
-
-  -- The main strategy of the converter implementations is to write one
-  -- or two functions that define the behavior.  All the other functions
-  -- define their behavior by calling the base functions.
-  --
-  -- In this case, to_Boolean and to_StdLogic are the base functions.
-  -- The vector converters simply call the base functions iteratively.
-  -- The active-low converters merely invert the results of the base
-  -- functions.
-  --
-  -- This approach probably reduces the amount of code, but it also
-  -- concentrates the behavior into a small place.  If the single bit
-  -- converters are correct, then bugs in the vector converters are
-  -- almost guaranteed to relate to the iteration but not the
-  -- conversions themselves.
-
-  -- define the base conversion
-  -- Unlike the IEEE defined:
-  --   function to_bit(s : stdulogic; xmap : bit) return bit;
-  -- Our converter does not allow any configuration for the case when
-  -- the input has a meta-value.  Hopefully, we're guessing correctly.
-  function to_Boolean (s : std_ulogic) return boolean is
-  begin
-    return (To_X01(s)='1');
-  end to_Boolean;
-
-  -- A base converson based on an existing operator ("not")
-  function to_BooleanActiveLow (s : std_ulogic) return boolean is
-  begin
-    return (To_X01(s)='0');
-  end to_BooleanActiveLow;
-
-  -- A derivative converter using the base converter
-  function to_BooleanVector(s : std_logic_vector) return BooleanVector is
-    variable rval : BooleanVector(s'range);
-  begin
-    for i in rval'range loop
-      rval(i) := to_Boolean(s(i));
-    end loop;
-    return rval;
-  end to_BooleanVector;
-
-  -- A derivative converter using the base converter
-  function to_BooleanVector(s : unsigned) return BooleanVector is
-  begin
-    return to_BooleanVector(std_logic_vector(s));
-  end to_BooleanVector;
-
-  -- A derivative converter using an existing operator ("not")
-  function to_BooleanVectorActiveLow(s : std_logic_vector)
-                                     return BooleanVector is
-    variable rval : BooleanVector(s'range);
-  begin
-    for i in rval'range loop
-      rval(i) := to_BooleanActiveLow(s(i));
-    end loop;
-    return rval;
-  end to_BooleanVectorActiveLow;
-
-  -- The base conversion
-  function to_StdLogic(b : boolean) return std_ulogic is
-  begin
-    if b then
-      return '1';
-    else
-      return '0';
-    end if;
-  end to_StdLogic;
-
-  function to_StdLogicActiveLow(b : boolean) return std_ulogic is
-  begin
-    return not to_StdLogic(b);
-  end to_StdLogicActiveLow;
-
-  function to_StdLogicVector(b : BooleanVector) return std_logic_vector is
-    variable rval : std_logic_vector(b'range);
-  begin
-    for i in rval'range loop
-      rval(i) := to_StdLogic(b(i));
-    end loop;
-    return rval;
-  end to_StdLogicVector;
-
-  function to_Unsigned(b : BooleanVector) return unsigned is
-  begin
-    return unsigned(to_StdLogicVector(b));
-  end to_Unsigned;
-
-  function to_StdLogicVectorActiveLow(b : BooleanVector)
-                                      return std_logic_vector is
-  begin
-    return not to_StdLogicVector(b);
-  end to_StdLogicVectorActiveLow;
-
-  function to_UnsignedActiveLow(b : BooleanVector) return unsigned is
-  begin
-    return unsigned(to_StdLogicVectorActiveLow(b));
-  end to_UnsignedActiveLow;
-
-  function Zeros(Length : natural) return std_logic_vector is
-    variable Vec: std_logic_vector(1 to Length) := (others => '0');
-  begin
-    return Vec;
-  end Zeros;
-
-  function Ones(Length : natural) return std_logic_vector is
-    variable Vec: std_logic_vector(1 to Length) := (others => '1');
-  begin
-    return Vec;
-  end Ones;
-
-  -- Log2 returns the ceiling of a base-2 logarithm.  Example application:
-  --
-  -- entity mux is
-  --   generic(
-  --     width : integer := 32
-  --   );
-  --   port(
-  --     Din : in std_logic_vector(width-1 downto 0);
-  --     Sel : in unsigned(log2(width)-1 downto 0);
-  --     Dout : out std_logic
-  --   );
-  -- end mux;
-  function Log2(Arg : positive) return natural is
-    variable ReturnVal : natural;
-    variable ShiftedArg : natural;
-  begin
-    ReturnVal := 0;
-    ShiftedArg := Arg-1;
-    while ShiftedArg > 0 loop
-      ShiftedArg := ShiftedArg / 2;
-      ReturnVal := ReturnVal + 1;
-    end loop;
-    return ReturnVal;
-  end Log2;
-
-  -- Log4 returns the ceiling of a base-4 logarithm.
-  function Log4(Arg : positive) return natural is
-    variable ReturnVal : natural;
-    variable ShiftedArg : natural;
-  begin
-    ReturnVal := 0;
-    ShiftedArg := Arg-1;
-    while ShiftedArg > 0 loop
-      ShiftedArg := ShiftedArg / 4;
-      ReturnVal := ReturnVal + 1;
-    end loop;
-    return ReturnVal;
-  end Log4;
-
-  -- returns the number of ones in a std_logic_vector
-  function CountOnes(arg : std_logic_vector) return natural is
-    -- argNormal just adjusts the index range for simpler arithmetic
-    variable argNormal : std_logic_vector(1 to arg'length) := arg;
-    constant kMidPoint : natural := arg'length / 2;
-  begin
-
-    if arg'length = 0 then
-      return 0;
-    elsif arg'length = 1 then
-      if To_Boolean(argNormal(1)) then
-        return 1;
-      else 
-        return 0;
-      end if;
-    else
-      return CountOnes(argNormal(1 to kMidPoint)) 
-           + CountOnes(argNormal(kMidPoint + 1 to argNormal'high));
-    end if;
-
-  end function CountOnes;
-
-  -- returns the number of ones in an unsigned
-  function CountOnes(arg : unsigned) return natural is
-  begin
-    return CountOnes(std_logic_vector(arg));
-  end function CountOnes;
-
-  -- returns true if the argument is a power of 2
-  function IsPowerOf2(arg : unsigned) return boolean is
-  begin
-    return CountOnes(arg) = 1;
-  end function IsPowerOf2;
-
-  -- returns true if the argument is a power of 2
-  function IsPowerOf2(arg : natural) return boolean is
-  begin
-    return IsPowerOf2(To_Unsigned(arg,32));
-  end function IsPowerOf2;
-
-
-
-  --********************************************************
-  --  Commenting this code because Talus (MAGMA) doesn't compile it.
-  --  It does not support clock statements in procedures.
-  --  Still evaluating if we will move this code somewhere else.
-  --********************************************************
-
-  -- The ShiftIn* procedures create a shift register whose width
-  -- is determined by Q'length. The shift register will shift in a single
-  -- bit into the Q'low position, moving the shift register toward the high
-  -- index of the range, so both Q(X downto 0) and Q(0 to X) would shift in D
-  -- at bit 0 and shift out at X.
-
-  -- -- Create a std_logic shift register
-  -- procedure ShiftInSL(kRstVal : in std_logic := '0';
-  --                     D : in std_logic;
-  --                     signal Clk : in std_logic;
-  --                     En : in boolean := true;
-  --                     cRst, aRst : in boolean := false;
-  --                     signal Q : inout std_logic_vector) is
-  -- begin
-  --   if aRst then
-  --     Q <= (Q'range => kRstVal);
-  --   elsif rising_edge(Clk) then
-  --     if En then
-  --       if cRst then
-  --         Q <= (Q'range => kRstVal);
-  --       else
-  --         if Q'ascending then
-  --           Q <= Q(Q'low+1 to Q'high) & D;
-  --         else
-  --           Q <= Q(Q'high-1 downto Q'low) & D;
-  --         end if;
-  --       end if;
-  --     end if;
-  --   end if;
-  -- end procedure ShiftInSL;
-
-  -- -- Create a boolean shift register
-  -- procedure ShiftInBool(kRstVal : in boolean := false;
-  --                       D : in boolean;
-  --                       signal Clk : in std_logic;
-  --                       En : in boolean := true;
-  --                       cRst, aRst : in boolean := false;
-  --                       signal Q : inout BooleanVector) is
-  -- begin
-  --   if aRst then
-  --     Q <= (Q'range => kRstVal);
-  --   elsif rising_edge(Clk) then
-  --     if En then
-  --       if cRst then
-  --         Q <= (Q'range => kRstVal);
-  --       else
-  --         if Q'ascending then
-  --           Q <= Q(Q'low+1 to Q'high) & D;
-  --         else
-  --           Q <= Q(Q'high-1 downto Q'low) & D;
-  --         end if;
-  --       end if;
-  --     end if;
-  --   end if;
-  -- end procedure ShiftInBool;
-
-  -- returns the larger of two integers
-  function Larger(a,b : integer) return integer is
-  begin
-    if a > b then
-      return a;
-    else
-      return b;
-    end if;
-  end Larger;
-
-  -- returns the smaller of two integers
-  function Smaller(a,b : integer) return integer is
-  begin
-    if a < b then
-      return a;
-    else
-      return b;
-    end if;
-  end Smaller;
-
-  -- These functions return the "OR" of every bit of the vector passed in
-  function OrVector (arg : std_logic_vector) return std_ulogic is
-    variable ReturnVal : std_ulogic;
-  begin
-    ReturnVal := '0';
-    for i in arg'range loop
-      ReturnVal := ReturnVal or arg(i);
-    end loop;
-    return ReturnVal;
-  end OrVector;
-
-  function OrVector (arg : unsigned) return std_ulogic is
-  begin
-    return OrVector(std_logic_vector(arg));
-  end OrVector;
-
-  function OrVector (arg : BooleanVector) return boolean is
-  begin
-    return To_Boolean(OrVector(To_StdLogicVector(arg)));
-  end OrVector;
-
-  -- These functions return the "AND" of every bit of the vector passed in
-  function AndVector (arg : std_logic_vector) return std_ulogic is
-    variable ReturnVal : std_ulogic;
-  begin
-    ReturnVal := '1';
-    for i in arg'range loop
-      ReturnVal := ReturnVal and arg(i);
-    end loop;
-    return ReturnVal;
-  end AndVector;
-
-  function AndVector (arg : unsigned) return std_ulogic is
-  begin
-    return AndVector(std_logic_vector(arg));
-  end AndVector;
-
-  function AndVector (arg : BooleanVector) return boolean is
-  begin
-    return To_Boolean(AndVector(To_StdLogicVector(arg)));
-  end AndVector;
-
-  -- These functions return the "XOR" of every bit of the vector passed in
-  function XorVector (arg : std_logic_vector) return std_ulogic is
-    variable ReturnVal : std_ulogic;
-  begin
-    ReturnVal := '0';
-    for i in arg'range loop
-      ReturnVal := ReturnVal Xor arg(i);
-    end loop;
-    return ReturnVal;
-  end XorVector;
-
-  function XorVector (arg : unsigned) return std_ulogic is
-  begin
-    return XorVector(std_logic_vector(arg));
-  end XorVector;
-
-  function XorVector (arg : BooleanVector) return boolean is
-  begin
-    return To_Boolean(XorVector(To_StdLogicVector(arg)));
-  end XorVector;
-
-
-  -----------------------------------------------------------------------------
-  -- Functions for setting bits and bitfields within a vector
-  -----------------------------------------------------------------------------
-
-  -- Returns a std_logic_vector with the bits corresponding to Indices set.
-  function SetBits(Indices : NaturalVector; W : natural) return std_logic_vector is
-    variable Data : std_logic_vector(W-1 downto 0);
-  begin
-    Data := (others => '0');
-    for i in Indices'range loop
-      Data(Indices(i)) := '1';
-    end loop;
-    return Data;
-  end function SetBits;
-
-  function SetBits(Indices : NaturalVector) return std_logic_vector is
-  begin
-    return SetBits ( Indices=>Indices, W=>32 );
-  end function SetBits;
-
-  -- Returns a std_logic_vector with bit(Index) set to Sig
-  function SetBit(Index : natural;
-                  Val : std_logic;
-                  W : natural) return std_logic_vector is
-    variable Data : std_logic_vector(W-1 downto 0);
-  begin
-    --synopsys translate_off
-    assert Index < W
-      report "SetBit: Index (" & integer'image(Index) & ") must be less than W (" & integer'image(W) & ")"
-      severity error;
-    --synopsys translate_on
-    Data := (others => '0');
-    Data(Index) := Val;
-    return Data;
-  end function SetBit;
-
-  function SetBit(Index : natural;
-                  Val : std_logic ) return std_logic_vector is
-  begin
-    return SetBit ( Index=>Index, Val=>Val, W=>32 );
-  end function SetBit;
-
-  -- Returns a std_logic_vector with the bit corresponding to Index set.
-  function SetBit(Index : natural; W : natural) return std_logic_vector is
-  begin
-    return SetBit(Index=>Index, Val=>'1', W=>W);
-  end function SetBit;
-
-  function SetBit(Index : natural) return std_logic_vector is
-  begin
-    return SetBit ( Index=>Index, W=>32 );
-  end function SetBit;
-
-  -- Returns a std_logic_vector with bit(Index) set to Sig
-  function SetBit(Index : natural;
-                  Val : boolean;
-                  W : natural) return std_logic_vector is
-  begin
-    return SetBit(Index=>Index, Val=>To_StdLogic(Val), W=>W);
-  end function SetBit;
-
-  function SetBit(Index : natural;
-                  Val : boolean) return std_logic_vector is
-  begin
-    return SetBit ( Index=>Index, Val=>Val, W=>32 );
-  end function SetBit;
-
-  -- Returns a std_logic_vector that has Val returned at
-  -- the bit position indicated by Index.
-  function SetField(Index : natural;
-                    Val : unsigned;
-                    W : natural) return std_logic_vector is
-    variable Data : std_logic_vector(W-1 downto 0) := (others => '0');
-  begin
-    --synopsys translate_off
-    assert Index < W
-      report "SetField: Index (" & integer'image(Index) & ") must be less than W (" & integer'image(W) & ")"
-      severity error;
-    assert (Val'length + Index) <= W
-      report "Val is too big to fit in vector" severity error;
-    --synopsys translate_on
-    Data(W-1 downto Index) := std_logic_vector(resize(Val, W-Index));
-    return Data;
-  end function SetField;
-
-  function SetField(Index : natural;
-                    Val : unsigned) return std_logic_vector is
-  begin
-    return SetField ( Index=>Index, Val=>Val, W=>32 );
-  end function SetField;
-
-  -- Returns a std_logic_vector that has Val returned at
-  -- the bit position indicated by Index.
-  function SetField(Index : natural;
-                    Val : std_logic_vector;
-                    W : natural) return std_logic_vector is
-  begin
-    return SetField(Index=>Index, Val=>unsigned(Val), W=>W);
-  end function SetField;
-
-  function SetField(Index : natural;
-                    Val : std_logic_vector) return std_logic_vector is
-  begin
-    return SetField ( Index=>Index, Val=>Val, W=>32 );
-  end function SetField;
-
-  -- Returns a std_logic_vector that has Val returned at
-  -- the bit position indicated by Index.
-  function SetField(Index : natural;
-                    Val : natural;
-                    W : natural) return std_logic_vector is
-  begin
-    return SetField(Index=>Index, Val=>To_Unsigned(Val, W-Index), W=>W);
-  end function SetField;
-
-  function SetField(Index : natural;
-                    Val : natural) return std_logic_vector is
-  begin
-    return SetField(Index=>Index, Val=>Val, W=>32);
-  end function SetField;
-
-end Package body PkgNiUtilities;
-
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+hVdJHWSfELCmA4ds+csnOQAALbB3ps7EiTSHEDd//nts1r+JQrRE4d3bDPRJpiX2
+Sl8d+xAK9BIi4i+3ruAzYvB6kuD7r+gs02Jsvd/1kn7JYK4xBxCjtdDFjVHOTEl1
+sSh1oNiYUwLuwR1yKfP+xBhqxD2Dv6pCKhH1NdGilpJQ6cvivGkSunAu0tzP76T0
+4x1pB179E7uIeRplfHWX03KzEBF+eVtfgXVp2W1BGjfAe43y1pCvNYZOh1+TY62g
+EgAFgbo7pAujZxZy/YSiZjUr2mGp7o83qMXyusx8+rQ41D3X6rxfuP0RiId2pOpC
+6oq5Dfkx04a1dk4s8w8cVg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="Sm9DkM+kBxuxXCFA+l3fFkxuSWV4xqRc4Nn7Ji3ukao="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+m2emGBqRy4AuduN4dffN8194qYvc9UXRqiQc56IrQYMiIVQPyh59I8SYabcDdspI
+7AFHnvKD5YaF6tQfxWm+mlcmMEk2Y//aUjxeiGGs+RkKgbHitJF/K7nqg1dmKvDg
+a/GaBCq4Bqh0EehlN4ntP5HxM4qcvSfh5m/Coe3drc4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="uG91daMWA1mGkhgP3oZKMYye3UAomMWgG80HuuXg2E0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 33072 )
+`protect data_block
+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
+lt4RiKf5Ppbo8m4GxT0W9nC+QctA2LXMCApNv7NDKLwS/nvyjQWYzfoKgaMG2NE+
++qEeVuK4NX16if6LNcyovzujkYqZjQ16KuR/EdQeWjHzVw9IuCwSstrUFO9/qaMn
+1tqiZhrHaQay38sMsGQlJzIM+hNwWf+g2OXCojE/OZwcelZSLQKFSbiv3L20J6Vo
+JJxk0WSgsLl7VpWQCgOykeTxcyRgd1RQrXNv+e90pt8YlNSrbi9wtL8Ke3OGJORy
+iVa3JErzAdHTdtOfKjkSo/msY9RRz8pWVjFXpMBpKOu5eIz001DF69CG5Xjq/8eH
+slp0iyYl5YownVXqlz6q8GM0ioZw8Q0hvK/at9BgbZ3PBqNQhLCos0qtWvWP/SVo
+qwveB1aN/HmwMYWyWlHhsF9dmrgnyM9pK7BJt4xx+Cd9DH3GQYoW4apb+lL75q0s
+lXpPbf8Ad6Tl+/j5Fl9qPg90iv2f8xZl+eENjsMcI3vHPzaVugg0ACQFjjGgdLRF
+1Phxjo+vMA4mg8ntcKZQuyxebDEyYnJ4wOUUjo38YdaYff9SshBnM0RhGNPVe0LL
+qEast9OeRqZloaRLhVRBSfQUQLYEETrjC4764Git0SrXfYdUsxcON1RQSHTfmn1m
+88ORGd+4Owgc9QG83IjDKt0X1QLO901EhPGwqeWEumvPhjLO1EqH9bvkfcs+4oYL
+8BWP7adoWbs+sIgy5XrpfvG5WugmK3FhfUrJOiHoCyUqclxxAku3TpQlHNenGPNd
+oMSdgar4hqyZBia4xHU0ua4LGtMFxJ1Yau4zulSWtj64L+WCGhSkIuvG01aOtuVc
+fms+P3ZTCjz8GhKnZaj+XZcZqrIKCL2wHEvKH/vfktJ43nXIJwNlXk9v4diEk7ne
+46bQ4SJ5haDPnWU229jxxWU6ydkZLwoBNXun0Is+Fg9efsDGnO0v6tZr2qHYjLKj
+KTdHZcy9pQaecj8kzhRFmRxz87KvoSsfZBhMyhDh5dSDAN6TjJLlo8UAQ5RRkWyq
+tU5DwHxHTLpq8WapK182NzXGRnYFuoIQhXIBclrvg3vl+s7zrusunMFJyPsyaQtv
+mnsh0ip96SYPFZKMYs/4MyQn0DYegFKNJlVQsK8Qlv+V6KD6MrM9HTcxP8w4yLYp
+UpH1bZUnCU2zWibyXeQicH44DB+3pOOTHiWj6YU9OGK6HotjLwJ/q1wtyXafX3Jo
+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
+`protect end_protected

@@ -1,120 +1,133 @@
--------------------------------------------------------------------------------
---
--- File: PkgFlexRioAxiStream.vhd
--- Author: Daniel Hearn
--- Original Project: Macallan
--- Date: 26 July 2016
---
--------------------------------------------------------------------------------
--- (c) 2016 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---  Define constants and types to be use for the Axi Stream
---
--------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-use work.PkgNiUtilities.all;
-
-package PkgFlexRioAxiStream is
-
-  ---------------------------------------------------------------------------------------
-  -- Master to Slave
-  ---------------------------------------------------------------------------------------
-  --We are going to keep data width at 32 since we will use stream mainly for microblaze
-  --interfaces, but if you weren't you could branch a copy of this and set it to a
-  --different value.
-  constant kAxiStreamTDataWidth : positive := 32;
-  subtype AxiStreamTData_t is std_logic_vector(kAxiStreamTDataWidth - 1 downto 0);
-
-  -- This type defines the Master To Slave (M2S) data interface.
-  type AxiStreamData_t is record
-    TData  : AxiStreamTData_t;
-    TLast  : boolean;
-    TValid : boolean;
-  end record;
-
-  -- Default reset/disabled value
-  constant kAxiStreamDataZero : AxiStreamData_t := (
-    TData  => (others => '0'),
-    TLast  => false,
-    TValid => false
-    );
-
-  -- Array
-  type AxiStreamDataAry_t is array (natural range <>) of AxiStreamData_t;
-
-  -- "Flattened" Version
-  constant kFlatAxiStreamDataWidth : positive := kAxiStreamTDataWidth + 2;
-  subtype FlatAxiStreamData_t is std_logic_vector(kFlatAxiStreamDataWidth - 1 downto 0);
-
-  -- Flatten/Unflatten
-  function Flatten(
-    Channel : AxiStreamData_t)
-    return FlatAxiStreamData_t;
-
-  function UnFlatten(
-    FlatChannel : FlatAxiStreamData_t)
-    return AxiStreamData_t;
-
-  ---------------------------------------------------------------------------------------
-  -- Slave To Master
-  ---------------------------------------------------------------------------------------
-  -- The Slave To Master (S2M) return for a channel is just a single signal (Ready), so we
-  -- use a single boolean for it. But we will define a "zero value" for it:
-  constant kAxiStreamReadyZero : boolean := false;
-
-end PkgFlexRioAxiStream;
-
-
-package body PkgFlexRioAxiStream is
-
-  ---------------------------------------------------------------------------------------
-  -- Master to Slave
-  ---------------------------------------------------------------------------------------
-  -- Private constants
-  constant kTDataIndex  : natural := 0;
-  constant kTLastIndex  : natural := kTDataIndex + kAxiStreamTDataWidth;
-  constant kTValidIndex : natural := kTLastIndex + 1;
-
-  function Flatten (
-    Channel : AxiStreamData_t)
-    return FlatAxiStreamData_t is
-    variable retVal : FlatAxiStreamData_t;
-  begin  -- function Flatten
-
-    retVal := SetField(kTDataIndex, Channel.TData, kFlatAxiStreamDataWidth) or
-              SetBit(kTLastIndex, Channel.TLast, kFlatAxiStreamDataWidth) or
-              SetBit(kTValidIndex, Channel.TValid, kFlatAxiStreamDataWidth);
-    return retVal;
-
-  end function Flatten;
-
-  function UnFlatten (
-    FlatChannel : FlatAxiStreamData_t)
-    return AxiStreamData_t is
-    variable retVal : AxiStreamData_t;
-  begin  -- function UnFlatten
-
-    retVal.TValid := to_Boolean(FlatChannel(kTValidIndex));
-    retVal.TLast  := to_Boolean(FlatChannel(kTLastIndex));
-    retVal.TData  := FlatChannel(kTDataIndex + kAxiStreamTDataWidth-1 downto kTDataIndex);
-
-    return retVal;
-
-  end function UnFlatten;
-
-  ---------------------------------------------------------------------------------------
-  -- Xilinx Conversion
-  ---------------------------------------------------------------------------------------
-
-
-
-end PkgFlexRioAxiStream;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+hVdJHWSfELCmA4ds+csnOQAALbB3ps7EiTSHEDd//nts1r+JQrRE4d3bDPRJpiX2
+Sl8d+xAK9BIi4i+3ruAzYvB6kuD7r+gs02Jsvd/1kn7JYK4xBxCjtdDFjVHOTEl1
+sSh1oNiYUwLuwR1yKfP+xBhqxD2Dv6pCKhH1NdGilpJQ6cvivGkSunAu0tzP76T0
+4x1pB179E7uIeRplfHWX03KzEBF+eVtfgXVp2W1BGjfAe43y1pCvNYZOh1+TY62g
+EgAFgbo7pAujZxZy/YSiZjUr2mGp7o83qMXyusx8+rQ41D3X6rxfuP0RiId2pOpC
+6oq5Dfkx04a1dk4s8w8cVg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="Sm9DkM+kBxuxXCFA+l3fFkxuSWV4xqRc4Nn7Ji3ukao="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+m2emGBqRy4AuduN4dffN8194qYvc9UXRqiQc56IrQYMiIVQPyh59I8SYabcDdspI
+7AFHnvKD5YaF6tQfxWm+mlcmMEk2Y//aUjxeiGGs+RkKgbHitJF/K7nqg1dmKvDg
+a/GaBCq4Bqh0EehlN4ntP5HxM4qcvSfh5m/Coe3drc4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="uG91daMWA1mGkhgP3oZKMYye3UAomMWgG80HuuXg2E0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 4128 )
+`protect data_block
+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
+`protect end_protected

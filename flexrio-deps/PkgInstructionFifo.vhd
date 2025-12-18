@@ -1,278 +1,277 @@
-------------------------------------------------------------------------------------------
---
--- File: PkgInstructionFifo.vhd
--- Author: Rolando Ortega
--- Original Project: Instruction FIFO for SDIs
--- Date: 15 May 2015
---
-------------------------------------------------------------------------------------------
--- (c) 2015 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
-------------------------------------------------------------------------------------------
---
--- Purpose: Types, definitions, and type-changing functions for the InstructionFifo. A
--- user implementing an InstructionFifo is *not* expected to modify the contents of this
--- package. PkgInstructionFifoConfig should be branched and modified instead.
-------------------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-use work.PkgNiUtilities.all;
-use work.PkgInstructionFifoConfig.all;
-use work.PkgNiDmaConfig.all;
-
-package PkgInstructionFifo is
-
-  ---------------------------------------------------------------------------------------
-  -- Write Side
-  ---------------------------------------------------------------------------------------
-  constant kIFifoWriteDataWidth : positive := kIFifoWriteDataWidthBytes * 8;
-
-  subtype IFifoWriteData_t is std_logic_vector(kIFifoWriteDataWidth-1 downto 0);
-  constant kIFifoWriteDataZero : IFifoWriteData_t := (others => '0');
-  type IFifoWriteDataAry_t is array (natural range <>) of IFifoWriteData_t;
-
-  ---------------------------------------------------------------------------------------
-  -- Read Side
-  ---------------------------------------------------------------------------------------
-  -- Main Data Type
-  constant kIFifoReadDataWidth : positive        := kIFifoReadDataWidthBytes * 8;
-  subtype IFifoReadData_t is std_logic_vector(kIFifoReadDataWidth-1 downto 0);
-  constant kIFifoReadDataZero  : IFifoReadData_t := (others => '0');
-  type IFifoReadDataAry_t is array (natural range <>) of IFifoReadData_t;
-
-  constant kIFifoSentinelWidth : positive             := kIFifoSentinelWidthBytes * 8;
-  subtype IFifoSentinel_t is unsigned(kIFifoSentinelWidth-1 downto 0);
-  constant kIFifoSentinelZero  : IFifoSentinel_t := (others => '0');
-  type IFifoSentinelAry_t is array (natural range <>) of IFifoSentinel_t;
-
-  -- Status is currently defined as a single byte, which we will optionally return or
-  -- not.
-  constant kIFifoReturnsStatus : boolean := kIFIfoReadStatusWidthBytes > 0;
-  --But within that byte we actually only use a couple bits.
-  type IFifoReadStatus_t is record
-    IsError : boolean;
-    Last    : boolean;
-  end record IFifoReadStatus_t;
-
-  constant kIFifoReadStatusZero : IFifoReadStatus_t :=
-    (IsError => false, Last => false);
-
-  type IFifoReadStatusAry_t is array (natural range <>) of IFifoReadStatus_t;
-
-  -- Note that in the case of kIFIfoReadStatusWidthBytes being set to 0, the flattened
-  -- version of the status will be a null vector. That's ok.
-  --vhook_nowarn id=CP7
-  constant kIFifoReadStatusWidth : natural := kIFifoReadStatusWidthBytes * 8;
-  subtype FlatIFifoReadStatus_t is std_logic_vector(kIFifoReadStatusWidth-1 downto 0);
-  constant kFlatIFifoReadStatusZero : FlatIFifoReadStatus_t := (others => '0');
-
-  -- Bit indexes within the vector.
-  constant kIFifoReadStatusErrorIndex : natural := 0;
-  constant kIFifoReadStatusLastIndex : natural := 1;
-
-  function Unflatten (
-    slv : FlatIFifoReadStatus_t)
-    return IFifoReadStatus_t;
-
-  function Flatten (
-    val : IFifoReadStatus_t)
-    return FlatIFifoReadStatus_t;
-
-  -- A "read" includes the actual read data, status, and sentinel.
-  type IFifoRead_t is record
-    Data     : IFifoReadData_t;
-    Status   : IFifoReadStatus_t;
-    Sentinel : IFifoSentinel_t;
-  end record IFifoRead_t;
-
-  constant kIFifoReadZero : IFifoRead_t :=
-    (Data => kIFifoReadDataZero,
-     Status => kIFifoReadStatusZero,
-     Sentinel => kIFifoSentinelZero);
-
-  constant kIFifoReadWidthBytes : positive := kIFifoReadDataWidthBytes +
-                                              kIFifoReadStatusWidthBytes +
-                                              kIFifoSentinelWidthBytes;
-  constant kIFifoReadWidth : positive := kIFifoReadWidthBytes * 8;
-
-  subtype FlatIFifoRead_t is std_logic_vector(kIFifoReadWidth-1 downto 0);
-  type FlatIFifoReadAry_t is array (natural range <>) of FlatIFifoRead_t;
-
-  function Unflatten (
-    slv : FlatIFifoRead_t)
-    return IFifoRead_t;
-
-  function Flatten (
-    val : IFifoRead_t)
-    return FlatIFifoRead_t;
-
-  ---------------------------------------------------------------------------------------
-  -- Configuration
-  ---------------------------------------------------------------------------------------
-  -- Type used to add or remove credits
-  subtype IFifoCredits_t is signed(kIFifoElementsLog2 downto 0);
-  constant kIFifoCreditsZero : IFifoCredits_t := (others => '0');
-
-  type IFifoCreditsAry_t is array (natural range <>) of IFifoCredits_t;
-
-  ---------------------------------------------------------------------------------------
-  -- Other
-  ---------------------------------------------------------------------------------------
-  -- One of the internal fifos is sized in terms of bus (Dma) words (which can be 64, 128,
-  -- or 256 bits) rather than Instructions. This implies an increase (if the Dma words are
-  -- smaller than the instructions) or reduction (if the instructions are smaller than the
-  -- Dma words) in the size of the Fifo relative to the number of Instructions. This
-  -- function returns the number of bits that must be added to the Instruction Fifo Width
-  -- to create the DmaWord Fifo Width. Note that the returned value can be negative.
-  function GetAddressWidthModifier (
-    constant kDmaWidth         :    natural;
-    constant kInstructionWidth : in natural)
-    return integer;
-
-  -- This probably shouldn't go here, but we'll put it in until there's a better place.
-  -- We just need to have a way to create an array of (something close to) NiDmaAddress_t.
-  type NiDmaAddressAry_t is array (natural range <>) of
-    unsigned(kNiDmaAddressWidth-1 downto 0);
-
-  ---------------------------------------------------------------------------------------
-  -- Ranges
-  ---------------------------------------------------------------------------------------
-
-  -- I've never quite understood why these range things work, but they do:
-  subtype AxiStreamRange_t is natural range 0 to kNumAxiStreamFifos-1;
-  subtype LvFpgaRange_t is natural range kNumAxiStreamFifos to kNumAxiStreamFifos + kNumLvFpgaFifos -1;
-  subtype IFifoRange_t is natural range 0 to kIFifoNrFifos-1;
-
-end package PkgInstructionFifo;
-
-package body PkgInstructionFifo is
-
-  ---------------------------------------------------------------------------------------
-  -- Status
-  ---------------------------------------------------------------------------------------
-
-  function Unflatten (
-    slv : FlatIFifoReadStatus_t)
-    return IFifoReadStatus_t is
-    alias slvLcl : std_logic_vector(slv'length-1 downto 0) is slv;
-    variable retVal : IFifoReadStatus_t;
-  begin  -- function Unflatten
-
-    -- Default empty assignment. Will override as appropriate.
-    retVal := kIFifoReadStatusZero;
-
-    if kIFifoReturnsStatus then
-      retVal.IsError := to_Boolean(slvLcl(kIFifoReadStatusErrorIndex));
-      retVal.Last := to_Boolean(slvLcl(kIFifoReadStatusLastIndex));
-    end if;
-
-    return retVal;
-
-  end function Unflatten;
-
-  function Flatten (
-    val : IFifoReadStatus_t)
-    return FlatIFifoReadStatus_t is
-    variable retVal : FlatIFifoReadStatus_t;
-  begin  -- function Flatten
-    retval := (others => '0');
-    if kIFifoReturnsStatus then
-      retVal(kIFifoReadStatusErrorIndex) := to_StdLogic(val.IsError);
-      retVal(kIFifoReadStatusLastIndex) := to_StdLogic(val.Last);
-    end if;
-
-    return retVal;
-  end function Flatten;
-
-  ---------------------------------------------------------------------------------------
-  -- Read
-  ---------------------------------------------------------------------------------------
-
-  function Unflatten (
-    slv : FlatIFifoRead_t)
-    return IFifoRead_t is
-    alias slvLcl        : std_logic_vector(slv'length-1 downto 0) is slv;
-    variable retVal     : IFifoRead_t;
-    variable goingIndex : natural := 0;
-  begin  -- function Unflatten
-
-    -- Data
-    retVal.Data := slvLcl(kIFifoReadDataWidth-1 downto 0);
-    goingIndex  := kIFifoReadDataWidth;
-
-    -- Status. This default assignment and the following conditional avoids awkward
-    -- assignment of stuff that may not be there.
-    retVal.Status := kIFifoReadStatusZero;
-    if kIFifoReturnsStatus then
-      retVal.Status := Unflatten(slvLcl(goingIndex + kIFifoReadStatusWidth -1 downto
-                                        goingIndex));
-      goingIndex := goingIndex + kIFifoReadStatusWidth;
-    end if;
-
-    -- Sentinel
-    retVal.Sentinel := unsigned(slvLcl(goingIndex + kIFifoSentinelWidth- 1
-                                       downto goingIndex));
-
-    return retVal;
-  end function Unflatten;
-
-  function Flatten (
-    val : IFifoRead_t)
-    return FlatIFifoRead_t is
-    variable retVal : FlatIFifoRead_t;
-  begin  -- function Flatten
-
-    -- This conditional prevents awkward null assignments.
-    if kIFifoReturnsStatus then
-      retVal := std_logic_vector(val.Sentinel) & Flatten(val.Status) & std_logic_vector(val.Data);
-    else
-      retVal := std_logic_vector(val.Sentinel) & std_logic_vector(val.Data);
-    end if;
-    return retVal;
-  end function Flatten;
-
-  ---------------------------------------------------------------------------------------
-  -- Other
-  ---------------------------------------------------------------------------------------
-
-  function GetAddressWidthModifier (
-    constant kDmaWidth         :    natural;
-    constant kInstructionWidth : in natural)
-    return integer is
-  begin  -- function GetAddressWidthModifier
-
-    -- We get around the fact that we are using integer division and logarithms by
-    -- distinguishing between the cases where DmaWidth is bigger and the case where
-    -- kInstructionWidth is larger.
-    --
-    -- GetAddressWidthModifier may not work correctly if kDmaWidth and
-    -- kInstructionWidth are relative primes, so we add in checks for that.
-    if kDmaWidth > kInstructionWidth then
-
-      --synthesis translate_off
-      assert kDmaWidth mod kInstructionWidth = 0
-        report "kInstructionWidth is not a divisor of kDmaWidth."
-        severity error;
-      --synthesis translate_on
-
-      return 0 - Log2(kDmaWidth / kInstructionWidth);
-
-    else
-
-      --synthesis translate_off
-      assert kInstructionWidth mod kDmaWidth = 0
-        report "kDmaWidth is not a divisor of kInstructionWidth."
-        severity error;
-      --synthesis translate_on
-
-      return Log2(kInstructionWidth / kDmaWidth);
-
-    end if;
-  end function GetAddressWidthModifier;
-
-end package body PkgInstructionFifo;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+hVdJHWSfELCmA4ds+csnOQAALbB3ps7EiTSHEDd//nts1r+JQrRE4d3bDPRJpiX2
+Sl8d+xAK9BIi4i+3ruAzYvB6kuD7r+gs02Jsvd/1kn7JYK4xBxCjtdDFjVHOTEl1
+sSh1oNiYUwLuwR1yKfP+xBhqxD2Dv6pCKhH1NdGilpJQ6cvivGkSunAu0tzP76T0
+4x1pB179E7uIeRplfHWX03KzEBF+eVtfgXVp2W1BGjfAe43y1pCvNYZOh1+TY62g
+EgAFgbo7pAujZxZy/YSiZjUr2mGp7o83qMXyusx8+rQ41D3X6rxfuP0RiId2pOpC
+6oq5Dfkx04a1dk4s8w8cVg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="Sm9DkM+kBxuxXCFA+l3fFkxuSWV4xqRc4Nn7Ji3ukao="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+m2emGBqRy4AuduN4dffN8194qYvc9UXRqiQc56IrQYMiIVQPyh59I8SYabcDdspI
+7AFHnvKD5YaF6tQfxWm+mlcmMEk2Y//aUjxeiGGs+RkKgbHitJF/K7nqg1dmKvDg
+a/GaBCq4Bqh0EehlN4ntP5HxM4qcvSfh5m/Coe3drc4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="uG91daMWA1mGkhgP3oZKMYye3UAomMWgG80HuuXg2E0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 11040 )
+`protect data_block
+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
+`protect end_protected
