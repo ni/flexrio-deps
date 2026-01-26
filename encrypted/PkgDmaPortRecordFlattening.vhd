@@ -1,779 +1,784 @@
--------------------------------------------------------------------------------
---
--- File: PkgDmaPortRecordFlattening.vhd
--- Author: Hector Rubio
--- Original Project: CHInCh 2
--- Date:  25 9 2014
---
--------------------------------------------------------------------------------
--- (c) 2014 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
---    Provide functions to flatten and unflatten record types at the port map of the
---    InChWORM so pre-synthesized netlist will be portable across synthesizer versions
---    (e.g. between Vivado 2013.2 and 2013.3) by using only arrays at the ports but
---    enabling the user to connect those ports to the record type signals easily.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-  use work.PkgNiDma.all;
-  use work.PkgBaRegPort.all;
-  use work.PkgSwitchedChinch.all;
-
-package PkgDmaPortRecordFlattening is
-
-  -----------------------------------------------------
-  -- REG PORTS (FROM PkgBaRegPort)
-
-  subtype FlatBaRegPortIn_t is std_logic_vector(
-    SizeOf(kBaRegPortInZero) - 1 downto 0);
-
-  function Flatten(Var : BaRegPortIn_t) return FlatBaRegPortIn_t;
-  function UnFlatten(Var  : FlatBaRegPortIn_t) return BaRegPortIn_t;
-
-  subtype FlatBaRegPortOut_t is std_logic_vector(
-    SizeOf(kBaRegPortOutZero) - 1 downto 0);
-
-  function Flatten(Var : BaRegPortOut_t) return FlatBaRegPortOut_t;
-  function UnFlatten(Var  : FlatBaRegPortOut_t) return BaRegPortOut_t;
-
-  ------------------------------------------------------------------------------
-  -- Input DMA (from PkgNiDma)
-
-  subtype FlatNiDmaInputRequestToDma_t   is std_logic_vector(
-    SizeOf(kNiDmaInputRequestToDmaZero) + 1 - 1 downto 0);-- Include request bit itself
-  subtype FlatNiDmaInputRequestFromDma_t is std_logic_vector(0 downto 0);
-  subtype FlatNiDmaInputDataToDma_t      is std_logic_vector(NiDmaData_t'length-1 downto 0);
-  subtype FlatNiDmaInputDataFromDma_t    is std_logic_vector(
-    SizeOf(kNiDmaInputDataFromDmaZero) - 1 downto 0);
-  subtype FlatNiDmaInputStatusFromDma_t  is std_logic_vector(
-    SizeOf(kNiDmaInputStatusFromDmaZero) - 1 downto 0);
-
-  function Flatten(Var : NiDmaInputRequestToDma_t) return FlatNiDmaInputRequestToDma_t;
-  function UnFlatten(Var : FlatNiDmaInputRequestToDma_t) return NiDmaInputRequestToDma_t;
-
-  function Flatten(Var : NiDmaInputRequestFromDma_t) return FlatNiDmaInputRequestFromDma_t;
-  function UnFlatten(Var : FlatNiDmaInputRequestFromDma_t) return NiDmaInputRequestFromDma_t;
-
-  function Flatten(Var : NiDmaInputDataToDma_t) return FlatNiDmaInputDataToDma_t;
-  function UnFlatten(Var : FlatNiDmaInputDataToDma_t) return NiDmaInputDataToDma_t;
-
-  function Flatten(Var : NiDmaInputDataFromDma_t) return FlatNiDmaInputDataFromDma_t;
-  function UnFlatten(Var : FlatNiDmaInputDataFromDma_t) return NiDmaInputDataFromDma_t;
-
-  function Flatten(Var : NiDmaInputStatusFromDma_t) return FlatNiDmaInputStatusFromDma_t;
-  function UnFlatten(Var : FlatNiDmaInputStatusFromDma_t) return NiDmaInputStatusFromDma_t;
-
-  ------------------------------------------------
-  -- Output DMA (from PkgNiDma)
-  subtype FlatNiDmaOutputRequestToDma_t   is std_logic_vector(
-    SizeOf(kNiDmaOutputRequestToDmaZero) + 1 - 1 downto 0);-- Include request bit itself
-  subtype FlatNiDmaOutputRequestFromDma_t is std_logic_vector(0 downto 0);
-  subtype FlatNiDmaOutputDataFromDma_t    is std_logic_vector(
-    SizeOf(kNiDmaOutputDataFromDmaZero) - 1 downto 0);
-
-  function Flatten(Var : NiDmaOutputRequestToDma_t) return FlatNiDmaOutputRequestToDma_t;
-  function UnFlatten(Var : FlatNiDmaOutputRequestToDma_t) return NiDmaOutputRequestToDma_t;
-
-  function Flatten(Var : NiDmaOutputRequestFromDma_t) return FlatNiDmaOutputRequestFromDma_t;
-  function UnFlatten(Var : FlatNiDmaOutputRequestFromDma_t) return NiDmaOutputRequestFromDma_t;
-
-  function Flatten(Var : NiDmaOutputDataFromDma_t) return FlatNiDmaOutputDataFromDma_t;
-  function UnFlatten(Var : FlatNiDmaOutputDataFromDma_t) return NiDmaOutputDataFromDma_t;
-
-  ------------------------------------------------------------------------------
-  -- High Speed Sink Interface (from PkgNiDma)
-
-  constant kFlatHighSpeedSinkFromDmaSize : natural := SizeOf(kNiDmaHighSpeedSinkFromDmaZero);
-
-  subtype FlatNiDmaHighSpeedSinkFromDma_t is std_logic_vector(kFlatHighSpeedSinkFromDmaSize-1 downto 0);
-
-  function Flatten(Var : NiDmaHighSpeedSinkFromDma_t) return FlatNiDmaHighSpeedSinkFromDma_t;
-  function UnFlatten(Var : FlatNiDmaHighSpeedSinkFromDma_t) return NiDmaHighSpeedSinkFromDma_t;
-
-  ------------------------------------------------------------------------------
-  -- Link Interface (from PkgSwitchedChinch)
-  constant kFlatSwitchedLinkTxSize : natural := 64 + -- Data
-                                                 1 + -- Ready
-                                                 1 + -- LastWord
-                                                 4;  -- RFR_Delay
-  constant kFlatSwitchedLinkRxSize : natural := 1 + -- Accept
-                                                1;  -- ReadyForRead
-
-  subtype FlatSwitchedLinkTx_t is std_logic_vector(kFlatSwitchedLinkTxSize-1 downto 0);
-  subtype FlatSwitchedLinkRx_t is std_logic_vector(kFlatSwitchedLinkRxSize-1 downto 0);
-
-  function Flatten(Var : SwitchedLinkTx_t) return FlatSwitchedLinkTx_t;
-  function UnFlatten(Var : FlatSwitchedLinkTx_t) return SwitchedLinkTx_t;
-  function Flatten(Var : SwitchedLinkRx_t) return FlatSwitchedLinkRx_t;
-  function UnFlatten(Var : FlatSwitchedLinkRx_t) return SwitchedLinkRx_t;
-
-end PkgDmaPortRecordFlattening;
-
-package body PkgDmaPortRecordFlattening is
-
-  -----------------------------------------------------
-  -- REG PORTS (FROM PkgBaRegPort)
-  -- type BaRegPortIn_t is record
-  --   Address : BaRegPortAddress_t;
-  --   Data : BaRegPortData_t;
-  --   WtStrobe : BaRegPortStrobe_t;
-  --   RdStrobe : BaRegPortStrobe_t;
-  -- end record;
-
-  -- type BaRegPortOut_t is record
-  --   Data : BaRegPortData_t;
-  --   Acknowledge : boolean;
-  -- end record;
-
-  function Flatten(Var : BaRegPortIn_t) return FlatBaRegPortIn_t is
-    variable Index  : natural := 0;
-    variable RetVal : FlatBaRegPortIn_t;
-  begin
-    RetVal(Index + kBaRegPortAddressWidth - 1 downto Index)     := std_logic_vector(Var.Address);
-      Index := Index + kBaRegPortAddressWidth;
-    RetVal(Index + kBaRegPortDataWidth - 1 downto Index)        := std_logic_vector(Var.Data);
-      Index := Index + kBaRegPortDataWidth;
-    RetVal(Index + kBaRegPortDataWidthInBytes - 1 downto Index) := to_StdLogicVector(Var.WtStrobe);
-      Index := Index + kBaRegPortDataWidthInBytes;
-    RetVal(Index + kBaRegPortDataWidthInBytes - 1 downto Index) := to_StdLogicVector(Var.RdStrobe);
-      Index := Index + kBaRegPortDataWidthInBytes;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var  : FlatBaRegPortIn_t) return BaRegPortIn_t is
-    variable Index  : natural := 0;
-    variable RetVal : BaRegPortIn_t;
-  begin
-    RetVal.Address := BaRegPortAddress_t(Var(Index + kBaRegPortAddressWidth - 1 downto Index));
-      Index := Index + kBaRegPortAddressWidth;
-    RetVal.Data    := BaRegPortData_t(Var(Index + kBaRegPortDataWidth - 1 downto Index));
-      Index := Index + kBaRegPortDataWidth;
-    RetVal.WtStrobe := to_BooleanVector(Var(Index + kBaRegPortDataWidthInBytes - 1 downto Index));
-      Index := Index + kBaRegPortDataWidthInBytes;
-    RetVal.RdStrobe := to_BooleanVector(Var(Index + kBaRegPortDataWidthInBytes - 1 downto Index));
-      Index := Index + kBaRegPortDataWidthInBytes;
-
-    return RetVal;
-  end function UnFlatten;
-
-  function Flatten(Var : BaRegPortOut_t) return FlatBaRegPortOut_t is
-    variable Index  : natural := 0;
-    variable RetVal : FlatBaRegPortOut_t;
-  begin
-    RetVal(Index + kBaRegPortDataWidth - 1 downto Index) := std_logic_vector(Var.Data);
-      Index := Index + kBaRegPortDataWidth;
-    RetVal(Index)                                        := to_StdLogic(Var.Ack);
-      Index := Index + 1;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var  : FlatBaRegPortOut_t) return BaRegPortOut_t is
-    variable Index  : natural := 0;
-    variable RetVal : BaRegPortOut_t;
-  begin
-    RetVal.Data        := BaRegPortData_t(Var(Index + kBaRegPortDataWidth - 1 downto Index));
-      Index := Index + kBaRegPortDataWidth;
-    RetVal.Ack := to_Boolean(Var(Index));
-      Index := Index + 1;
-
-    return RetVal;
-  end function UnFlatten;
-
-  ------------------------------------------------------------------------------
-  -- Input DMA (from PkgNiDma)
-  --   type NiDmaInputRequestToDma_t is record
-  --   Request : boolean;
-  --   Space : NiDmaSpace_t;
-  --   Channel : NiDmaGeneralChannel_t;
-  --   Address : NiDmaAddress_t;
-  --   Baggage : NiDmaBaggage_t;
-  --   ByteSwap : NiDmaByteSwap_t;
-  --   ByteLane : NiDmaByteLane_t;
-  --   ByteCount : NiDmaInputByteCount_t;
-  --   Done : boolean;
-  --   EndOfRecord : boolean;
-  -- end record;
-
-  function Flatten(Var : NiDmaInputRequestToDma_t) return FlatNiDmaInputRequestToDma_t is
-    variable Index  : natural;
-    variable RetVal : FlatNiDmaInputRequestToDma_t;
-  begin
-    Index := 0;
-    RetVal(Index)                                       := to_StdLogic(Var.Request);
-      Index := Index + 1;
-    RetVal(Index + Var.Space'length-1     downto Index) := std_logic_vector(Var.Space);
-      Index := Index + Var.Space'length;
-    RetVal(Index + Var.Channel'length-1   downto Index) := std_logic_vector(Var.Channel);
-      Index := Index + Var.Channel'length;
-    RetVal(Index + Var.Address'length-1   downto Index) := std_logic_vector(Var.Address);
-      Index := Index + Var.Address'length;
-    RetVal(Index + Var.Baggage'length-1   downto Index) := std_logic_vector(Var.Baggage);
-      Index := Index + Var.Baggage'length;
-    RetVal(Index + Var.ByteSwap'length-1  downto Index) := std_logic_vector(Var.ByteSwap);
-      Index := Index + Var.ByteSwap'length;
-    RetVal(Index + Var.ByteLane'length-1  downto Index) := std_logic_vector(Var.ByteLane);
-      Index := Index + Var.ByteLane'length;
-    RetVal(Index + Var.ByteCount'length-1 downto Index) := std_logic_vector(Var.ByteCount);
-      Index := Index + Var.ByteCount'length;
-    RetVal(Index)                                       := to_StdLogic(Var.Done);
-      Index := Index + 1;
-    RetVal(Index)                                       := to_StdLogic(Var.EndOfRecord);
-      Index := Index + 1;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaInputRequestToDma_t) return NiDmaInputRequestToDma_t is
-    variable Index  : natural;
-    variable RetVal : NiDmaInputRequestToDma_t;
-  begin
-    Index := 0;
-    RetVal.Request   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Space     := NiDmaSpace_t(Var(Index + RetVal.Space'length-1 downto Index));
-      Index := Index + RetVal.Space'length;
-    RetVal.Channel   := NiDmaGeneralChannel_t(Var(Index + RetVal.Channel'length-1 downto Index));
-      Index := Index + RetVal.Channel'length;
-    RetVal.Address   := NiDmaAddress_t(Var(Index + RetVal.Address'length-1 downto Index));
-      Index := Index + RetVal.Address'length;
-    RetVal.Baggage   := NiDmaBaggage_t(Var(Index + RetVal.Baggage'length-1 downto Index));
-      Index := Index + RetVal.Baggage'length;
-    RetVal.ByteSwap  := NiDmaByteSwap_t(Var(Index + RetVal.ByteSwap'length-1 downto Index));
-      Index := Index + RetVal.ByteSwap'length;
-    RetVal.ByteLane  := NiDmaByteLane_t(Var(Index + RetVal.ByteLane'length-1 downto Index));
-      Index := Index + RetVal.ByteLane'length;
-    RetVal.ByteCount := NiDmaInputByteCount_t(Var(Index + RetVal.ByteCount'length-1 downto Index));
-      Index := Index + RetVal.ByteCount'length;
-    RetVal.Done      := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.EndOfRecord := to_Boolean(Var(Index));
-      Index := Index + 1;
-
-    return RetVal;
-  end function UnFlatten;
-
-  -- type NiDmaInputRequestFromDma_t is record
-  --   Acknowledge : boolean;
-  -- end record;
-
-  function Flatten(Var : NiDmaInputRequestFromDma_t) return FlatNiDmaInputRequestFromDma_t is
-    variable RetVal : FlatNiDmaInputRequestFromDma_t;
-  begin
-    RetVal(0) := to_StdLogic(Var.Acknowledge);
-
-    assert RetVal'length = 1 report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaInputRequestFromDma_t) return NiDmaInputRequestFromDma_t is
-    variable RetVal : NiDmaInputRequestFromDma_t;
-  begin
-    RetVal.Acknowledge := to_Boolean(Var(0));
-
-    return RetVal;
-  end function UnFlatten;
-
-  -- type NiDmaInputDataToDma_t is record
-  --   Data : NiDmaData_t;
-  -- end record;
-
-  function Flatten(Var : NiDmaInputDataToDma_t) return FlatNiDmaInputDataToDma_t is
-    variable RetVal : FlatNiDmaInputDataToDma_t;
-  begin
-    RetVal := std_logic_vector(Var.Data);
-
-    assert RetVal'length = Var.Data'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaInputDataToDma_t) return NiDmaInputDataToDma_t is
-    variable RetVal : NiDmaInputDataToDma_t;
-  begin
-    RetVal.Data := NiDmaData_t(Var);
-
-    return RetVal;
-  end function UnFlatten;
-
-  -- type NiDmaInputDataFromDma_t is record
-  --   TransferStart : boolean;
-  --   TransferEnd : boolean;
-  --   Space : NiDmaSpace_t;
-  --   Channel : NiDmaGeneralChannel_t;
-  --   DmaChannel : NiDmaDmaChannelOneHot_t;
-  --   DirectChannel : NiDmaDirectChannelOneHot_t;
-  --   ByteLane : NiDmaByteLane_t;
-  --   ByteCount : NiDmaBusByteCount_t;
-  --   Done : boolean;
-  --   EndOfRecord : boolean;
-  --   ByteEnable : NiDmaByteEnable_t;
-  --   Pop : boolean;
-  -- end record;
-
-  function Flatten(Var : NiDmaInputDataFromDma_t) return FlatNiDmaInputDataFromDma_t is
-    variable Index  : natural;
-    variable RetVal : FlatNiDmaInputDataFromDma_t;
-  begin
-    Index := 0;
-    RetVal(Index)                                           := to_StdLogic(Var.TransferStart);
-      Index := Index + 1;
-    RetVal(Index)                                           := to_StdLogic(Var.TransferEnd);
-      Index := Index + 1;
-    RetVal(Index + Var.Space'length-1 downto Index)         := std_logic_vector(Var.Space);
-      Index := Index + Var.Space'length;
-    RetVal(Index + Var.Channel'length-1 downto Index)       := std_logic_vector(Var.Channel);
-      Index := Index + Var.Channel'length;
-    RetVal(Index + Var.DmaChannel'length-1 downto Index)    := to_StdLogicVector(Var.DmaChannel);
-      Index := Index + Var.DmaChannel'length;
-    RetVal(Index + Var.DirectChannel'length-1 downto Index) := to_StdLogicVector(Var.DirectChannel);
-      Index := Index + Var.DirectChannel'length;
-    RetVal(Index + Var.ByteLane'length-1 downto Index)      := std_logic_vector(Var.ByteLane);
-      Index := Index + Var.ByteLane'length;
-    RetVal(Index + Var.ByteCount'length-1 downto Index)     := std_logic_vector(Var.ByteCount);
-      Index := Index + Var.ByteCount'length;
-    RetVal(Index)                                           := to_StdLogic(Var.Done);
-      Index := Index + 1;
-    RetVal(Index)                                           := to_StdLogic(Var.EndOfRecord);
-      Index := Index + 1;
-    RetVal(Index + Var.ByteEnable'length-1 downto Index)    := to_StdLogicVector(Var.ByteEnable);
-      Index := Index + Var.ByteEnable'length;
-    RetVal(Index)                                           := to_StdLogic(Var.Pop);
-      Index := Index + 1;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaInputDataFromDma_t) return NiDmaInputDataFromDma_t is
-    variable Index  : natural;
-    variable RetVal : NiDmaInputDataFromDma_t;
-  begin
-    Index := 0;
-    RetVal.TransferStart := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.TransferEnd   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Space         := NiDmaSpace_t(Var(Index + RetVal.Space'length-1 downto Index));
-      Index := Index + RetVal.Space'length;
-    RetVal.Channel       := NiDmaGeneralChannel_t(Var(Index + RetVal.Channel'length-1 downto Index));
-      Index := Index + RetVal.Channel'length;
-    RetVal.DmaChannel    := to_BooleanVector(Var(Index + RetVal.DmaChannel'length-1 downto Index));
-      Index := Index + RetVal.DmaChannel'length;
-    RetVal.DirectChannel := to_BooleanVector(Var(Index + RetVal.DirectChannel'length-1 downto Index));
-      Index := Index + RetVal.DirectChannel'length;
-    RetVal.ByteLane      := NiDmaByteLane_t(Var(Index + RetVal.ByteLane'length-1 downto Index));
-      Index := Index + RetVal.ByteLane'length;
-    RetVal.ByteCount     := NiDmaBusByteCount_t(Var(Index + RetVal.ByteCount'length-1 downto Index));
-      Index := Index + RetVal.ByteCount'length;
-    RetVal.Done          := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.EndOfRecord   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.ByteEnable    := to_BooleanVector(Var(Index + RetVal.ByteEnable'length-1 downto Index));
-      Index := Index + RetVal.ByteEnable'length;
-    RetVal.Pop           := to_Boolean(Var(Index));
-      Index := Index + 1;
-
-    return RetVal;
-  end function UnFlatten;
-
-  -- type NiDmaInputStatusFromDma_t is record
-  --   Ready : boolean;
-  --   Space : NiDmaSpace_t;
-  --   Channel : NiDmaGeneralChannel_t;
-  --   DmaChannel : NiDmaDmaChannelOneHot_t;
-  --   DirectChannel : NiDmaDirectChannelOneHot_t;
-  --   ByteCount : NiDmaInputByteCount_t;
-  --   Done : boolean;
-  --   EndOfRecord : boolean;
-  --   ErrorStatus : boolean;
-  -- end record;
-
-  function Flatten(Var : NiDmaInputStatusFromDma_t) return FlatNiDmaInputStatusFromDma_t is
-    variable Index  : natural;
-    variable RetVal : FlatNiDmaInputStatusFromDma_t;
-  begin
-    Index := 0;
-    RetVal(Index)                                           := to_StdLogic(Var.Ready);
-      Index := Index + 1;
-    RetVal(Index + Var.Space'length-1 downto Index)         := std_logic_vector(Var.Space);
-      Index := Index + Var.Space'length;
-    RetVal(Index + Var.Channel'length-1 downto Index)       := std_logic_vector(Var.Channel);
-      Index := Index + Var.Channel'length;
-    RetVal(Index + Var.DmaChannel'length-1 downto Index)    := to_StdLogicVector(Var.DmaChannel);
-      Index := Index + Var.DmaChannel'length;
-    RetVal(Index + Var.DirectChannel'length-1 downto Index) := to_StdLogicVector(Var.DirectChannel);
-      Index := Index + Var.DirectChannel'length;
-    RetVal(Index + Var.ByteCount'length-1 downto Index)     := std_logic_vector(Var.ByteCount);
-      Index := Index + Var.ByteCount'length;
-    RetVal(Index)                                           := to_StdLogic(Var.Done);
-      Index := Index + 1;
-    RetVal(Index)                                           := to_StdLogic(Var.EndOfRecord);
-      Index := Index + 1;
-    RetVal(Index)                                           := to_StdLogic(Var.ErrorStatus);
-      Index := Index + 1;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaInputStatusFromDma_t) return NiDmaInputStatusFromDma_t is
-    variable Index  : natural;
-    variable RetVal : NiDmaInputStatusFromDma_t;
-  begin
-    Index := 0;
-    RetVal.Ready         := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Space         := NiDmaSpace_t(Var(Index + RetVal.Space'length-1 downto Index));
-      Index := Index + RetVal.Space'length;
-    RetVal.Channel       := NiDmaGeneralChannel_t(Var(Index + RetVal.Channel'length-1 downto Index));
-      Index := Index + RetVal.Channel'length;
-    RetVal.DmaChannel    := to_BooleanVector(Var(Index + RetVal.DmaChannel'length-1 downto Index));
-      Index := Index + RetVal.DmaChannel'length;
-    RetVal.DirectChannel := to_BooleanVector(Var(Index + RetVal.DirectChannel'length-1 downto Index));
-      Index := Index + RetVal.DirectChannel'length;
-    RetVal.ByteCount     := NiDmaInputByteCount_t(Var(Index + RetVal.ByteCount'length-1 downto Index));
-      Index := Index + RetVal.ByteCount'length;
-    RetVal.Done          := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.EndOfRecord   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.ErrorStatus   := to_Boolean(Var(Index));
-      Index := Index + 1;
-
-    return RetVal;
-  end function UnFlatten;
-
-  ------------------------------------------------------------------------------
-  -- Output DMA (from PkgNiDma)
-  -- type NiDmaOutputRequestToDma_t is record
-  --   Request : boolean;
-  --   Space : NiDmaSpace_t;
-  --   Channel : NiDmaGeneralChannel_t;
-  --   Address : NiDmaAddress_t;
-  --   Baggage : NiDmaBaggage_t;
-  --   ByteSwap : NiDmaByteSwap_t;
-  --   ByteLane : NiDmaByteLane_t;
-  --   ByteCount : NiDmaOutputByteCount_t;
-  --   Done : boolean;
-  --   EndOfRecord : boolean;
-  -- end record;
-
-  function Flatten(Var : NiDmaOutputRequestToDma_t) return FlatNiDmaOutputRequestToDma_t is
-    variable Index  : natural;
-    variable RetVal : FlatNiDmaOutputRequestToDma_t;
-  begin
-    Index := 0;
-    RetVal(Index)                                       := to_StdLogic(Var.Request);
-      Index := Index + 1;
-    RetVal(Index + Var.Space'length-1 downto Index)     := std_logic_vector(Var.Space);
-      Index := Index + Var.Space'length;
-    RetVal(Index + Var.Channel'length-1 downto Index)   := std_logic_vector(Var.Channel);
-      Index := Index + Var.Channel'length;
-    RetVal(Index + Var.Address'length-1 downto Index)   := std_logic_vector(Var.Address);
-      Index := Index + Var.Address'length;
-    RetVal(Index + Var.Baggage'length-1 downto Index)   := std_logic_vector(Var.Baggage);
-      Index := Index + Var.Baggage'length;
-    RetVal(Index + Var.ByteSwap'length-1 downto Index)  := std_logic_vector(Var.ByteSwap);
-      Index := Index + Var.ByteSwap'length;
-    RetVal(Index + Var.ByteLane'length-1 downto Index)  := std_logic_vector(Var.ByteLane);
-      Index := Index + Var.ByteLane'length;
-    RetVal(Index + Var.ByteCount'length-1 downto Index) := std_logic_vector(Var.ByteCount);
-      Index := Index + Var.ByteCount'length;
-    RetVal(Index)                                       := to_StdLogic(Var.Done);
-      Index := Index + 1;
-    RetVal(Index)                                       := to_StdLogic(Var.EndOfRecord);
-      Index := Index + 1;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaOutputRequestToDma_t) return NiDmaOutputRequestToDma_t is
-    variable Index  : natural;
-    variable RetVal : NiDmaOutputRequestToDma_t;
-  begin
-    Index := 0;
-    RetVal.Request     := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Space       := NiDmaSpace_t(Var(Index + RetVal.Space'length-1 downto Index));
-      Index := Index + RetVal.Space'length;
-    RetVal.Channel     := NiDmaGeneralChannel_t(Var(Index + RetVal.Channel'length-1 downto Index));
-      Index := Index + RetVal.Channel'length;
-    RetVal.Address     := NiDmaAddress_t(Var(Index + RetVal.Address'length-1 downto Index));
-      Index := Index + RetVal.Address'length;
-    RetVal.Baggage     := NiDmaBaggage_t(Var(Index + RetVal.Baggage'length-1 downto Index));
-      Index := Index + RetVal.Baggage'length;
-    RetVal.ByteSwap    := NiDmaByteSwap_t(Var(Index + RetVal.ByteSwap'length-1 downto Index));
-      Index := Index + RetVal.ByteSwap'length;
-    RetVal.ByteLane    := NiDmaByteLane_t(Var(Index + RetVal.ByteLane'length-1 downto Index));
-      Index := Index + RetVal.ByteLane'length;
-    RetVal.ByteCount   := NiDmaOutputByteCount_t(Var(Index + RetVal.ByteCount'length-1 downto Index));
-      Index := Index + RetVal.ByteCount'length;
-    RetVal.Done        := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.EndOfRecord := to_Boolean(Var(Index));
-      Index := Index + 1;
-
-    return RetVal;
-  end function UnFlatten;
-
-  -- type NiDmaOutputRequestFromDma_t is record
-  --   Acknowledge : boolean;
-  -- end record;
-
-  function Flatten(Var : NiDmaOutputRequestFromDma_t) return FlatNiDmaOutputRequestFromDma_t is
-    variable RetVal : FlatNiDmaOutputRequestFromDma_t;
-  begin
-    RetVal(0) := to_StdLogic(Var.Acknowledge);
-
-    assert RetVal'length = 1 report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaOutputRequestFromDma_t) return NiDmaOutputRequestFromDma_t is
-    variable RetVal : NiDmaOutputRequestFromDma_t;
-  begin
-    RetVal.Acknowledge := to_Boolean(Var(0));
-
-    return RetVal;
-  end function UnFlatten;
-
-  -- type NiDmaOutputDataFromDma_t is record
-  --   TransferStart : boolean;
-  --   TransferEnd : boolean;
-  --   Space : NiDmaSpace_t;
-  --   Channel : NiDmaGeneralChannel_t;
-  --   DmaChannel : NiDmaDmaChannelOneHot_t;
-  --   DirectChannel : NiDmaDirectChannelOneHot_t;
-  --   ByteLane : NiDmaByteLane_t;
-  --   ByteCount : NiDmaBusByteCount_t;
-  --   Done : boolean;
-  --   EndOfRecord : boolean;
-  --   ErrorStatus : boolean;
-  --   ByteEnable : NiDmaByteEnable_t;
-  --   Push : boolean;
-  --   Data : NiDmaData_t;
-  -- end record;
-
-  function Flatten(Var : NiDmaOutputDataFromDma_t) return FlatNiDmaOutputDataFromDma_t is
-    variable Index : natural;
-    variable RetVal : FlatNiDmaOutputDataFromDma_t;
-  begin
-    Index := 0;
-    RetVal(Index)                                           := to_StdLogic(Var.TransferStart);
-      Index := Index + 1;
-    RetVal(Index)                                           := to_StdLogic(Var.TransferEnd);
-      Index := Index + 1;
-    RetVal(Index + Var.Space'length-1 downto Index)         := std_logic_vector(Var.Space);
-      Index := Index + Var.Space'length;
-    RetVal(Index + Var.Channel'length-1 downto Index)       := std_logic_vector(Var.Channel);
-      Index := Index + Var.Channel'length;
-    RetVal(Index + Var.DmaChannel'length-1 downto Index)    := to_StdLogicVector(Var.DmaChannel);
-      Index := Index + Var.DmaChannel'length;
-    RetVal(Index + Var.DirectChannel'length-1 downto Index) := to_StdLogicVector(Var.DirectChannel);
-      Index := Index + Var.DirectChannel'length;
-    RetVal(Index + Var.ByteLane'length-1 downto Index)      := std_logic_vector(Var.ByteLane);
-      Index := Index + Var.ByteLane'length;
-    RetVal(Index + Var.ByteCount'length-1 downto Index)     := std_logic_vector(Var.ByteCount);
-      Index := Index + Var.ByteCount'length;
-    RetVal(Index)                                           := to_StdLogic(Var.Done);
-      Index := Index + 1;
-    RetVal(Index)                                           := to_StdLogic(Var.EndOfRecord);
-      Index := Index + 1;
-    RetVal(Index)                                           := to_StdLogic(Var.ErrorStatus);
-      Index := Index + 1;
-    RetVal(Index + Var.ByteEnable'length-1 downto Index)    := to_StdLogicVector(Var.ByteEnable);
-      Index := Index + Var.ByteEnable'length;
-    RetVal(Index)                                           := to_StdLogic(Var.Push);
-      Index := Index + 1;
-    RetVal(Index + Var.Data'length-1 downto Index)          := std_logic_vector(Var.Data);
-      Index := Index + Var.Data'length;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaOutputDataFromDma_t) return NiDmaOutputDataFromDma_t is
-    variable Index : natural;
-    variable RetVal : NiDmaOutputDataFromDma_t;
-  begin
-    Index := 0;
-    RetVal.TransferStart := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.TransferEnd   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Space         := NiDmaSpace_t(Var(Index + RetVal.Space'length-1 downto Index));
-      Index := Index + RetVal.Space'length;
-    RetVal.Channel       := NiDmaGeneralChannel_t(Var(Index + RetVal.Channel'length-1 downto Index));
-      Index := Index + RetVal.Channel'length;
-    RetVal.DmaChannel    := to_BooleanVector(Var(Index + RetVal.DmaChannel'length-1 downto Index));
-      Index := Index + RetVal.DmaChannel'length;
-    RetVal.DirectChannel := to_BooleanVector(Var(Index + RetVal.DirectChannel'length-1 downto Index));
-      Index := Index + RetVal.DirectChannel'length;
-    RetVal.ByteLane      := NiDmaByteLane_t(Var(Index + RetVal.ByteLane'length-1 downto Index));
-      Index := Index + RetVal.ByteLane'length;
-    RetVal.ByteCount     := NiDmaBusByteCount_t(Var(Index + RetVal.ByteCount'length-1 downto Index));
-      Index := Index + RetVal.ByteCount'length;
-    RetVal.Done          := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.EndOfRecord   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.ErrorStatus   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.ByteEnable    := to_BooleanVector(Var(Index + RetVal.ByteEnable'length-1 downto Index));
-      Index := Index + RetVal.ByteEnable'length;
-    RetVal.Push          := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Data          := NiDmaData_t(Var(Index + RetVal.Data'length-1 downto Index));
-      Index := Index + RetVal.Data'length;
-
-    return RetVal;
-  end function UnFlatten;
-
-  ------------------------------------------------------------------------------
-  -- High Speed Sink Interface (from PkgNiDma)
-  -- type NiDmaHighSpeedSinkFromDma_t is record
-  --   TransferStart : boolean;
-  --   TransferEnd : boolean;
-  --   Address : NiDmaHighSpeedSinkAddress_t;
-  --   ByteLane : NiDmaByteLane_t;
-  --   ByteCount : NiDmaBusByteCount_t;
-  --   ByteEnable : NiDmaByteEnable_t;
-  --   Push : boolean;
-  --   Data : NiDmaData_t;
-  -- end record;
-
-  function Flatten(Var : NiDmaHighSpeedSinkFromDma_t) return FlatNiDmaHighSpeedSinkFromDma_t is
-    variable Index : natural;
-    variable RetVal : FlatNiDmaHighSpeedSinkFromDma_t;
-  begin
-    Index := 0;
-    RetVal(Index)                                        := to_StdLogic(Var.TransferStart);
-      Index := Index + 1;
-    RetVal(Index)                                        := to_StdLogic(Var.TransferEnd);
-      Index := Index + 1;
-    RetVal(Index + Var.Address'length-1 downto Index)    := std_logic_vector(Var.Address);
-      Index := Index + Var.Address'length;
-    RetVal(Index + Var.ByteLane'length-1 downto Index)   := std_logic_vector(Var.ByteLane);
-      Index := Index + Var.ByteLane'length;
-    RetVal(Index + Var.ByteCount'length-1 downto Index)  := std_logic_vector(Var.ByteCount);
-      Index := Index + Var.ByteCount'length;
-    RetVal(Index + Var.ByteEnable'length-1 downto Index) := to_StdLogicVector(Var.ByteEnable);
-      Index := Index + Var.ByteEnable'length;
-    RetVal(Index)                                        := to_StdLogic(Var.Push);
-      Index := Index + 1;
-    RetVal(Index + Var.Data'length-1 downto Index)           := std_logic_vector(Var.Data);
-      Index := Index + Var.Data'length;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatNiDmaHighSpeedSinkFromDma_t) return NiDmaHighSpeedSinkFromDma_t is
-    variable Index : natural;
-    variable RetVal : NiDmaHighSpeedSinkFromDma_t;
-  begin
-    Index := 0;
-    RetVal.TransferStart := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.TransferEnd   := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Address       := NiDmaHighSpeedSinkAddress_t(Var(Index + RetVal.Address'length-1 downto Index));
-      Index := Index + RetVal.Address'length;
-    RetVal.ByteLane      := NiDmaByteLane_t(Var(Index + RetVal.ByteLane'length-1 downto Index));
-      Index := Index + RetVal.ByteLane'length;
-    RetVal.ByteCount     := NiDmaBusByteCount_t(Var(Index + RetVal.ByteCount'length-1 downto Index));
-      Index := Index + RetVal.ByteCount'length;
-    RetVal.ByteEnable    := to_BooleanVector(Var(Index + RetVal.ByteEnable'length-1 downto Index));
-      Index := Index + RetVal.ByteEnable'length;
-    RetVal.Push          := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.Data          := NiDmaData_t(Var(Index + RetVal.Data'length-1 downto Index));
-      Index := Index + RetVal.Data'length;
-
-    return RetVal;
-  end function UnFlatten;
-
-  ------------------------------------------------------------------------------
-  -- Link Interface (from PkgSwitchedChinch)
-
-  function Flatten(Var : SwitchedLinkTx_t) return FlatSwitchedLinkTx_t is
-    variable Index  : natural;
-    variable RetVal : FlatSwitchedLinkTx_t;
-  begin
-    Index := 0;
-    RetVal(Index + Var.Data'length-1 downto Index)      := std_logic_vector(Var.Data);
-      Index := Index + Var.Data'length;
-    RetVal(Index)                                       := to_StdLogic(Var.Ready);
-      Index := Index + 1;
-    RetVal(Index)                                       := to_StdLogic(Var.LastWord);
-      Index := Index + 1;
-    RetVal(Index + Var.RFR_Delay'length-1 downto Index) := std_logic_vector(Var.RFR_Delay);
-      Index := Index + Var.RFR_Delay'length;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatSwitchedLinkTx_t) return SwitchedLinkTx_t is
-    variable Index  : natural;
-    variable RetVal : SwitchedLinkTx_t;
-  begin
-    Index := 0;
-    RetVal.Data           := SwitchedPacketWord_t(Var(Index + RetVal.Data'length-1 downto Index));
-      Index := Index + RetVal.Data'length;
-    RetVal.Ready          := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.LastWord       := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.RFR_Delay      := RFR_Delay_t(Var(Index + RetVal.RFR_Delay'length-1 downto Index));
-      Index := Index + RetVal.RFR_Delay'length;
-
-    return RetVal;
-  end function UnFlatten;
-
-  function Flatten(Var : SwitchedLinkRx_t) return FlatSwitchedLinkRx_t is
-    variable Index  : natural;
-    variable RetVal : FlatSwitchedLinkRx_t;
-  begin
-    Index := 0;
-    RetVal(Index)                                       := to_StdLogic(Var.Accept);
-      Index := Index + 1;
-    RetVal(Index)                                       := to_StdLogic(Var.ReadyForRead);
-      Index := Index + 1;
-
-    assert Index = RetVal'length report "Flatten function size missmatch" severity failure;
-    return RetVal;
-  end function Flatten;
-
-  function UnFlatten(Var : FlatSwitchedLinkRx_t) return SwitchedLinkRx_t is
-    variable Index  : natural;
-    variable RetVal : SwitchedLinkRx_t;
-  begin
-    Index := 0;
-    RetVal.Accept          := to_Boolean(Var(Index));
-      Index := Index + 1;
-    RetVal.ReadyForRead    := to_Boolean(Var(Index));
-      Index := Index + 1;
-
-    return RetVal;
-  end function UnFlatten;
-
-
-end PkgDmaPortRecordFlattening;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+aMReDmrPskJscpWYThVKVItA5gecPPZO1R595p0GoIq1TSTG+UxXhmmUXc+VYHJ3
+u/C3EW5qePLufxmXxmhmDnr9U8/cYC1zLfk44v/2OPb1TBrTsludEDQZdGNWeV9l
+cPUMSIfZ0dHXN7L1M1E2XtgoTWQxf3VDHs7B7lU2y9Rdm/ibz0fWMow7op2nWdD8
+gJ4QlNl3f9Oiotp1p8vz9RFzzZOF5gBBslZxcTF5+z4qO2W7+xLByngthWm+exIr
+3Pzy8qyUo/m2DDwOz3VJSvSNm7RUq+0/yJNOOz3jr3j7ZyCj5OqT/jDAWjJSMH+i
+2402Un+wDMOQxi21JLo3cA==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="5R6K2aWI3OdbT2A+sz4o9+2XAInTqB1/cSw5W16RnA4="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+Gm/2BIZF5/H5qen8uQizPH9RftTuEE9mgEOF0SqeOKegtP64CfvEUnIxj/ahmIpA
+6xUR2v2l7E5duaLZh39Mc1GYsfqE91NCPU5whLaBPg0UuX4cgTkO4cYbW/7yvcrd
+4wavUfwXEp2VSiN7EVxL8RcZTSMSI0Jr/aojiilFqVE=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="TEmQtJ1Dsm7TOzpJk/CeTSSFx/zKExk04H6I8sT4Meg="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 35344 )
+`protect data_block
+nvPqn26PC4XWLLQG0Fq8XsMTlhB4evbpiwGjZroFFLgtNlE6bBjdtwWsB89WW4j7
+jNfYbKN4sBv0hDeMH0AAR+8g+TCqoX7yLdIUd7aGwBUZJr6FdDs2wTUxRkXFYNTL
+pZPBKDWpw8SI9CeQ0UEeIcY2J1qCujg89h/gX/skEwkU46rZxlWzkbfNfLuRMj+c
+r72kmLLnCRS8/THs2zjunarhDpa4lVEnpZWgBN0oZy5mLVp+qMO6uok5lFps+STd
+iaRGLZnzOwn+ZMPzRh6LLwABsP90G8a4dwq63wg3yVeKzLMo39S4Eaaf7s7r9fSU
+9IaPAYWw/uP3DJH9//DvdLFGHLFy8efQTrBhCk/nuf99dyUjIf/AAX1up1337Z+4
+PDMOUCFP5qaXq6XsgV9xsqPHO0+UEBxgDJ4gvOc+Jt6l7zBDpsKAKB1IS1SHqP9+
+EaDo/A+36ScvgKZuqyxAZ4hxhWZgUsrO2JvnDHQCURjPHl4zK3qbi7xGOXJKxUho
+5vJ1wCaM+MQE7i9TnmR+JxgwrKUFlRqtnVELTGollB9fCJwBcmDaAqh4XBIB3YeX
+twbxY+c63tHqqziPQBUj9cIDxztL5XqvWtvKROuXOeTFJ+mhOijY8HK2Ot80XXnJ
+YGfVFoaqp+4xFoPMscppCjFyqSfmSKLNNX5goOq3O8CAt612HVGDkRzUodZyft2m
+79u9qohf+x7ep9huvc0d8gUS1ZGXMZXWR2eOC+buBlTcI2i/oorKtxDqPkN8KTf+
+ppyPUgRkcKSC/qp60+AEgaR69JTbtBM27t8+fBsyOIgOQEi1W4gEUceA4cG0YCg8
+ikmDVRN8tKXcvwkiOrJ0jTi253gd9OI7pnVlqduhD3V87D7y0Dk6GZnZ13cbjuQG
+jUx5y1j8wStL0cbEMQ9auStFh7llaql360wbs4GpwFqqVDSuTc8/kZDK2XIjB50P
+wH6vVJJRgsMsg1syEdGZgExnAinePB1NmvMLFGl81rcZ2dmWODb/GOQ1Yih4+YLA
+/SINLT3RGHuYRPgnmTEw2hqELa7MBH6DxWiitlDdliHIw0FhiuPrRHIakDw809s0
+/6NiU2grs8lLnGm73aFcxnb2ZgEn35Kbw1wx2VVWNAUUVcr8RHYjO3aPOIFPzfaD
++3y4Pzyck47tWFrVMoYbimas+dsRdCxt0JsWg6KKZDFYBlsgtFYr6iiim2Aj7M7B
+hAW45xVJqYSS/faELn4+Q6CZx+6ay1z8heaijIwZSaulO4rMctd5H0zHQaCUfwTV
+c+SmCSD/2pbEz7TfKKvY0lmZZsTs1nWG2sJjhg12UucWa37Ips2fuJENFu/cCLGY
+8iN4OLvGO3eD/9d7gsj0yNL3rLbDYOKboD0EMIzGY9pDnQMNtFCNI/wW2ShhHbyB
+92qlx4xlJ6iWL1e6+WCeLVSEki+Gtfd2duyWscl3T7kEIOzCCFf5N8C3Fkt0NqIq
+MozYeXkpmWnxgm92MRtLF23wgjO20tNjEksOVfrCrvThaqRPzC3YZy+GDqabX/yw
+MNdBwEKjrUP2FfQlSEJ2unbFX1Z56FoFhXrAsPjDmqagvsgLkKYCVPluKMYA50B6
+06REwpv3yYQiZzktP5n7MliaCC/PWksMkV6q+b96ffJhBkmPDZahHy+ZBsDvN7Tb
+4RfCCcbCQF4mgxq8te7lbUdOKrv6V5ktVDdnFxINcOuit+OCUpmTmyoLQJ5BZogF
+0NXKazj3D1flR+xbWcIhtC4DlU/pD21jQYrAV58POKlQG/AukmxH1mjxrosxnsX9
+Ts60pXYradebOpCWmF7aCoVlnDEXporzX7EinKHFPttf+8hZbwFhybQMK8BbxW0Y
+465hbML/G+4sGGFr2eksGaW0cahgTRoc8zhdia8ee8gaTStULCwGJ7E34NUdqnN9
+0s4NZd1jixuJtLL8b/MZoMGmmzl4MVHo7FSaYAo+1ZbgagRjItzp3KnxahqBdnSD
+j0JwPEwm+9gg5q1jP0ksSKhGnwD4zwcTNqCboLJiQYLxnp7B6CpqUnpI0jyxesUR
+0iEP0mi9ine8QWv16SXp+QU43REuYD+PKmExZvTEeVJqiVYcx09iGSU7qiIAUNqw
+lhevOBkYuXEKYQ6GoRqaQ9LrlEVKhYb8imTjXssT3FxtEvD/2HpPa+8Xt39BspYQ
+/bp9pB2gxqUMo/fwo+GRES9QSkjKFOj94WIAOTl8O3SxjtMioB0BME2/E6/HVdzD
+T1s7YWeUTSP4k3YjFqB0cGwEGFMrdZkETfinyiMokfID+S5sh0vZ96tUfkYys4I0
+GNofDBunFKjf/bYqrDYGJaWbM/djS9AdKFBJGq3jJzIBH1ce0IGBYleU6jeWv2Cs
+HQpdvCYXN7cduBuP/A4Jq+RD1GPcvlnljYdruymoqe8kf+INB9yRsEpKKmxIZj5h
++w4mATTtxhC7cfaRg7K2s6sArLq4gMpldh86wqJVsf5zdlL+Mt+s0w/DBPam4m09
+u2ibUQUEl6ED64iVIOzTPocGj+wYPSBsnr1T/PS+YSUuqCwNBHmyuKQEzji/bz/m
+/5ZLiLCojdoD9nM3DaF4goHIuYdPiJdRNIINy83CuojEIhlzN8HyIY821krYAJR3
+souunhqSrklWiLKOVy0bU+0tY10t1uQ479UHtUmlJo+wpA/PxwaCBcRzdARWIIWF
+BtH3nRVpUmLwx5kIlYkEpEVbzEZUn8PbT/QSXdD1/bF4rHpXxcvnhNQfZvE58VfH
+litKoNxSnOdDVudfw84QRg3ZoQ+QT5edECMtx2z7NXRB9cHJS6SxzASGekYtn2aP
+3Iw5bdFUuk7dXvMehPsSGbeN/GBtUNfYvlyOJAm1HU8kHWRSfcnPpBe5T5K3QZl1
+NKdHLRRYGkrKWgvp62Zx+SD7CQSs+dJsv1XqFMdVJ/5sFCmIDvUBJE61tlMigfja
+bQq8gWQeftoXSqZceE/29ZrTsyC8QU6a6maaagv3nMXWjj2XZ3meZrNKj+13DyIX
+TPTNcfyBuKJfe1L4PE8z/CNAPvwOBkLEbhscP24gRjbea1a2dM7kjMjijmyhwgOV
+kouladFer3CHGuSKur4wPHbTxZ7l55pPci2+FSz+1ktRLjv0BMrFmzEJQijEaw8S
+j30YgqlgijUOIu4sHbwPUH+OGE9QMB8Mp704olaZLdaY5b/pN/tv8aXCjJpFb/+I
+RPD1VMaKmFwq3awnt1o8FAfey8S2XwGGgw7s+NxdrVAaRJ9K1txVSwklU1WjzRNa
+WpySEJfDVVA/A4Yi9ZHzo8S2IaLyZWpQAlDzqa7yFY0fp/bOqBm6RnUBoptb6kVF
+l8eyjxnVT9IlmXiAagI/zHG2eKjXRykehuSUGDfYYv7Ss6mxKDKWkBe/VBSW3F54
+B/8ojdz6I5cvm03cmO7+0l7/xUDVGj6wr+npZjRp2QhmJkUmhIjrpMxay0c6z07s
+ym5gQC02GHXN7Bh/UW0KtCBTLY/KexiC/WT3xsuNLspGMUH5yFs43fuZuAR70qfE
+q6W18jsxoM5Xcq9/LvNxzU6nNKN2Cir74/4x6fUVfQZCNXm0ECZizE5XQp/VF+JH
+9pYX/b+ByyffrETRJyaj0Bv+nls17O3J6sgw1MHsl3zcbMYNj8I4IvigF8MHSUVU
+ZxVVgcFHakMEVUycKkTh01Z03qzmLdEOWERYh2GtVwT1WFCmXGUGT89GZu/LTNeG
+bbxmTejuW15v9Q2ZHvfAw+S3ss/N3DRVwP7Ptcwa4ZbJEMEt1nlDNmFGZS4Ueud6
+pxDOOcj+pAfSEsyson6pKc/lNJ1ohFHenSG4JEbOlZ7AP6QmKZhVcDMkxrVTBjxx
+p8R0zmEQmZ2xb+uB981tdmnAFLQnnneqlW/kn9yecAqOeyoj8klaxVeHPWhy3L8N
+SCJwsG7qbDY5IzU97UqrI+2eGbkW5h5H2wjT4CqPTO363JTltLMYrs1sstn96ixA
+bR19GTQ+CcEKYV6Pd31VqDUuxPX7d8sHy95lHFtOCS04vytsrOVYb2WpnMJ+MP0Y
+SHB0/dZqkqw4L8T70mKs2plkrfXCFZI6FI/O5z/yvyZcrKMUFIFgB7jz5w+nNY2E
+RQXYYMJO7a+XMrrij03VVsgstgvGF1ShazknFrQ89HTaoYRH+Q9d7JUEMgk5RwJb
+aAGOMJZzLtb16526qSJRuuOC0jQYPh2IHJQMvMWO6YLeR1bHqX8ZzSJgQJPt4DIL
+HfKviK1uifNQcbACJiT/OaJJUl1qAE2KXcB+5nFz+amefrmLkI/+FKckHi0uuz47
+l7KVvRBAIFU0Vgp9gZd+4760izvuN7LUwEm5YtPFXenMkRtgOJdUjSvdpl8ruAV/
+u5PjQXRji7QGBue9weqoavmwRG7g765LuiITjdjFHTgjzqCA6sQ5BLYxPCbecuG9
++2B0rss17v9wDGIwyuS/WFdBB1ULz+zlH/53T3LdSn7c1lSp+9VsG0EvOsd9nG8N
+dUUx71js9mCSR3V7JPC53Hde7L5HsUr19iXsQMmC45yRHp/TzwRNA7i8DdPbFqW4
+caBwnaFY6iSOsPS0FKUXH9VSQcUGXgUJK8eC7ExEBvqGveY1tGcClaCR9iGj8OGB
+thBDjZXD3K3iL3ois5KUHh6WDljGk/Ixh0cp58bj92jB2MhfKI/LsD9WwfPUToWk
+zQiX2JypwAihQ8suhnS/kdLO5szb2pEWgUQlrgfn9wlBlZIqfMgo4ZBvPW9hVw+r
+JNmcekDoO1yJRCy9vAuf0yaxB+Vrfq2B2boOV2SSYokSkep8wg3wy2viLkq1wRwz
+4g6hk+jlHnhGrH2ZoFD5HGJjUHOXWE1IOoh3WKvl7UEhD9TGeGqApTn7sjBV/m9P
+/qyaPLOqaQ0VrVYmGRTvKWrTNWEMNX9/OSkBoJnfuvXSdve4BS5rDUKDt/X2oPxM
+Rx3OM94PAj8oUAdGL43AliqPATp+6gd7z+7jLJv1gZRLo+75wRQe/b5ccjKtneN2
+QVDGrr6CvbHnCXA4QGxYcuzQ0GWqoFeJAU6iUXyhX+R2UF1Zo+j9r4+muUm8jZHG
+2hV6714sxte915qKA7RXpMBgHgFRFtFAgvKU/Z5FS34So2SzIPuOAHxsm3wvHtSa
+V1IqT+5r5aQfJuuOi69d83Q2IeMlZJ05LtRucJwLo7msPbdAS0wG3TVjVx82oBjh
+3+jKuNLkvhQRs+9ALbc0MG6yvQHxBZR+C0Q61PROCRXEKZceL0gWjMXcCsrXCfoi
+vTaX6a3Ik3Si/Iicstqitu0Y/cuRbRhm2p68d5fHEDbg/v2B0lspf1Jcvkocnx+4
+/0qO13Og5niHodQ9nwsDVloZSp39nr7SeKbkNrbmYNtHyd7vaiCaslYOJBy4MLFT
+zZCaoOQGgtyjYzxRtF7nCuLDliG/w5iKVAp61+m953jpBW1FnSFWDD6WoeUDiqW7
+vcgit2Gi630EXzVIJPBR/DLqamkBxuvy0HQoEGPK5m4N7/M8XsS6qvlf7WMvobqL
+EGRwrzr5Xk9MkIFVcrpGA8AjYY4i3csi86aYmlHnpohyCHdhC31oa/0vqFxGqNXN
+QEVdu/aZSTbk+EDg0TVovH5Y+6Or1Qi7jeKD+3hxKN2OOLfY8l/50n9rC0Fh8e7t
+SAtOpCOIEaJa2OjGC66ZsYHJ9hYb2RB6FpB0ORFpbaq6PSQ8c6a6xTKzgQ8W6evd
+uBItIKi1tBQ1t32dfXxqzx6R3lsXnBQuB+9HQ6omk9BVwsahWUgxBKYlVkq9Vi0q
+E6Ge5qbNZ2Qm0tBBqjwlqm5+kmfLkiNrOwZmyO7W4/EoHeiOXd9VA7Z+c+cUCE8n
+JvE2FEbvQOGV3zKp9H21kDEnNfPPRrCjZzDtJtSOxndhgJb0zEFfFkBh+WV8+pUt
+Zd/xi0FJAUuiA2A7Rm6B1TbfsBkz1fDHuugRcGRBQtZVn7deuskzy1U0saoFe+Er
+TSPjezZWMp8wQR763kcXQvMFwPGhiwYfCIZsEA+AU2Vd2aQRa8M/0Dq1jwY0H+kH
+NQnyPULMhTYPbFESSZUrNXYFn6ligLA/I9fFhBL8FSIZsv+zRmf2TAKy5LKn1M2a
+UIU9jVhFjfL70MUkjfhKrTc6lRWxpNnzGpOXfBjOJHICSIf1Ms7Y18G4ztFr/orE
+uJ3aUDVbJc8YuwMfcCPI1lrIZY7lMgfijd/ugvPqryZ7RhTkSwP8C8JCulBXkmDT
+XNfGN5hrTgsPE1uMzih8RYqkRSYSsPX1xMikm/fpRMgYeUZX086xr2pACe2W1LVt
+21N05F5MM+rlYdkIC0LZ7cM3gdsq7SgsLPrrNNp3GJomTpgZNBRaap8aC/FBUGJJ
+7FXS6If0mpTdG+naqeQjrnQkP9ZBOPV1+2afuC1SXOzODbA91pwisDqWNCfdlAO5
+UNRr4IHkTQicqre7jEk+bhCypxrDynAecXY1dL3MOMdPD+JdAmAyKQkx0dI8ViOu
+JSf2gX/u05NJG+n6fIJRwSN0yHQtC1pHItup/tNSi3nUHaNBswLMe1WLOv5pH3i8
+TzbYOQUrPm2OYm9W52E6WXo/D1+Fk1YP3rCOocFBG4VvjStqEc96yNAoz8T8/qi7
+Q0oaVhcT2edZWog9H3IDEStBZS0wWa44VqPlysN8cKcGg4AEhqRBfg7qjonX+JNC
+KSaRoGAg+uDcwfiKi4BxrEq3obQboKMMzkTrO03OzlgJSRIlAb8Rnsg3ewqU9F2G
+k8AhG1qsnQUqnZKfG0902qPxx4lL8DPqlqf7yhqOwP1cjHyQqRvFPnBMpgLnVG4V
+uYsAYh4oHq5NyfUQCI5PnZDt3kPzHDpe6tDGZI7tCLHSIX1jiB15/Rr9GbvMIU7p
+3ZnlcDsBpwkvJO+JaMrTbtcNFqsaT6/xPIwrNHn/K3caAB1foUs18rPIqG990uUf
+pfrZ5GpXS/wkq8EqClc58wMdCdKRR5rpO0bsm90NuZYA4S0l0FGtnglMsq8CFGdq
+djNB0UUB2Bu4D9FoSD9ycVXjMv6hPmsSrYb+HiPY6fvszgWt1mR+6EQv5IRQR1VQ
+hmLSWcpP2afIkGTyqv+X30cvdMiTyRUajp7q7aeUKYI2unWDmaSU8SsCg11Ty1d8
+zUsYfVnZDk8EWytvwIqeIF8npt3eYJNCKWAGsOVddN4koeLojA2uCRhEDmy980Hd
+IdpCHYa1bc0BURz8erP1apo1jOnUEEKFqZNMxYa8ltC0ueTS8yDj6blrI9mS+pG6
+UgIPOuLBBvM44gI1vQnDd2+gLDX4HX0xdxD6bvAgCi3iEnzjttPkSo/k/wm00rhd
+YKAe2DaI+ZKB0B49LRXS8DDRfjYjEpfQVlACzV2oMQIp7jeXn96O7GZTRXPrKEKW
+dKMx3CoGSVdNiKuV43+j1VnuE//3wJfhSg84BsZevEtFZXylZHU25Ch8Zoom5yaR
+N3MR1jz047FOtiCQca/1MYDKFzQhu7/O5vEROYwgEN6uv4kDhKObifLs9qLVExTO
+fJHU5xd9mwOogttci53KRfWFRILwvqvNXbOdtaXJjdFuLK9R7XugLh6B9KEC9DwY
+2lwBVSWSUst9uw2q5x8TI5VbLANLu/NwE/R1XC08zzRqIYMlKz/p29RuOVUPlyfe
+jZvTj8yX1ZPK34wcPMumDjOeHfyOXnsuruBAAGpPlSq0oB8LY7tG34Oek/NBes2g
+nh8Myhu8mtR3ibnFRfcunQ576dq4/rYxrLj0/fg28G3KrYLZwRCyg1v9qJYy/+A9
+pDN4fo/k4KBB1EjnGEEEqReiHcfmeImCGiJOBAll1GQniKsc3avjWbgACm149wuf
+15UHK49GUiojxWHn7CIRbbr5RDuTSNz2zOU82+s+WwuDmpWVRSZmwVVBBLm1FUEW
+u9IF4jDgoJ7gKg6krc0Cgb/YlUlb10Wo9VD5dgpYHFC85nXfu9/mynxAH5ydPFXz
+TVSldmd+VjEYjrApJBREob0U5tQX83wDV5Ff9Oq5KFkzbF+sa+FWG54ObW6DAu2G
+6NRocNlP0Ze6A+l6Kt6pDk1eX5zCMAImFoMYA9KM7FeVkuENPIqeJg/OHYDf1vFM
+7f21x3RbADGaLEt7KMkXId0s1rty+KcIZQrMmzGkT4zCNDnidnGvm9l3Uosyl4iL
+dmLf19AGjelcfvRtXhXxcOjntRu+mJN55HOuXX6+ZEFIJXOlzrzmtwq4a7DiUgBE
+qrgnktXg2wxBbAz4LeMcewyLK3jNOImkb9Y+5unsVRr6skOjptKNmT1zpR1IFKuj
+HNftxP1QiOOk0BVrQcd02uCJo7dnlM+OiIQ+NZHr8/i/my24mrh3pjv0eQV3jvmm
+S5uL9lCJcSbxiOyClVfbSMQ1fr21/BwuvoKfHP0OzIoXqpS2YU4jLx6EZk55mXxP
+UOyMW/3I5krDQW7FpBL+qjxjbV6BqhVdKhjkfuz1zAdhvd/ayeeBKuObkVFKIVK8
+3nmB1NLhW1KJpNcKgS/7yIGY5x/H7y/sRsc5zuO0hijxJVzcA+ytxbuf116he6e9
+RfI2uymGOjS4bVN66DcNAan3oWaE9fANUABnp1e2KrAzOuhugllCkR9J8Xm8reB1
+y7n+9l78YF4z/UwGndkT5+H7exYGEIBEJr+anfOBdMl3NqS6uvk/Lsd41C1Jnehc
+E3mW+brgSXQehuH6OivjxE3CoT8tx3MMBT05lEvb6ArU5FaUPBjSvVmImV/jBrdt
+6zUzJuyl3ZfQcWVSWEeCRHLyxWCz5yFw+s3CjoxfgQdmBKtJSyl4RWllRSYJYYKc
+Qgov5p1KWi0Ir82vJ+AsPOwUofyONnfeW7cwf7sxV3U9121CzhtAYrTdHOifxdXR
+vAAsSYyBcJng9QbY9U20YqEKSvT06osdt5k79kUb7G3I+E36TIsDR247mXZBWeQT
+KBl5luBUSv02QyYKmRvf0wu4UF0S2hSaBrBwmEE/GqWroUKhjdLtx5qt6g1Y6Scp
+87wVSWELVPi2yNUNrh4RXOZ2qrefUdgmSx8fY8gbGSTpqJVMBq5xEIICkteZJflG
+pWKjtdIcuYdr2ky3QWxaxLbfteazoyAGPqZl5kxYynrEdiQvAeDH9r/zFdO9BD0J
+/m0X67k1/zGINL2t+bNrDvpr7g4U83RmH0H71ATtzGMddrUC6HbkUlMovqxqPhSf
+kWhgSchDUMlLHtTepHxuwNFFLjLwoFdzeD5+uOEc1mD43JQTGJdPyGncxG14F2Fg
+Mf/m4b5e59wXy/Aim7idpptL059+W5OmwFuaoc23HwYvNep7moz6eBAEdXIb+4V7
+/YQakMyjG5TMLNe2ID6A5ccSwzUgYZRU0ru2JyVG+brnKCdNfAnDdaAl1KSCGKMI
+i93lzAfee64Kbydymm4BO152TC6ec841mXYJdfRWT/XQScXtBmiOr5G3K5l8Aexp
+oVH8wJriaP+e2pT98AZH1C85eEazBOr13NPGxwtKHzL/Zb80Tf+hya6Q9kx0pWiK
+ePxBJ09FV+6KgQzgL/ZKpB7UWtByiblyYenjQP3VP/qk8yzjabUA7PlfUHeO45i4
+5p2L01sM8NEs54YvAIgddh9fmuV1t8H9ky+2V1k0gCks2lGcZVe70mwhEqqUoLqw
+a6OwPkBzBQcNa2SajIvGdZijA7w15GhAFMPGxudaomfrccWZl/t6G5uLBv+pd1q/
+u5FACfH9VGuEJzD/OrJnwxE4xi9FJ0791JzabEU0nPIPVhR34ChaRJJ8qx/Jje1i
+cKDvnGVe2SbLPSywYUOxN8Q74h2w/e2eTd2Jh2mufqvKv1IFPJPhEaIJRCnY+JXw
+1fUbX5xi3GGnGBgEvYjhlT1xCVSxSbiAx/mkeasviKzDNEKHjB0vhM/a/kMey9wZ
+IUQgIYG8lY4URm9DvedvXNYXTijPwL1+gonIKsVVf4E52PqOx1RQc6IWZ7gojBjw
+xn3hD/KjLECVMImAmCpXdkUqLcd1ssdf8u71o3fHCZeKkh1Zx53q6T0V88kc5bw7
+G+T1SlytUFyJe41ZYTa0W5xuADbNW4Rfss0cq+ocvgOkmACngkfDWNakSnl8uc5k
+y+FLKSEJ0BYY+qFYQbRXjjxe8SkDNxkSrdrRRrG/jxpSS+XD3ZD3Y/BD9Y1iq6XK
+u+LzCv6vlY+JqNgpRSEO5K1LQjbc0dKjeHUp3/TI0yyMy70Q6NTtjeM3LRFAQY6v
+YEZqEuL1OiM0Qx8SztfrZW0G4WXVsShmFqNBFWB+/SSZ/seaZ7nZvsrVJJI1uWtY
+fzpROqqFn1YOYkwE9fmRyB+gvAqD5EbMI4x9bnyl4SvzBjerd7zLFV7p1aLFZUYH
+Z8AvoAA60K1HRLo4bPpRFJ4i6nXnSkxepeepHS41cWO/HuE5YePaBwXvYSFlNRgE
+Xu90Z0EDeTyzExm+2VvFqtVJGXPSAjTsGeIliG1Z2dtTfT4psx743eVwyGCinZxa
+vfZwyH8j5Ix5fx5JLtGQavxwNHdbiynEck0fKCLKlOvn3JoW+OJDMC+oAR954GxP
+p9OD3ICF7+6p2QV1amSls2RA7gkxVC8OSbnMSjoaUutWDnceso3H9ym2d8Y07i7A
+nfJKU+TklH8tWI+AEqh8HBinHviVnTVOPeY4plxyfc9dzBmLQnUPZ4HbfDL9E+DU
+I73P/yfjIWUShe+56kETFtlvX5HxFODhHVetH2/GUaoZA4k4ioAUXTSZn8iSQAiw
+kkIolGJt141zZLq+A9+btcAgYqjC4As1YVeNa2otedaZKy5hRInJqNtdM4IVVnr8
+FDZwSsBnszN3k7JsdS5RFrld/D80wSp6EA+mpVet1VV5YaGNICy4GTX/0AqPvYOu
+jD7uZmIoWcXfDArI4d93MO947IC43XhGjDa92SQxRljrBwCfV5L66ozVV9vnCqtG
+7mopn1q+wiJ5YP4V8Yup57xYOaULT/b0AhCOmVy6Mox5F8ITh14runOJjgeX76gp
+JAMXL0mjSR0u9wWawTrgEKW1b0p0AnmDGqpyzN7swjB406ahmSMezANg85rpf0Ww
+i20PL5DKX0r5hYK2qBZZXH/oBvh6YDF/sZ9HUNAZspFCZcJ/u/8TFZzPeVH8UDqX
+GVNsBq5//XAqBPuNot11IqqfKoR6p+53/NsgRxqP0RmrFGa72OAscIuycBjs2301
+xlLxjj2naL8saCjywl7Wvv+QXP3hHDenmwGoWMduODgMf3fPh/5R9BrkObas3/Hb
+/dHBqJW72YBGTwj9TPTuDPNMwV58Q0AQmgM+B5wRDWprF5+1QA601MpmETQP2vDC
+geCTg2ksF5kRGi0BQfsXKc3N05jvJ8vmUm3juvmVYtqa09+tnPF4E6tyuembd3bk
+Vziros6ilGsgQlye6XXcjGxyzx1IXALnCFDck+3IZG00Nzceq3HSbLTAinAsiaPV
+HvNrkL8xSnGrbSWwVRkDpIbwqlXWuyZHCsRBQZBJqlNFL/0Svfzgl1OSG2lIEHFX
+CKNQf706pAjIeNax8xjfMboEtrkO8fRF42wNaTqFF0eAGM89LA1FUb2zI7y7dWAb
+qTaLU790wMb2Y2dVfTQe2bPkswnUaF8jZ9bWErLq5RY9N8qszE4BYPt4KNT2y6uK
+a1ZK+WpeYuhXdgisw5Csm51JuDEqZ0kBVWPPRSTajx1c3rrSVcpztS3TpT8fEnjL
+AOa+3UMrynTk69pCCstWQnoiqLuzpuYp9VuOLJR8m80xopUUx2QE1rmqpnZcIpla
+FkQcjPfHUopMIU9bxSam8nMudwlorWD1VscrHhXE5wyW6OE1i3qrIyDFh79q7/c2
++kGUzCKvB0sUmX7OdHBbAZiqy/toomWllSAH7CGGvu6kRwq0kk/UPM/lOPAsle2A
+XWsoESKScSMkq86FroAPI5ZldVkonKXG2O1DSyFdj9cEcZ5sBMVVyACIuD8ydGLG
+0v9ltdt5o41eMJtnf6Rld5Ad1Um/BrWU/xUnTfMdIgFQr6HLDyv/6OerWtpG3Xkt
+dEhk2CNe679qnrekneipscgaoE8F4M5X9DCi6MhSao03zk+1tRFoat6C62Gx9okY
+N169dwGQKxhO3d9hRewXZ4N0/71B9e2uJ1pR71i4k6aol/irCTiXLDIx4pOv0oyR
+KVEzORy5FB3JdFBPXic19kX7Ch9MNZiM5uFsB8gLcmc6gu1m/7+tWDqLT0g/ur6g
++yo+72IFBuv+1Sx/Q6j9ec8j2qOfN1Am+/aTWqA/xUXA2UsP5WZl/xm3bXyIhved
+DDKJmgayQ8mXQVDf7UB6zTvDIZYvrMmZFRD69inRHjh1G4v2vRTHjiS/0ltG8+MX
+4VIHd2repVyOWWlk3cbJPLaAFfc4XtUPAOwaze4S8+x4bC2llLIFNF+kxWiJYINO
+e6Ke9wz0JsC6AI047uZM7j5+ebASJSJt/4UDld2S75LWgKvV5/Me4RSqqKYSJqPy
+cGprroM0p84qb56IWkpqc02wRC81pkB0ahaXaCHYPJxgLrYptehi9nseWbDmcPDF
+UNgDqVxdFscT+WpaE2HlKQgDvM+FHAb6+fqxkIxYxaDC712hKoVQk0hB7b4a8ZPH
+YzHPyy3KE/j74rPxjl4Lg0jtbLm3kmfNJ0tRDwur+mZuuhzLGtrRQ4oHKjFMRctj
+DINNHo/l49Zt6qEa1YolzKlKcHa4w6gzUjNaLdz+Vx3KmzxMTiOSuerbSjv011mV
+ynHCMa1jgcSqhBP279QpBGNVkRDmc8fXXwoYXlb5D8Od6fE3hunz84el4RHLzNqg
+yD/FiohYWoeON6ry7bhxhi5+s7q6hmb+y2VRgDNxnlbvAc2N8aYUELQifMDeKQmm
+mwnfJmuxFPS/xja7mUrL9QR45HELIR5kGZDTVRQarQRkJGnzhUlH2WgOASY6oveT
+UbxrcK1uYqm1lw2soTet4wOnocWmHlK4ls4UGwpaWTlUIpTa2BsWFwkRUdgDwe0g
+wwwNyNkiHuDmBirWLjKMWeMr+Xz1LX0o6B2O1trEDek9jp+6SIzEBWgLMQ/zAp9Q
+Z48W0/hO8YdRiqfV6ZliNZXDsX2bXXF2Tou1FVDLLWHSpg7EzpGofgsSm8YPqVMj
+RQDfub+/NfeEbiaQ2XIU+7h6DbEPnXm2Dtj8TdeLufGt+CuShazpkXXBW7hJjRm5
+YB8Qt3R6tnTedS8Q0O5pxdgsyDg2haKd5Df9IhKO7u7le4fBck3dXrjakHGgK1Vn
+r7rAWP0HQMomus7eKp0Y35ReQWwC3h21TeCGJI7ToXerT3yuzs9rSeuWfE0oeYJF
+aXakZJO8yi7dqhXkPt36TRptiZa7fXtCvEyTAIJ5zb4s+yHUVbq/X466LIiiMdsf
+hfC4DHest8mYpfP3n9qC1LLVS6Ng1It2ZRDFhFfEuzr11H7hrhcYmiyWAAuzTRX+
+aX9VnW15+pbNjtjbgEpA2OaVV4yixoWuOg5/VTC7AERklEqa4omTVqffQ1+8434R
+LuSbnRITt/F3X9Ir1yc1oNE8aqffz/w+GyQwlzgaS6kMHEm6H1CIfy3ZyeaYQh6b
+1GN/CLfFp1YzvX+sX1VlpUXDNKYme8TcxPoubJWCd22Tg8N+gAbCm5dLxsLUccC2
+04oFx3v2f97UnN7nypWZ3jTgQ1rYZHcXDbExfS1epp0WMmUYrO478Lje6jMiKa/A
+A6LOgU12Ibos6V9rd7T5LvSRquQvhOtHsKOUC9IxkqkDZjZC42GPpaUWM1AM6T1c
+uojXP04DgfJaF0FaNAMjHwgOj2fNJmtYBAoFG7j42K+L74VPl+aDojUn8d81yEKb
+wuGOk5rRWFrxFsvYSFxLUB//yOQMi4phznWZ4JaMdolOY7PNU7fKhWe8EKtrXTWn
+9YTMpUQtCRER301+6QHti0AOjAM0doebhP/cm4SbGK9gQGqrWTbxXkOgvZkaTE/A
+Q7huQtU2cGW712Tmtqs/clK1m/SnAwrbnBdHPDVXTqHiWvNQIgeZ90F53iN+cXIG
+KINU7Suhv7z1+fDOEnQTELgDKnXue+k6Z1DB91EKMl+ufBwi33y8BJQ/Vx2OHxBq
+TRCV9LCevuU2rSiJ9Fy9CuUq8+7RhhDuVTz6s1bEZTbHZDpEi29d7Pfu3G46ETCz
+3V7gtvCmU2mUfRIxfxAWD2NT+aQpCfos6JGagb3F2FspEMOxHILL+JpprwRrMbRA
+zH7BNxSTD6ztg78g3Ic1okCphjpKLzMwgMv7ikjcLJP9J4KUrRO761p6EgsQCz36
+JWKr7Em4ZTG0SwNZnXlHNYg2LHwfvMXB1jYP9m8dTNoITVWe7xcaW4wNhAU8J+ut
+MaG+TuK1hGaI86YF0RD2F/Es9RnDbzFbtQiG+xJQpN/hH/qHrm2lP4C7zrOHWgez
+B2p2PGVOeTLIUM8P70VTi0wHS5mEwyDSJyZMgJ4lhw4vdBYGlVkba+Y4WV+4an3S
+i9V0EhkZXBye2hUVpRRKlxhpeInIMtVPtYxc9/EuSSv5QIsZuomzgDtKN4pYJ9hU
+9bl1gjvEVodCDzPINlwt5FZJ1hAvulB7zRLn18h3LsxaSNhpfQx0d6f+/s8X7Qxr
+ov3i54zr8+VOG7k6vjKL9oZVJD5KA3US6LZX8b0Iljz6QdDBBILK8Jjjx7ZsleD4
+xWxr7EMHhDRG7XJ7m/Zw/U42s4KEXPBXXaRHh4p8iLzeLIoA6lZB2gTFt0P3+jXH
+A+zBceaG/bfi3l7r5uTZ4jeqp2mJM7NTXyB6jOE5iOspUN1doSWL/YGap68zTI+y
+2SRAWBIYJ8RnPyZ710CA15IR8cDdhEXR3sson1YBXKv0efYwMzQug6mWm8Sj2epc
+sF+3oUPiwZa+oMU284/BACEhbw6+FFQddiY4cz1y+zAW2tYDZ90T9kjZT12eyLcA
+JOQwc/IY51ZacxW0nYgzi3HRbIDPdlBwvE2zzvNE1Rqf9S6n9S/TVYZpl1x+Fofe
+JenG08UlCuXK/HpmhxXQkW/u/TeHO4dX0HEqvmeWtlowRCuW9JBfp/IHbPbIdN84
+LCO33b1dOaE/1CgC+GKhhT1kTN8KPgCdN4MDjhv6Ja+fskWPbp4TK65yjuIjn9uK
+Ga2HVbeRJJ4mcg8E98iBIFaSwtMOrXRuvQ4dKSmC8SSdJzJJH6N2YKkPQIDPN75d
+0Bi9f7mW75hdmxFKu8duZvB0+0uGcXxA//441zV1fEO5ZDynSzMN1gb7lw/a5t9q
+MLmln7wlEHiyo5qfkS5s72SRTpZPBmlrqosOxTi05jMgGgIBq20GevQxZmoz4NBB
+GquM2Aw6///m8Ac2hL4kl53kzM61ySmv+37bvNHryBGqm/PJhkPHf3kzQJdAfB5o
+fWMVdfIONsmeL8yu8u7L0zT5JRl2NLhOcPUqTbBvnd80be7KTX9xImkeW5G/cE9W
+PDHmEJDR7eeW9+94jH4kOZnOlDyD0YnHVPsSdmuA9czxU61g7fn44VJ4Qwy/w6EI
+VgOOph6fn51R1+/SI0VYGSByKanzVaK4ioLLQ8OGR4lH0cbbDq8aOqjOModZ+DLY
+ZsuerYftxv70MhYYY0dFCqfUiPhzM3KTYgCZY0QvP+H728L2hTRkn3uj5sBEmtCT
+mCywaImt/atIBhEHC+CitpZRR48cNSKf/C1BtBtwywzMC/adhsGBkdhjKp+ycncK
+X/dzDRni0fA0m3QFabmuuHtGYDp1c7X2vMs/120ql/97I9SgOiGPZg4EhByVdcnZ
+x5ZYYlxl0WkqvPE1e1oxtULeBM14a0EO/LRCEsD6479zHEwiCJXgvFwBfOctxadP
+UNf1SUbRgwCj72PTAeGyZYKKN4QGnwidxSoU5HdnyLJRO5SW/ZHSyEFZq80RxSr+
+eWq9so3KaKg1OQIE9WUARhAqazYpZGu9EFVVz8D4uoSU5eP6JfHphdQE4KH1eybl
+AMQjPHoL3FdOeEeliq6zgTnOrtgngul2y5wVcbtgfGoRW4HNmbts1qrz8zjf0ace
+zO26zjjige4KqOjLEPWtiI5AsNLTsrOafojaFXp/K0OToC/PrPQuGnzV5lKMv/C7
+PjYvbP1gqEuh2+uNhvSNvldjuTd+PsUHQ9vUKRyPEFv3B1dLVG8JhEIS+7+Yms0D
+ISTcg6hDnUd2R1W/Gdb19QqmRrxFvikvU7qaUg+ZirMpDZ++GrNbG09siEuVnfZ+
++an69BEF24IzTlyZKSUnLrkLeBlCtrNz6MB2XvCNxV6fkrNpUokX2q801NveR5Yr
+bzI18l8ULhHJ88aNXBPW/8P9GK1apgogIMm2UpjnN25hO3T28MC4Gcueer1AZjV4
+dl8NBqTYrFTkgt3kGYj9osPWic3GAjhAkXPUc5dnpJO7y1N2ORz5bw/eHmCP/2qJ
+Im9xxwLB5vGFHxyVEgG8BUxSSdR6J+eazHLdlmBplbEjPWiny26LxEI73gKwih9T
+DAIyShPU8t5y2PPbQGHX3c8ZPrTQu8gMtHu4mCsNyAazVESavfT59DQBygqnLGag
+/ZL3d0M7JsTsny2CixOgL/LXbf/MdmSMX/PJNxsbqqCmrdxkqlw/Tg7rr21hvp5O
+Bqe8llQCsK+4A47Eqa7kyiUfSvoJ4LUhlNI1SUXHvs6HJMf8wKb9dxhGEqTi60jx
+HJb0X9mzuoO8WGgGfTh2Safi6qsWjjrGtuF+LkZrOb4WDQUAAzIu5eFD3mFOoUR4
+HXBcSTU2Es5HEB+UNUuV2UjREnld/MJRsICUB3K3flWLd7vdMM36Jl5KEY1F25eY
+YbGMbE7NJqsAkXAr9yHy5bWfDcL6xAAqYamAoQgEWxeQNUue2K20lEv4iFBk5ohn
+hUtcvnoKB/KWQJB+K7bBRY+n8woxvj2FxZwwWk6QpT/uV8F+GAdzUzh5Fe8s490b
+Nz3spohzvacBUh/4JCETH0V4/ssyvKS6Tstg15ADHId5/tue9nlpxGF+Vz+JqvUt
+qGt4+HLPDMQajG9sHs7h/bGHKp/2LvUhtAW7FLzu6iGkCVo42knSxS00rgYUIlh4
+anG5ba7jOMP+E/ZCSipDL5e0T1TttUJMjUgSYvdOb3BGlFBAqw97Gq8dq7BmXno2
+PocQgsLNb3VcU2ftpa7wbdODwLJmjWOxaK1pDybkk2plfKV+s5Q+a4ERPET9Pb1S
+9yUBtHWkJX5U5Yg6Kted2FVJ0ICOD+goO5NeSGpgoCzkrMjOkAeHUjgCdTPAH8W2
+BSVAvOka8TIRq3J0cLS64iuiQOPt9sWQvWbWfssWboJYthrPuFJgcH5IouUaVk+R
+p9OqbTo7O91WrDu9opYfGUUljBQsShoFWGyK4GyHhPV4MJbITp225avCjdcx5X+C
+o3QM5NBzRBPSDEy2813fpcHufsc91myrVN6KD4pft1GoXvDRn3LOxYBTgvywUso/
+VRwbEILea/NlSe3MHM6LdLaqSTPVG8Y0Qa4u0Ygpf3lXyy8nTAQsckL/JlNmOCun
+JwQH931NnFTEVsUoOfgZ8iiSWlkdhUdOYNvEUq6aAV7MJDoMMKOpC67hU5CXPb5+
+NA1o3poLr6gmw5X8GbNcNmhILupjmHZjLYz9XSByvW+HGgiLBYG2f2ipGefKct9t
+jJgU7uQVP6FsDQF1N0CAve+l2ZWf7ZwFKfKbJKRssxFz5i8jlmmqqzRaQAg3LAgb
+REWpm9Jpkn17+9ul/Hxu+l183QbUys3ssJ12G8LACUlkv6rgjgHp/bx/f/7S9aFN
+v1jn5NJhIcDVKgYoDKg3Tb83rzlS6goS/Ep3487OYGKeE30Y4UdPXZ8BB+Q4/2Qc
+o0CUhqTyX9/eoElYJgcbSzxfuk5QYHMiT+bysKR1EAShdH7OP9PhzUmTPEFgUBvS
+wxtna0TNj7Oc+iuQfvR7DqA+fXegD9uOZjtyzivXE5vY7SSmbYCDMkjW5kgimeNw
+FcVQ7tpa8KHgO+6T2f49ZFs7ce0vnDf4Uxx4B+Ir3ljzMvfi1RWSUmQL68DTZuD9
+NZM036GzBa+juNu+IyQnsQF8l+3UDbWkeyhX9LNcRmDNuk9wtOXkdmG0r0HtHnXH
+2mJWCt/F/WJ0x7BMyFnYHF1wbgcx4c9C2P9mLDVrH5lpLENIT3IrGMMhXE9xwWUn
+2PaJQfVvRjuirP0UXvBB7oAgMo59Xz5+ZkijdmjIb3f4ChiUcaVN8i8TcykRIbYD
+QjvLn3LEf0QHhYd02FmDbA6EIpuyaD/rP0TO882sp3ldEOroDg6b+xxtck58J/qV
+10xaZgazh9HvdofXPSoo3oAVS+pb2ieOJIm6l11jZna86JhZcMUu+UIF1dt10Sym
+mMk/pbFAmm/mUftMGi0f+GXxWNgmhG4/yF4ThkyyBvqUeQH/hRJOEfWk1G2WB7my
+8ncklBUy8gkQjqMOM9UWGBmZWjyV9vFddAsJl3F7/QHxHA0BAy3x8BU7+v8gSncB
+KXeVfftYRyqCxzrxR0eGMKXVVdfZb+hEMIFUfO8+7jnhpW8JI0gB1KZBMbA56iQ7
+VrFxTgrl9//k0Eg54l/WNjOdbDJAaZRViknJ3vRb44fePl5Vba4a6aVZLb1lOjTB
+BZFumBSwlF2wG2j/edyEyj//r4O8Gj8IIs6YopcE7+ILR5NI/OCC5XTP1GRe4SQh
+Hb+LT8lWs8c5n5rxsZVbtAm5eH2qVgY3+DdKeQ216OoElfvXoDITA82hwAJA6Fdy
+eSJvxGAY6qYNolNKZeTPG5OCxORd3ojN0NJ0Z6e4KRf7ARXeEFAvxKrqLuE7v1EL
+2aO682odVaO+uYNXxIYFVEXnITSQFDKB4j2hen7iLSJM7iC95p8om8K/5zsNU+0q
+ycrWRjwCnKqbLZOeYtei3AhB9bq1v8Csj9wC/Y7f1yKq3YyTdoWjP8RVwpv0XuCu
+LsmXSk5VxISzbtZItdtQNAObGyFGFF2uPpBc8amibuN+lLMgJpWt5h9wpeeifeCt
+hvl+Pfrpm7H16Zq533lM8QcVaOba8LShXsBKDjK6hi6fuNlv2T0gOslRpyynrWFz
+yRSTwvZYHRA7kO0lydlxm0AUJl6Rl/cdfKci8BYwjMHPd195bOdOQkiODkN7ldTe
+PPcSVUX9oeRkYljIq90KfcpVVuMM6weiBiG+IoImWMr83HWESio8lyz/nTmItYAf
+s30rdzKXURDpZrb/7gaC+UHjr6DzkWmNdKFC2K66qFeFadHtkiGH5lgQjf9OiP7P
+EZAiPSuYrlIeIHDv57tsBBtWVswpfvmyY9b9YB1ozIyTCqfv4ir7c/qlDIOAB2Oi
+HlNifL9ArBVmerR94n2Nm2ETb1Rw7GEOpVNbtlL/nkJ9jXMJj1fNkYFkjbhEbnQv
+gW9Z4121xjf6RnNK3EPe0htBvmcLfnHggpqrlrolCOVuGs+DkQN8rKHzTjswSbO0
+ChebkEA8Z0EBj25J/ynElvpC4zsOwS3k8smXoKuGqs3BCiEpDeA9KWwbaOtX3azc
+rzsgiFI+fZ+a8voPgnQyEKYig41GvxGkC6sVvYyjymK7VCsrJspZqJ6oPiQA+0Nm
+ObTrZBzqGDAqRQ5p5lF358rHSDJau0GHLC2NIU3JNJXlfGxOCRHtsDaOMpJCJ0G5
+VD73Z3ylfXRvl0g73xT2UYpLo8TleKrsSeJW86AXKbmaE77deHCA9/+VIwTE1WMC
+A91vkzCiDzfEQILaAHvOYv9udLEp8KB7nSD/JcZ/FQOy+TpsfMe4Qg9S3yLR/7/F
+RTtjE+ku3oUeWSDTSHC3a/1UK+OWM6gbxFjs2oyotooat6eL8aklm2DbEwiWVOWv
+XFoG5pBQx+pVu9NGCdyBPPflnr9KAgEEY4EIq5SvUO++9HSLK6AD8i0YDsx2w7zX
+kJv+AJwcGaMHmDZDlG636a4+mLALusVgp2sga/B6lrrCUA24bFb70J0I+TdPA9uy
+6QmXNpKe1smWZMxemvwLKoIQoiIH/a2MFfBq7q+5F+FzmMk8NapPqhtxtg0SiAc0
+eMsYUb2Qmu2Ycr9kZFuh6/mjN3IgcqXAHI8cqrlD7l8SX1qDhZaBasO+QsUmDrQH
+if/TGsZ6JlYhlTKrKhhsNwUPpbYEpnLsckvEW26xdtZwLIlGINxlljpt1Qv/4vyz
+Xqr9d8lKQ+fmc4YeSBQfj8QknxNTWwWqAYrab0qAhWYNknQopi7PZE3F7Zm7l0Eh
+Qvscxd7tuNNMAl9+0xUh1GaghEawlQBfClHSfmKM5cj6vZTjunqxhV6UZ9aTCzQ5
+bmv+GejJDDZkD55fjstmatk3WR4Go1QJ+jbVd4Psc68X/y65ICKkyQDg4xSr9is4
+YMhOdB73M8uNNEQ4vdrruveQBC5A/UUiYsgalAWcOEwiDXnU0KznfbsQv/9rf/Xf
+uWDJORrkIIf5j8kBMEWOOa/CRweKA8BTw8zqnFzT5Whw9+XWB5Dzjj2W8TFpqzto
+jOVtEGE786Uboh8ugVEAfik5j/NLsYuKWxp5dlTQK84SF3qMcQUQXrGjdJBTIUF1
+qkNh3NkueTW2+tjBXFfVnNpn5f2AclL0cNJW0x2pzA88f2wRBiMmdUSXibTYMwi8
+GB9Vmz/YtZ/iA9jezGbT1S6o+koyF8Jph2vL4NrOKL1hSiEMUirUThvi7vJGhHDL
+g4Q4CiRColmGsMbTGV14vsR/Ul2K1pVLZ3sBa1Bupx0oh98TRuW7WYyC3LNAmfS5
+tafm+Y9bBZaR6NH56QDNESfrlXJz0mspFSvJ6p7ydWh5jt7aEqMZhZKUTjvglRK0
+0BRlrGKxCCvhVHOqKFnGPuB8yY+T2yCl9m77vfNS/FJ28IAqfBx2ERwRF1TYr41e
+qZUO8KzCSm6QZEVgzHWhNkKcPuc11lNPJ7tn6cgX+Thx6bQhJ99/27U2/BVM8b95
+2MVX45pIHWTk381rDO9eXB2I624DsWeHU/JNfHnm0xZ6jOPjPh1efxtAWTAqnF7w
+vraWXyxHXkW4WSR+WPQIXnu7Y+m00HMwcGnI3+ushADq6fTZ3/noUbwd1GXE9pQv
+AWPYvE5vt/10ZNbpQTFRq10k8WMCFuRdMp74zhvmEPO1y2akpUylVw0ipCHNBGFh
+XsyQuaE0E11SfMAHQ3HCffL3VD1A3+8IaPPjIOjCr2N63qY4apxNqv54ph6ClXzS
+sVQgiI7n+mktropcsSz4O96WmHboaEEnZb7/jpcVZFyg+kMq8SfMhCZqkeqrO9z/
+wZJb+qD+rRuo2VLeYh4Q8nrV9ql9pflhhvB2yAhE+RqzsyeFJ06JaOkWdtk/3UT2
+Ibdq5gNn+ZOL/1cPQTLK7UzySX1y6HSt2l+7DTMSTjjWmWeo5eALNbDTECG4z/pe
+l/NZ4lttuSrcagvEgCh2yXKSKB33Zije8+vEmIAIfkf7Bj93EiECTcSX9MUqcQKc
+2022VgI+qRYn5fFsbrFMockf2UvaHbYnPKUBvz7oQhDJbrE8bqkOyU7OL2ET8TtQ
+Yfa+KVI4ykuscAgwXS2lK5+eVEpFYne4CDdkQZPd9AY/vRR9pMqteZL6akBCvGyu
+jwCs3ooaugMT3vgdOWhGHjpnJvaY/B45xRNk6pRLppGIhkrGpRZ5xRqSgHA6xhzE
+2N32BCFeHZJjjnVZzkH5aufDSQrOoC2ysKGHEHUR6918KGZjLtumLO3OBPMg2QDO
+KLJVvpJRIOjRsFTigBlrtobSNyWzO4bURXLg9VLV25ogzLw5LMPcjGtlZWWR6Z5c
+IRlWICwFyKpYF+PfpKPhxEOLMI8MxwPaVGHN7fPB7crTTuL+Gbw2BYLcxz7jQaNG
+gL3ydplKs2SJWMKTqvY+ONBeb93LGPFddjPPhlY/n62DGZ+Sf9M2PZpHn9fOVYE/
+9+snKYwdyz/V9/dYPFhDDh8VwDUeK/5ZDElXoi24F8xCHVG7/3FMHGcxVfCTl5bx
+pmjAqkfTROLFcuDfhQRse09B8VkvPdQaxaOImdvbpqAsdGhBgtpEclRl4XxaIbdV
+r34OhJvvJ9sqNpCxPOYzskxnsazDnJPl7nTvYTD6y/tHIRGmhGlJ0K1/8DfEu3Fz
+XJOU5MaTXZR29gidt3GTVI98uTdd1DaHTC3nQeLiWaEs6+2N2JLgYJUoQii8ragv
+bp9yyBoke5VIXQ+xo0OSeAiiDIQGgiqsi+LiO4oAisMWd+UfRaIwMYt3BTeDQ0M0
+7X7K9vJ2ilumh/XB3gyjN9BqyxfOgITDgG+MybMuCZ3RFfnUfEa4y37CR2LJtJgz
+9RTKeRzS3V4xJ4iAXI7FXux6lBzwydVzkPam0z1r/qIH43emDa1zpOQTcmwny9eH
+nTGxY8RUqrjyYZblE1COD1NzmZhZKfQb3cqRHWc/4FlT8z6HaBO2HRx4Z4AJrDzB
+T1dTWVSZSHe5JcC1PcwL9oMA50fm9IKtD6iPZu2edor+WkHAITBfYJ5M4MvNTvXH
+mJpQj/v/Gf14gFsJf9ZS1y+7ZXbm7aEgcwUd4gMQDeYONYE4MAM7V84WX0j/MJxD
+b3stewf+Sm7Psii4qy2j5o6XSPZ0jRAHtsHnR5scm8sRXDNOhwk1xT31kWO68ipe
+lUj/pn40GQcNtC5KiVr4AQGxDTcJ63Zfh9bT12O0v73IUc0S3+RFWyROUNjOkigE
+3jWIKTw5gK87fQQJdWos7z/VSyqnUIJ+YV+e0mdbVi79h44B0WUcP5a6ZCvGXOxC
+28emLPypwGh968A2o+ENDmahplzrQ/QRGDWHS2VFuF4OuEG+3C4CE6MJ6SfNWDRe
+CbFPbmEORrv2tqAAPcA0EHgN+RFhznTTBTK0h+QBhh+Z19rjeSxSsLc4V6hHEJxd
+pp95FX/PiHGOoEZnaZYU69eV8WvvxUnjOkzrxtFic+ZhgdSusmQaLt0rqDmlLC5+
+P+mPIFSDBZT1xoLaMFPn1FIrzK7R195xuuS2JtopJdc24SWRbIEcy5tVq8PfU0FX
+RWrRCWHHyPBkxllCerqFj5YH0StkMjC2ABEd6byFIxfzPNG2JlKD8oevy6169Sso
+79h3CDEnC2tNM5KyXQu6RnDsGhmcZdn50hUmJgXNuKCv5kQji9U+nsy1mJr3/fz1
+I0wefJ0AuMfR1zBuuU1kl6hQl1XNN7N15hc57wTyT/MUtX/LtVfP41pcH+XGxTq7
+R3oFP1DiIbglXSFjIAarQLbVmaCCjVRX8a02zUUisEIZmR1gXzqkMmrPSfIiuatq
+cwcbhcVf82kbqkenmiZ8+rgRUUVCGQXQt+RZ/AbAccYpkByba9uxqONWphowoWx8
+b1S70i7XSUKvmbo8G7vYn7wMPcgiXYVZbhEoe8k+AnxDluA4Y8wgBBIOyA5gVry5
+scCXTXi66BmW3CsCooWsFIV7td9NrYbMLr3rHpdy/xxOocKyizrK6OVnp7K58Dwr
+/RP3HzwpxRggPpmRiY7Ck8l94Ul/4v8L1NjniSfb8w2/N+ijyL6zUEghYwAE0VQB
+wVWruBbv8kpbDXz3cZsKGahmJkn6wF4En+N2H07G+ZumlNoJbDtPcxde7d2Z8t5c
+86FD5Vh6CQrBj0lxSBdM0VVVEKUJSAxDNsezXF7ZdcLKxhMS2jw2FKf16jwtR2up
+vd47fddVrJG8PG4WFMuG2jeuk2jc/yOXmEQVFhxx6loGfA6pR6mtJrXBresUgOBk
+/9/y5TYrQSqSn/9MwK1o/hykYUna5np5Ke5Gyyp28KIpP1I4RpgnIJehIGAeBbve
+TopGArDrvvpqw3P81TC0YoIESuclw7Q0Jf3X49twhBRY+HzbL1slMIWxLI+gRuhL
+BTafQzJk6u2Rd+Bl+f72ROQEimEHoTmILIaqwrTdcwd+2Uzm6WmVs0xZ44zQwoyL
+X6T2mq1et6snSH4FaGTiVE3upeRp+IsVuyWsvm5yBPPc6/iZ47R2/UNgmaI1/Wwr
+EvQVnLfx9G/GgehA3FtVJoKhBCT9QQU8kDtLfJ+1uqe+c/3rks1BcGP8rPL2Bg8b
+PKhiapAYVbzHChTGh5VvjSNtYih6BACAhTxqd+1wS6Cl/pCZUQG/bw/ISRo5HCUl
+WNzLyYqfQx9NimjKw+25ATTsNkVnnipmVyWHyvHZEN/cSGg8OoAZpDcIPsTaFAwj
+n2cuwwWJoZOOcD3U83xgOPtNYkY4GBzdlc51GSEbpqlh1Ise9FJeBsMEQA0EaljE
+KKgU1ROb16Yp376CZ9GGiQ5xubEB2NJk/RFLdklXvGPcszV/QkWh7+ClloNHHftX
+3A0FvKizFBNEw6cuSKXSwF/WKiU6p38+Fyd6FJN4jSFMqYo3gQ3JM7+LBJ/DAwIE
+SrbVQRIViQEOOxUi/mbZUJZNOc3JyyQrBirOXNjV9UysKRvlt/J/YHoZI4LHv343
+V4rhbwVOKifHRGnTpKjno7+N/eREXdtq5Q0CHLMyHvg1Zl5229yvsT2j5DsHy49c
+uscctrZLJRBm/PnwAC1Nk5YM4QgImzrlwIYKlnYiF2E/niOTWggPJbwzXdFI75tj
+F1dn999g8QqlB9EFCubQWTLHQtjhSorhcUn61x5D52NeLTUhlW+nIQ0DZhjh9YZ0
+QaEJH7zQMHvQKLxKwqmrAR5sViJ0u6V7YiniG3lqIkxQWJ839cto7W7iOdlspoVT
+k/1QT/LeAkBvs183UnVTMWBgOliJOPa5yyaJJxACggw66C4jHZMOaFc/SodWe24E
+/neJlpI7gG8VFdxc/Sj5x9nCrW0vZnsIgo3MiguhssKLRH4pdZG4BkVG807qsYl0
+hZrtHF0sA6JW35oPjyoDT1N68YgBCgbMEeuuc11gA4OSoZ74GiC5kkkNePAHiBrf
+ZZgXDy72XqPD3WyrOZsRUfXEecUS1Yuqt2r9Uq1fZqgNSNv90AZlPpYY5GyxFyOO
+GYVPF2S26RoX3p6LbKDvfHCXt8KXtc69Ta+xW0M4AH+fntdcSUtYQwaobeFHuRJR
+GFIuNOUSgm+PxIHAilHmpr5TRfahNJledPE+ALvl2XRHgLhPKoxC95JpcswrF5sw
+9ShwEw7JAnOI7/erI1dXloVB31VOydPSdPxugjq9WrusnTELkJzQOqoWPut+HoCB
+uw9/adYdCfDYr/Q8ka+HRI72lXuBy41DxF1qW3ziNIIrmSxkN87PpLrOur/EuSf9
+FU/bG0WKEtxqogkZlBH8Fp+468pW3q1cnEea0g2N9CJqBCAiJrMQMBNnoHTN0k/A
+98YTgIukc5spQdTZhi7uq/3En0t/mbsKD3lyixyUlvDzRhZLQ2JuRYEuLlfBEu1d
+iSJZGmHmv0GRSSeEBPBoDR/Jzr3yOu+jFSEt8kazuHQ6E1O7M+NHuwdOi1txMXIt
+eBC62aO3WHn16HRsbq6O5OzMI3xMNi7LvDlefBPghsOGvAqj0WTua0Fz5sz5CEEQ
+AKLoRmVZn0z9eTUZ2/0Nc6Y1Fdm1GqavRoPIv2el/zPVF0Z8CyW1gLUmwb5mYwBj
+5L4VLzY+3V0p7Ba/wUbJ/XKcj0Zd+aVjnecOuJQTmi31qE+XmeUx7S5qtmPeGNXZ
+ck21yQFaJxS4T+5d/bSuzbn1MFFpv4PG9a1Zou8T0AVwVFlBwA0qUuekCUyu4JsG
+H13vhnBWLNENYCF0wAG0PgnlILQrAB9nBKJ+AI0gLvgWhk5VII58NTcenrj1TQ2+
++gNpz9MsHgavHnE6IDPOiVKBcIJaIzJJixB9Grlq7YKXF+hF9ojgtyTUd1+o1rZ7
+0Gvf00ATVTiR/FL5peOj14vGpciMjXbqjB2bE71OU7Cc7nwFpO6CFnD2++6pScZE
+SXklhjbvvACAvIeW7r8+GvdB9oox3s2mslrDWEswVRbtFeRS0e5dV8PGX3wOHWb7
+uh0QEmA9zd7bqkNWVVcD2eK0yJJ0A3rByzKJAkzGrqXXtk6snqtsqFJE1BZcB0tu
+15Zns1QObvvaqDIPMNbQKEkRHngThNJJaVsmsimoz7l/p9l2Tiv/xN2bAfThMMKe
+rzOPtNKCKVSEIb/ayz8r674SypzeujQQqAdT+8/PvRN6QdLdFujp5iaRxneBWcDI
+4y+v6pipVO3145/WWjtHCLJq9qYDHn3djD+3N/uVXDewfJlJEVvnz93+mpT45hO3
+hkyJHY7TZA3Nrq9pavrGN1/XubDgOxJcbZxJ4KmybBHLGHnyxfHvIo1UmeyDBOv/
+BBXiiHa4qi9wp0pEdlUX+mIXcMGhTBRX7bdKxbcOWJdiWHEqd7fP4Dydr3YglX1S
+u6gHpjJ8PqY2pmd112yYl4Vqjz2CE5r8TpwsaxIgt7AODVj4DCLwi05Qymd39hmU
+iZM7LyaYzAdY4a+qQrJ3lWQ73LiO9qKTTBdAwY5/yucN8VWxI8Rhg0fRmsUsPYpy
++i+utPc3kIrhHx7UBNt3v4z/hQUXEsGz7k8P8b6cC72YEBt4mfOjv2HlCf0GjhAM
+vFdWjbU7U0xp67Szt/umai8DP4FT04ORk34M6kuEG9MxIgn5TDYZ54Mdy8SDbsJE
++kueXJsHI+HiM41wKwkNt/NNP7pt6HdBjXZfycZVsBuG3bywEfI8oyB055lrWaxY
+fbe1FVZyHAT3glIdsLazJwy3ncCR+S0mXqnpd9y2N4MoH2IkQjKvjMqaqpGUANd6
+JT3EYilGtWg9X0qqIhrOS+7uiJ9GVnZTotfzwi8VmqXMeGvajZUByDAMf+r50hP2
+qfeP3G4U+NZ+8eTPIIhcRpy1b/F3NSp6Qhd6+sSj8imr7sb89WhXi1XzgOqcjwmr
+huEtd1ZNY3Ma9K3P7wcoiVufWSzGGLi7R4fNZfsR/tatG1up+/8RA1BXa6iU1+Cu
+R8Wg30u4L5Qps0ZqGCB63tddqitC1kcza6977CT7HHsp6cNeRpBk4lVFgqJYleJq
+Kw2sqb67fvR4PyJ7kEFLYQVE+kwlWzCkY3wv1y5M1pKgBsfXw1vQcIQMcXNCDwtO
+Ko7f6aoj08HHbAgYWz9lJZ1lw6BgzYGMEOzxwBfFo6Opz8Rww/AjKceOx6s+ANHH
+mqNsGhFCiBlExVhqApYdMBWczn8zOMKe3VUl43kEmKSt6p7soy1Ak/UbVrsimxFl
+EqvTLw+8yQ1S7l33PZ4sNwabssSOe/3hMSzC5AVOoiYRJD5UHj5r9g/gmPL9T7Il
+dC5P/gJ6AeWxVF7rFPL9hBo0FNlFsJYnSllJkbVIN3a8ABSnO97HR9ST4qFoundw
+F4osTdfebjGT2T3Yygftp5iN7lZtJnVgR247QUGAc5ooSR+J1fiskBW9mowrh8H1
+ezRirL0o5dwTvhU17oHvE4LGHxGT9GRhbKQUEx7KTRQlr2Vt9EQwI5SsgyVIRNjq
+b3r6dvPIdkYSzEXjtIoz85vAWyj96spwNqJWqMDtg01Usz7xga3GGQ/J2oxBdYZW
+tvuG6xRuUHdGhfSgGSAnwsstZ1nVNzL90CDyRb6nHkjVwuI4O+B+3J9ij8yWE3Zc
+/wWRdrgZQL+UD7rKUIEAkWYBoE+ZO3uLRlWdLD9xdLG7qU7oLUWVPuIwX11t/qH8
+T+E/mY/4gV0m6sGZcM7lHb5y8gmeva/Q/g0JCTJ1GO8ygsq6Z7a52EFUBeiJ7WOb
+DosUzbeI9r6ysbPVvH5HZbPkgatDgJLr6FKDmrucQdAEAm6u6r2M7dcX9ggN1tTQ
+cvderwsUYwCo8bhCyMMv5F80xxdOwlAmbgMc/RcF0jhxJzh3aUYNMnMcr5pkV5yo
+qeIYlCvdyWGvdf+SDSeJ6UlrL+mcNiav0W5Vc0tWZzsvaVGI1cYBArxDsYm6s4qh
+dDrwpGGzZjWeg5xp9TDrtwWqWXGnGBIRnrIpYcI08/u0knH3bkfLR4OJ3pxpbEbs
+XqpcDR42ZJk93i//HHczVj2Ufyadr+mERozUe/vrCAnzsdmHg6vCU7oO1vijVNBC
+ptFpaMSQsdlZjZv68zxov5LgMnjzvY8f8CKdpbAjFbQNBYzFwryBlurG9GCCtPv+
+CtCb986nUzE/7m+6m978wOoRbHSFPAXrzLLlLT7u1LeuogB1dMhuSxV8J8zt9h1L
+WF1uK61nYijXms0wot2enjHnsc8M1uTMtzp/8CPRaxLQ5VSv2MoZnTJ82U3ZhYrp
+IB5FEmqKGLgA4dWvXTacGO/O1BGX8qoj12zrjeO2JVWxUmXJKswdDKC3kcej8Mii
+JLAVBiuNFsDvIupZOi+l230msiRGjlUXDxd8qkjJRVP15tpJ9ZwzhSXXP+uiyO7P
+ArccVJdsbIPoB2oJ4O1cunt5kd1LNG8bMet+J2uTj35F5arQfJa3pv82ufo4QJyt
+hLqzolTYJffP0pLfXOFdukyhr6cfY5Q7vRxgXpyS56hb4/DJs3nNuAPnsPXCgakc
+QXcxhYD/L5JCL0fEmzheXZpUoTb87D2CJV5kvZTvejNNmrUa3jcgaxM5JMUqyGsM
+CXbYVz6ioxRPC0Bp37GPUma8cuQq9gfVq8Eu9sonW7GaD9bNM4aEj/LamKtc7c3F
+4EXWK2RGZOfmgnSxoy2rboPht3E8JPQNdxt6sPzNMdVr2P1VAMvAqa/ixfPouUqy
+dozwBfKQf3z7Oz59sEr9n7IcNPBDQG9bFx4YPVIKrIbS8LulEisBxE4XPzcqGpgK
+415P30ptPapSMvYTGAc4U5hCrbvx+ecKLchbdnfHSylhTLqKpjtd0eqnOMeS0sRn
+TdSffKGCOHkiRGlcUfrHhag6WklHIHEJcf76wdcOoL9+3zZyMsQq4qj9M4fQKnwz
+YEuFYUj+6YZLI2Nbk2jWDQyzpcQ4JBzC7K8xMMJm1aE+/r1rRCPEkhf+1+Z35S0f
+5Te8CTrgLXEdjJCG7x0nipqX51qqxx1Is8bhXy+FFcGG8lGdfGlR5pAI+cXndI/5
+dugdP73CC4kHr630b1XJynYAju3btHFm96ghJBVRucc8XiUV7NDK/WGMAoYMDJfA
+ax9ZkaLSZXFWDxV61VR1v7FWdnAsFfolKBrh6cAk9orkchOKLvgsLJ1lpw1jAYww
+1OP0dLVkuazaWTjGapJM10KAR3yloNNd/9l2RAxLgAcQ/cW/N63WFcsSPt3rc6Ij
+akzMetcX6EJI+U8qgRBgqy+EyuP1nO5FB14c5vJaJHnaHn9Z6ZRrq0rQRK9o7Kvk
+3k1RnQy5INn7nXXaAp5EJBFbPemmDdQ00PsXtP10THkl/kq073wkWE/jqjIPj35H
+wxZ7udWqh9iDNIQqtOI/idLGfctuZ8WqtxGBnv+NkLtGsYhsnUhH7sQxYBBdjXAa
+SuxHegzRoAb4AMg2ENJ0vrveHze9D6qADjsPYL220CPXcH4rQssxFn+5gEuiNjWY
+iYnl+rRGUth7t+twn+qxwZnO2Pp2LqFDv5Sy9qzcgT57Di3f+4AC0sWd3zirExGP
+1SafNHQkOmN3I6P763khi+R4t/i96nwG+pf5ZsM1yupStvttCt1Q/lZsuZ8O/QSb
+wNLziTUSJ5z6PT4fYbIN5RUnyKuk2sLAL8gpJC1dJIeLSa6nWYBIXCjcIgd+RBJi
+qT8uSGIV4bWbQ4w9vXeiGDgVgmZ4NkdoN12UrkAoJ94ysizlxPu1mWccDQ+SAHQy
+9/wSQymk2EV1+fZT3vrqXqpZA37kVfLUDenVd8i2tI0Du3d4J5W+VYttAspyxH5n
+6GocemRDyiYYAfzB5yJdAi660lwCLRYXoHpbYRKyC0ih30bs3ilLQGFkMYPWqILF
+Z/c5qb6p0gtqee+JUuWI6Cxow7EtNktxJ/KpNCXouwcNFKbNocJ9QcqyuhvBjStL
+da0X5iCuUODp5gYEixiQ8oGfgb1jraK9F7FO2rircV0MsfyPuyfn3+AwyGcIBtPQ
+kYiSCN7oTqUWTk2Y3Kr5wL0o54WjIcAhieKV45ftH/VQxPRVZ1YmH6UCEXNU3t0C
+6VUsKYxgD2ilOJ3zS40WjTxTjO6+ZPQzZBtouyl++jH7Tyl/19xwTHKbnvIFPoGM
+4O/IXsaxNcdkIE9+MyFvs8NMOL/Ftg0xgxOk/x6eMzxGTRZBUCmwPcY5w18Glqz5
+Onnnro60NX9MqaYLwDQhYqD6f+fsc4LxfGfN6ZoSEpZiFBHgiMDI6ss0lwwoBUh5
+O7rZ0fXi5857o2f+i+nBfrT7ky675fw+AynkgsOqaqAmmBTzsU+0L7zA4J/r4dbV
+P8wpobgqrJ2KJ+XzzwJWCb0U+vqRVvSBiA/6S/DrhJCYOfyIQCVe/caLrYBk3EbS
+RYHtCkOkhejfnuS+FtvXDzHl8tyWpJWKoMZ8zZFarbRuFTuogYsQLA3MDfO1L9g8
+TiDWW4Oh145C5W0D2eVN+NJHii/jB7NJY05xWnlwJ1mYSZE26jFcRxr5QeC4AS7y
+/U9ootP1KN5vnBZDdREzz7Ty/q6rPsSbNeQlppAE3i9u/meXYbNeIifySZaMt11l
+Aw3yChhgUp057zc9DzYM8nYcr557e9cQx3lSwXQ92bF3SYvIFPe7iRrjGQzyNoEh
+cON4DRzuI+hHFflwiPE/3USqRTZQ8e+PQKMGoRFJH+7wavjbPsTaNxP8zT2Deb5k
+IQ0HAe8tNZF91im7hH6f3kDSry4EzhsByRbxhau8QhaVNR2aOHeyRbVA9jFPihyb
+cAZ2WM6KwkncyUgAjTlb3k7dlJJTT1DtxJF+joTvLo8i62IlEN25zfYVS+jhjm1M
+FTgP+PhMtN+q7LtUUIoxUPwKubBlFAxroDk+z1OwcpxmkN7K1TVirniDZsYaCv4L
+bTOScEHD6HyPkF/dFshlrgQ1Md7Dc8Eezaj0FVmek8zRnpoaSSkTiz5Werua1scp
+EoYkkJR1hfRG+M8vuBwYTXI1w3sDrT5+xWsplzhSOf4jZ4fmvqn8s4P0FEmdPxXs
+lgiYIhePz7Pv0TOuwWPoQiDPYCCIqrDCv3mexgEKeTW1uNbAoBhKUBBHENLfYuP0
+9LYjNa3ohpLC33j1XnZFKvNdFfU+waa7m389sgYGrvEpAMnrT4y62pcNDZZp0a6B
+l0isafXmAxt7wCZmKtZHlcnNjmjOpST7zvCKXI1pJ3nFYgT/Hqu61+7kqcdcdgvB
+WiMsxj0czArkhAQib3q9IY6zjXUO/tlFxG91sP07JzUUk2VbE3WP2KBZwPQEVwha
+A0/kfbjqXvC5QoeGo0Xfz9ZXUB2ToqyykuFKmTOCnvyhb3PDtecVRAk6byPDTDVK
+1ODirzCnKxaKE/1XiGTjx/fmKtVtGDsVZE74zQCswgK+pAdqQ7bvDJMNW9Yu/KKf
+3MGVlDbhzk3A/6JNa4Sv9eI22JURYhsHy9BhbcpKKokV5q5wTmgMN3de5TrtyD83
+AOeyYSxU9V24nEpK15EUT8upKJDCyBm1FIs1kPBUlxbfmNCbm9IODCaGb1LZxx1X
+AF50FIbfv3GpBHfh++HOVqkmYtlulfwypQZY3ZrIeosWvXs4qbXrpvTYOkSOArZN
+9K+AuJ7rzmBdjoOOK0VpscZi+rR3MiuNVUjwQW8AxVjY+M47IAtE+8VxyzATYqY7
+Vkyu/XRum4Lc7DmWGY9xoUQ4T4G+m+DgbXrxCNOl917S1UVdPXDuWcYVp92Q6ecs
+iu/W60U6r9FGCFKNGsUU5H7JlzfrAcu6CvNKNraXxPVIts8Ae32P/wQzredwOfZK
+G7gC8pU012bybVVmiyDNg8yqqu2xRDC8S0ThMORl6ziG55ivWThjZOutjz+69MG9
+xlN7B/WMmvRVLlXXAlCYJIWdDgu+hy03H6cZ+PZl7v6vmFRp/9b39QNF6Czz/KCu
+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
+a8hMdfcLFB/ZQseCkGnr5w==
+`protect end_protected

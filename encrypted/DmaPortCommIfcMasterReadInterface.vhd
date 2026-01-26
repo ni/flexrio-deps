@@ -1,266 +1,258 @@
--------------------------------------------------------------------------------
---
--- File: DmaPortCommIfcMasterReadInterface.vhd
--- Author: Florin Hurgoi
--- Original Project: LabVIEW FPGA
--- Date: 04 November 2011
---
--------------------------------------------------------------------------------
--- (c) 2007 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
---   This block implements the interface between the Read Master Port that sits in
---   "The Window" and the DmaPort connected to NI DMA IP.
---   This component receives requests from MasterPort based on which it sends the
---   arbitration requests to the Output Arbiter. Once the grant is given the requests
---   are sent to the NI DMA IP. The Data interface comming from NI DMA IP is decoded
---   for the "channel number" so that only applicable transfers are sent to the
---   Master Port.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-
-  -- This package contains the definitions for the LabVIEW FPGA register
-  -- framework signals
-  use work.PkgCommunicationInterface.all;
-  use work.PkgDmaPortCommunicationInterface.all;
-
-  -- The package containing the definitions for the FIFO interface signals.
-  use work.PkgDmaPortDmaFifos.all;
-
-  -- This package contains stream state definitions.
-  use work.PkgDmaPortCommIfcStreamStates.all;
-
-  -- This package contains the definitions for the interface between the NI DMA IP and
-  -- the application specific logic
-  use work.PkgNiDma.all;
-
-  -- The package containing information on the DmaPort configuration.
-  use work.PkgNiDmaConfig.all;
-
-  -- The package containing information on the Comm Ifc configuration.
-  use work.PkgCommIntConfiguration.all;
-
-  -- The package contain data types definitions needed to define Master Port interfaces.
-  use work.PkgDmaPortCommIfcMasterPort.all;
-
-entity DmaPortCommIfcMasterReadInterface is
-    generic(
-
-      kReadMasterPortNumber : natural := 1
-
-    );
-    port(
-
-      -- The asynchronous reset
-      aReset : in boolean;
-
-      -------------------------------------------------------------------------
-      -- Clocks
-      -------------------------------------------------------------------------
-
-      -- The communication interface Bus clock.
-      BusClk : in std_logic;
-
-      -------------------------------------------------------------------------
-      -- NI DMA IP interface
-      -------------------------------------------------------------------------
-
-      bNiFpgaMasterReadRequestToDma : out NiDmaOutputRequestToDma_t;
-      bNiFpgaMasterReadRequestFromDma : in NiDmaOutputRequestFromDma_t;
-      bNiFpgaMasterReadDataFromDma : in NiDmaOutputDataFromDma_t;
-
-      -------------------------------------------------------------------------
-      -- Master Port Write interface
-      -------------------------------------------------------------------------
-
-      bNiFpgaMasterReadRequestFromMaster : in NiFpgaMasterReadRequestFromMaster_t;
-      bNiFpgaMasterReadRequestToMaster : out NiFpgaMasterReadRequestToMaster_t;
-      bNiFpgaMasterReadDataToMaster : out NiFpgaMasterReadDataToMaster_t;
-
-      -------------------------------------------------------------------------
-      -- Arbiter signals
-      -------------------------------------------------------------------------
-
-      -- bMasterReadArbiterReq  : This is the signal to the arbiter indicating
-      --                          that access is requested to the NI DMA IP.
-      bMasterReadArbiterReq     : out std_logic;
-
-      -- bMasterReadArbiterDone : This is the signal to the arbiter indicating
-      --                          that the current access to Request Interface
-      --                          has completed on this clock cycle.
-      --                          This is a strobe bit.
-      bMasterReadArbiterDone    : out std_logic;
-
-      -- bMasterReadArbiterGrant : This is the signal from the arbiter indicating
-      --                           the DMA channel has access to Input Request Interface.
-      --                           This stays asserted while the channel has access.
-      bMasterReadArbiterGrant    : in  std_logic
-
-    );
-end DmaPortCommIfcMasterReadInterface;
-
-
-architecture rtl of DmaPortCommIfcMasterReadInterface is
-
-  -- kChannel represents the number of the Read Master Port.
-  constant kChannel : NiDmaGeneralChannel_t := to_unsigned(kReadMasterPortNumber,
-    NiDmaGeneralChannel_t'length);
-
-  signal bNiFpgaMasterReadRequestToDmaNx, bNiFpgaMasterReadRequestToDmaLcl :
-    NiDmaOutputRequestToDma_t;
-
-  type ReadRequestState_t is (
-  -- Idle           This is the default state where we wait for a request from the
-  --                Master Port. When we receive a request from the Master Port an
-  --                arbiter request is issued.
-  Idle,
-
-  -- WaitForArbiter In this state we wait for the arbiter to give us the grant for
-  --                sending the request on the DmaPort. Once we have the grant we
-  --                build the request and move to SendRequest state.
-  WaitForArbiter,
-
-  -- SendRequest    In this state the request is sent to the DmaPort until it is accepted.
-  --                Once the request it is accepted we send the arbiter done strobe to
-  --                the arbiter.
-  SendRequest);
-
-  signal bReadRequestState, bReadRequestStateNx : ReadRequestState_t := Idle;
-
-begin
-
-  StateReg: process (aReset, BusClk) is
-  begin
-
-    if aReset then
-
-      bReadRequestState <= Idle;
-      bNiFpgaMasterReadRequestToDmaLcl <= kNiDmaOutputRequestToDmaZero;
-
-    elsif rising_edge(BusClk) then
-
-      bReadRequestState <= bReadRequestStateNx;
-      bNiFpgaMasterReadRequestToDmaLcl <= bNiFpgaMasterReadRequestToDmaNx;
-
-    end if;
-
-  end process StateReg;
-
-  bNiFpgaMasterReadRequestToDma <= bNiFpgaMasterReadRequestToDmaLcl;
-
-  --!STATE MACHINE STARTUP!
-  -- This state machine Resets to Idle state and only move out of this state when 
-  -- bNiFpgaMasterReadRequestFromMaster.Request is true. The Request comes from the
-  -- the Master Port and we can assueme the signal resets to false and a request is
-  -- issued after a register write to the Master Port Register that cannot occur right
-  -- after reset.
-
-  ReadRequestNextStateLogic: process (bReadRequestState, 
-    bNiFpgaMasterReadRequestFromMaster, bMasterReadArbiterGrant,
-    bNiFpgaMasterReadRequestToDmaLcl, bNiFpgaMasterReadRequestFromDma) is
-  begin
-
-    -- Set initial signal values
-    bReadRequestStateNx <= bReadRequestState;
-    bMasterReadArbiterReq <= '0';
-    bMasterReadArbiterDone <= '0';
-    bNiFpgaMasterReadRequestToDmaNx <= kNiDmaOutputRequestToDmaZero;
-    bNiFpgaMasterReadRequestToMaster.Acknowledge <= false;
-
-    case bReadRequestState is
-
-      when Idle =>
-
-        if bNiFpgaMasterReadRequestFromMaster.Request then
-          bMasterReadArbiterReq <= '1';
-          bReadRequestStateNx <= WaitForArbiter;
-        end if;
-
-      when WaitForArbiter =>
-
-        bMasterReadArbiterReq <= '1';
-
-        if bMasterReadArbiterGrant = '1' then
-
-          bNiFpgaMasterReadRequestToDmaNx.Request <=
-            bNiFpgaMasterReadRequestFromMaster.Request;
-          bNiFpgaMasterReadRequestToDmaNx.Space <=
-            bNiFpgaMasterReadRequestFromMaster.Space;
-          bNiFpgaMasterReadRequestToDmaNx.Channel <= kChannel;
-          bNiFpgaMasterReadRequestToDmaNx.Address <=
-            bNiFpgaMasterReadRequestFromMaster.Address;
-          bNiFpgaMasterReadRequestToDmaNx.Baggage <=
-            bNiFpgaMasterReadRequestFromMaster.Baggage;
-          bNiFpgaMasterReadRequestToDmaNx.ByteSwap <=
-            bNiFpgaMasterReadRequestFromMaster.ByteSwap;
-          bNiFpgaMasterReadRequestToDmaNx.ByteLane <=
-            bNiFpgaMasterReadRequestFromMaster.ByteLane;
-          bNiFpgaMasterReadRequestToDmaNx.ByteCount <=
-            bNiFpgaMasterReadRequestFromMaster.ByteCount;
-          bNiFpgaMasterReadRequestToDmaNx.Done <= false;
-          bNiFpgaMasterReadRequestToDmaNx.EndOfRecord <= false;
-
-          bReadRequestStateNx <= SendRequest;
-
-        end if;
-
-      when SendRequest =>
-
-        if bNiFpgaMasterReadRequestFromDma.Acknowledge then
-          bMasterReadArbiterDone <= '1';
-          bReadRequestStateNx <= Idle;
-          bNiFpgaMasterReadRequestToMaster.Acknowledge <= true;
-        else
-
-          bMasterReadArbiterReq <= '1';
-          bNiFpgaMasterReadRequestToDmaNx <= bNiFpgaMasterReadRequestToDmaLcl;
-
-        end if;
-
-    end case;
-
-  end process ReadRequestNextStateLogic;
-
-  -- The following process decodes the channel number on the Data Interface comming
-  -- from NI DMA IP.
-  ReadDataFromDmaDecode: process (aReset, BusClk) is
-  begin
-    if aReset then
-      bNiFpgaMasterReadDataToMaster <= kNiFpgaMasterReadDataToMasterZero;
-    elsif rising_edge(BusClk) then
-
-      if bNiFpgaMasterReadDataFromDma.DirectChannel(kReadMasterPortNumber) then
-
-        bNiFpgaMasterReadDataToMaster.TransferStart <=
-          bNiFpgaMasterReadDataFromDma.TransferStart;
-        bNiFpgaMasterReadDataToMaster.TransferEnd <= 
-          bNiFpgaMasterReadDataFromDma.TransferEnd;
-        bNiFpgaMasterReadDataToMaster.Space <= bNiFpgaMasterReadDataFromDma.Space;
-        bNiFpgaMasterReadDataToMaster.ByteLane <= bNiFpgaMasterReadDataFromDma.ByteLane;
-        bNiFpgaMasterReadDataToMaster.ByteCount <= bNiFpgaMasterReadDataFromDma.ByteCount;
-        bNiFpgaMasterReadDataToMaster.ByteEnable <=
-          bNiFpgaMasterReadDataFromDma.ByteEnable;
-        bNiFpgaMasterReadDataToMaster.ErrorStatus <=
-          bNiFpgaMasterReadDataFromDma.ErrorStatus;
-        bNiFpgaMasterReadDataToMaster.Push <= bNiFpgaMasterReadDataFromDma.Push;
-        bNiFpgaMasterReadDataToMaster.Data <= bNiFpgaMasterReadDataFromDma.Data;
-      else
-        bNiFpgaMasterReadDataToMaster <= kNiFpgaMasterReadDataToMasterZero;
-      end if;
-
-    end if;
-  end process ReadDataFromDmaDecode;
-
-
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+aMReDmrPskJscpWYThVKVItA5gecPPZO1R595p0GoIq1TSTG+UxXhmmUXc+VYHJ3
+u/C3EW5qePLufxmXxmhmDnr9U8/cYC1zLfk44v/2OPb1TBrTsludEDQZdGNWeV9l
+cPUMSIfZ0dHXN7L1M1E2XtgoTWQxf3VDHs7B7lU2y9Rdm/ibz0fWMow7op2nWdD8
+gJ4QlNl3f9Oiotp1p8vz9RFzzZOF5gBBslZxcTF5+z4qO2W7+xLByngthWm+exIr
+3Pzy8qyUo/m2DDwOz3VJSvSNm7RUq+0/yJNOOz3jr3j7ZyCj5OqT/jDAWjJSMH+i
+2402Un+wDMOQxi21JLo3cA==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="5R6K2aWI3OdbT2A+sz4o9+2XAInTqB1/cSw5W16RnA4="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+Gm/2BIZF5/H5qen8uQizPH9RftTuEE9mgEOF0SqeOKegtP64CfvEUnIxj/ahmIpA
+6xUR2v2l7E5duaLZh39Mc1GYsfqE91NCPU5whLaBPg0UuX4cgTkO4cYbW/7yvcrd
+4wavUfwXEp2VSiN7EVxL8RcZTSMSI0Jr/aojiilFqVE=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="TEmQtJ1Dsm7TOzpJk/CeTSSFx/zKExk04H6I8sT4Meg="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 10128 )
+`protect data_block
+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
+`protect end_protected
