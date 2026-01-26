@@ -1,156 +1,190 @@
--------------------------------------------------------------------------------
---
--- File: DmaPortCommIfcSinkDataControl.vhd
--- Author: Florin Hurgoi, Tamas Gyorfi
--- Original Project: LV FPGA Dma Port Communication Interface
--- Date: 15 June 2011
---
--------------------------------------------------------------------------------
--- (c) 2007 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
---   The NI DMA IP also implements a single Input Data interface for all the requesters
---   in the application logic. The NI DMA IP will always initiate the data transfer
---   as a response to the request sent by the communication interface. The communication
---   interface needs to be ready to transfer the associated data whenever
---   the NI DMA IP desires. The Sink Data Control introduce a data latency based on
---   the number of pipeline stages needed to multiplex Input Data interfaces coming
---   from Sink Stream circuits. The module generator will define the
---   kNiDmaInputDataReadLatency constant at compile time so that the NI DMA IP to know
---   what the read latency is.
---   The Sink Data Control component needs to introduce the same read data latency as 
---   Input Data Control component. The read latency is set by the 'kInputDataDelay' 
---   constant defined in PkgDmaPortCommIfcInputDataControl. Both the Sink Data Control
---   and Input Data Control components set the read latency based on this constant.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-
-  -- This package contains the definitions for the interface between the NI DMA IP and
-  -- the application specific logic
-  use work.PkgNiDma.all;
-  use work.PkgNiDmaConfig.all;
-
-  use work.PkgDmaPortCommunicationInterface.all;
-  use work.PkgDmaPortCommIfcInputDataControl.all;
-  use work.PkgCommIntConfiguration.all;
-
-entity DmaPortCommIfcSinkDataControl is
-  generic (
-    -------------------------------------------------------------------------------------
-    --The number of sink streams
-    -------------------------------------------------------------------------------------
-    kNumOfSinkStrms : natural := 16
-  );
-
-  port (
-    aReset : in  boolean;
-    BusClk : in  std_logic;
-
-    -------------------------------------------------------------------------------------
-    -- Input Data interface between the DMA controller and the Communication Interface
-    -------------------------------------------------------------------------------------
-    bNiDmaInputDataToDma : out NiDmaInputDataToDma_t;
-
-    -- This signal indicates when data on the bNiDmaInputDataToDma is valid.
-    -- This signal will be asserted irrespective of the DMA channel and it will be
-    -- used in the DmaPortCommunicationInterface to further multiplex the data coming
-    -- from this module.
-    bNiDmaInputDataToDmaValid : out boolean;
-
-    -------------------------------------------------------------------------------------
-    -- The interface with the Sink Stream circuits
-    -------------------------------------------------------------------------------------
-    bInputDataFromSinkStreamArray : in
-      NiDmaInputDataToDmaArray_t(Larger(kNumOfSinkStrms,1)-1 downto 0);
-
-    -- This vector must be a one-hot or none-hot vector for the correct operations
-    -- of the multiplexer.
-    bInputDataFromSinkStreamValidArray : in
-      BooleanVector(Larger(kNumOfSinkStrms,1)-1 downto 0)
-    );
-end DmaPortCommIfcSinkDataControl;
-
-
-architecture rtl of DmaPortCommIfcSinkDataControl is
-  
-  signal bNiDmaInputDataToDmaLocArray : NiDmaInputDataToDmaArray_t(Larger(kNumOfSinkStrms,1)-1 downto 0) := (others => kNiDmaInputDataToDmaZero);
-  
-  signal bDataValidDelayedArray : BooleanVector(0 to kInputDataDelay);
-  signal bNiDmaInputDataToDmaShiftReg : NiDmaInputDataToDmaArray_t ( 0 to kInputDataDelay ) := (others => kNiDmaInputDataToDmaZero);
-  
-  -- SelectData returns a copy of InputDataToDma where all but the
-  -- selected channel is set to "zero". The multiplexor can be completed
-  -- by simply "or"ing the array elements using the OrArray function. It
-  -- is crucial for this function to return "zero" if no channel is
-  -- selected.
-  --
-  -- For correct operations of the multiplexer, the Selector argument is 
-  -- expected to be a one-hot vector or none-hot vector.
-  function SelectData ( InputDataToDma : NiDmaInputDataToDmaArray_t;
-                        Selector : BooleanVector(Larger(kNumOfSinkStrms,1)-1 downto 0) ) return
-                        NiDmaInputDataToDmaArray_t is
-    variable rval : NiDmaInputDataToDmaArray_t ( InputDataToDma'range ) :=
-                    (others => kNiDmaInputDataToDmaZero);
-  begin
-    for i in rval'range loop
-      if Selector ( i ) then
-        rval ( i ) := InputDataToDma ( i );
-      end if;
-    end loop;
-
-    return rval;
-  end function SelectData;
-
-
-begin
-
-  bNiDmaInputDataToDmaLocArray <= SelectData(
-    bInputDataFromSinkStreamArray,
-    bInputDataFromSinkStreamValidArray);
-
-  -- Computing the data valid array coming from the sink stream circuits.
-  bDataValidDelayedArray(0) <= OrVector(bInputDataFromSinkStreamValidArray);
-  bNiDmaInputDataToDmaShiftReg(0) <= OrArray(bNiDmaInputDataToDmaLocArray);
-  
-  DataValidDelay: process (aReset, BusClk) is
-  begin
-    if aReset then
-      bDataValidDelayedArray(1 to kInputDataDelay) <= (others => false);
-      bNiDmaInputDataToDmaShiftReg(1 to kInputDataDelay) <= (others => kNiDmaInputDataToDmaZero);
-    elsif rising_edge(BusClk) then
-      bDataValidDelayedArray(1 to kInputDataDelay) <= bDataValidDelayedArray(0 to kInputDataDelay - 1);
-      bNiDmaInputDataToDmaShiftReg(1 to kInputDataDelay) <= bNiDmaInputDataToDmaShiftReg(0 to kInputDataDelay - 1);
-    end if;
-  end process;
-  bNiDmaInputDataToDmaValid <= bDataValidDelayedArray(kInputDataDelay);
-  bNiDmaInputDataToDma <= bNiDmaInputDataToDmaShiftReg(kInputDataDelay);
-  
-  --synthesis translate_off
-  CheckForOneOrNoneHotVector: process(BusClk)
-  begin
-    if rising_edge(BusClk) then
-      for i in 0 to bInputDataFromSinkStreamValidArray'length-1 loop
-        if bInputDataFromSinkStreamValidArray(i) then
-          for j in i+1 to bInputDataFromSinkStreamValidArray'length-1 loop
-            assert not bInputDataFromSinkStreamValidArray(j)
-              report "Sink streams #" & integer'image(i) & "and #" & integer'image(j) & " are both selected in Sink Data Control multiplexer."
-              severity Error;
-          end loop;
-        end if;
-      end loop;
-    end if;
-  end process CheckForOneOrNoneHotVector;
-  --synthesis translate_on
-
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+YATj3kULTF7Ty4ORuRfFpnT6YIk4rUPRrM74bVTnc4GjdV8oSnW5PtQkMCLOi558
+1V+/wvDfc3y0Z8//ksX8sZm3JZWtrxUppw8c14g9Y7owiwp+JumRtO1zuk5xFbe3
+0MMnIxxoTKLhyRJtAxElG8sbx8N21OWDGiOk0Xyd5CqAmk9dcOIbxzMjW/wndBXi
+maijUdqS+5KiRCM9+Gsp6k/iEAa2LnYTt4WtjkmDD1P5jZKsiMgFck8WOqLymplZ
+ml3TTfn1UlLNm/+zD3SFGP0kABAiUT8NK2xBPQ5UzQ6sMFPd/np8iUZ5u4QLTWOZ
+hTrU9OSX7lOvRUo8pJ9vPg==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="BzW6NOo8eyBw+CxsNNo4wIDxODIsVe0ft0K5tGuSUZw="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+DhjJh9S2BY18dG77XPz3hsiSQ73+w0XqfJhD+f+lIDHHVjOB7CfC8ieNRTexgzn1
+5W+qoqOEwenoVQtit9u3XViXJSRJ0wfUC5a9axblRNyD2mUbyfH9+f59nWqGkVOh
+ieHxkA/DPprM70F3APxk51m7/gNSLICSvbONgLGndWc=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="L7NTNW/5Dqy+2kJZXKczEa3js87UJ8H00YWI+92sDHA="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 6848 )
+`protect data_block
+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
+`protect end_protected
