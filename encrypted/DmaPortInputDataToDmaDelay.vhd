@@ -1,117 +1,86 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-aMReDmrPskJscpWYThVKVItA5gecPPZO1R595p0GoIq1TSTG+UxXhmmUXc+VYHJ3
-u/C3EW5qePLufxmXxmhmDnr9U8/cYC1zLfk44v/2OPb1TBrTsludEDQZdGNWeV9l
-cPUMSIfZ0dHXN7L1M1E2XtgoTWQxf3VDHs7B7lU2y9Rdm/ibz0fWMow7op2nWdD8
-gJ4QlNl3f9Oiotp1p8vz9RFzzZOF5gBBslZxcTF5+z4qO2W7+xLByngthWm+exIr
-3Pzy8qyUo/m2DDwOz3VJSvSNm7RUq+0/yJNOOz3jr3j7ZyCj5OqT/jDAWjJSMH+i
-2402Un+wDMOQxi21JLo3cA==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="5R6K2aWI3OdbT2A+sz4o9+2XAInTqB1/cSw5W16RnA4="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-Gm/2BIZF5/H5qen8uQizPH9RftTuEE9mgEOF0SqeOKegtP64CfvEUnIxj/ahmIpA
-6xUR2v2l7E5duaLZh39Mc1GYsfqE91NCPU5whLaBPg0UuX4cgTkO4cYbW/7yvcrd
-4wavUfwXEp2VSiN7EVxL8RcZTSMSI0Jr/aojiilFqVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="TEmQtJ1Dsm7TOzpJk/CeTSSFx/zKExk04H6I8sT4Meg="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 3328 )
-`protect data_block
-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
-Rlc9lT8tFK2Ehthwe0QjBA==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DmaPortInputDataToDmaDelay.vhd
+-- Author: Paul Butler
+-- Original Project: LV FPGA Dma Port Communication Interface
+-- Date: 16 Oct 2014
+--
+-------------------------------------------------------------------------------
+-- (c) 2014 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+-- This simple component will delay the input by kDelay clock cycles. 
+-- kDelay can have any natural value, including 0.
+--
+
+library IEEE;
+  use IEEE.std_logic_1164.all;
+
+library WORK;
+  use WORK.PkgNiUtilities.all;
+
+  use work.PkgNiDma.all;
+
+  use work.PkgDmaPortCommunicationInterface.all;
+  use work.PkgDmaPortCommIfcInputDataControl.all;
+  use work.PkgCommIntConfiguration.all;
+
+entity DmaPortInputDataToDmaDelay is
+  generic (
+    kDelay : natural := 0
+          );
+  port (
+    Clk                             : in  std_logic;
+    cNiDmaInputDataToDma            : in  NiDmaInputDataToDma_t;
+    cNiDmaInputDataToDmaDelayed     : out NiDmaInputDataToDma_t
+       );
+end entity DmaPortInputDataToDmaDelay;
+
+architecture RTL of DmaPortInputDataToDmaDelay is
+
+  -- The index corresponds to the number of state delays applied to each 
+  -- element of the array. Index 0 has not been delayed at all and index 
+  -- kDelay has been delayed by exactly that many clock cycles.
+  -- I declared the array using an increasing range because I think it 
+  -- felt natural to me to shift from left to right. I could shift left 
+  -- to right using a decreasing range, but then the index would not 
+  -- correspond to the amount of delay.
+  signal cDataShiftReg : NiDmaInputDataToDmaArray_t ( 0 to kDelay ) :=
+         (others => kNiDmaInputDataToDmaZero);
+
+begin
+
+  cDataShiftReg ( 0 ) <= cNiDmaInputDataToDma;
+
+  -- I intentionally omitted a reset because this shift register is only 
+  -- used for data, not control signals. When the control logic is being 
+  -- reset, the data is undefined and it remains undefined until the 
+  -- control logic has shifted meaningful data through these registers. 
+  -- For those reasons, we have no functional requirement to reset these 
+  -- registers.
+  --
+  -- When the corresponding control logic enters the reset state, it 
+  -- might conceivably cause the first register in this chain to become 
+  -- metastable (we have a boundary from the control logic's reset 
+  -- domain into a domain with no reset). However, none of the data in 
+  -- this shift register has any meaning at that time and we cannot 
+  -- transfer any data until well after the control logic exits the 
+  -- reset state. For those reasons, I claim that metastability on these 
+  -- registers is safe.
+  --
+  -- By not resetting registers unnecessarily, I preserve routing 
+  -- resources and I simplify timing closure on the reset net in case we 
+  -- elect to use a synchronous reset or a reset with an asynchronous 
+  -- assertion, synchhronous deassertion.
+  cDataShiftReg ( 1 to kDelay ) <= cDataShiftReg ( 0 to kDelay - 1 ) 
+                                   when rising_edge ( Clk );
+
+  cNiDmaInputDataToDmaDelayed <= cDataShiftReg ( kDelay );
+
+end RTL;
+
+

@@ -1,96 +1,70 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-aMReDmrPskJscpWYThVKVItA5gecPPZO1R595p0GoIq1TSTG+UxXhmmUXc+VYHJ3
-u/C3EW5qePLufxmXxmhmDnr9U8/cYC1zLfk44v/2OPb1TBrTsludEDQZdGNWeV9l
-cPUMSIfZ0dHXN7L1M1E2XtgoTWQxf3VDHs7B7lU2y9Rdm/ibz0fWMow7op2nWdD8
-gJ4QlNl3f9Oiotp1p8vz9RFzzZOF5gBBslZxcTF5+z4qO2W7+xLByngthWm+exIr
-3Pzy8qyUo/m2DDwOz3VJSvSNm7RUq+0/yJNOOz3jr3j7ZyCj5OqT/jDAWjJSMH+i
-2402Un+wDMOQxi21JLo3cA==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="5R6K2aWI3OdbT2A+sz4o9+2XAInTqB1/cSw5W16RnA4="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-Gm/2BIZF5/H5qen8uQizPH9RftTuEE9mgEOF0SqeOKegtP64CfvEUnIxj/ahmIpA
-6xUR2v2l7E5duaLZh39Mc1GYsfqE91NCPU5whLaBPg0UuX4cgTkO4cYbW/7yvcrd
-4wavUfwXEp2VSiN7EVxL8RcZTSMSI0Jr/aojiilFqVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="TEmQtJ1Dsm7TOzpJk/CeTSSFx/zKExk04H6I8sT4Meg="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2320 )
-`protect data_block
-nvPqn26PC4XWLLQG0Fq8XsMTlhB4evbpiwGjZroFFLgtNlE6bBjdtwWsB89WW4j7
-jNfYbKN4sBv0hDeMH0AAR+8g+TCqoX7yLdIUd7aGwBUZJr6FdDs2wTUxRkXFYNTL
-OIbjKmolrCPGXruliCzGdpwyceV2rQ0eTVrtJshfuH4/zUPjhRQgo4U//009oWv8
-GKm1t+zPG3SFOLyD1yLP+UbidzaCUqMF4ip7SktbqwnB/tdu9riqAvz0vy2z12V7
-k92zVGxBn3tn6tF4sI6TYmd/VPfGouEWUi8y+t1FjHCaJWtUzQswkSJ4Bb5M+qN9
-ptvV+A53U3U0Z41Fphdptl6NXqlVXzDDU2+5kXwEMCUhrb9EWju4oBiIaavI3aOb
-gZbiPzB+m7N2sDTIWusO38ktJvOIQtu3On37/vHMvPEnxVXbSwpWjaJJEE1G6xp3
-XHA86Yd7g0mfCnrPp6UUYd1XBG5wN3slcjPBHaGRUa7DTR6B6D0NvCQSiyU8c1kQ
-cFFUE6Dy/98nG1DTLPyaLKw82FTtfYSYtFH5BL15erG/8pjz485YvvpjNCYA5Z9l
-rXg/giGzDOTtyhx4n6Ic5DyiYnpZ7XcftwAsBbyEN4SvpmOiMVLSX75Daxr/eDV3
-LcPVkacyk/57FAHxpYq29v7dCfLYlf2GfkcmVYbRBKnQejNkN99dBl9ZWoBGOqqJ
-1I6enW0NavrkKzrjCYf0wMDCntYdXvhh8e+wBJearwtNoC4LzSr11nJ3Ee5aIH05
-nXvfT75UzokiH+5905tftT3MsfZnbD/Anp4IWVXpctGFOgdnXuA0Iol92/5j3yWz
-AtCkrejv6oTGftQHc/ZPIyzyREc3zzA/Y9aFFop0vFvpBUFYESy0ThIDEckMLCHp
-hzhzFLteFYhZanavlgDQBoOREJmIc/UOgS61c12TYfWECWXw/6U2VTfltLBM2Lfy
-1YwuMmYHz0Sf03Bk7VNrrV9iGkBGF19ZwSShvpjYirtrHWc/jE3ICmEndmXFJjlG
-9cH1sRLFec+Qm2wuTQVLPwkzbpy0YtV27nM86IsiK74BoT4+FYjP/wK/0gTSauwO
-qbz/VbN15iKV4zmGdAaDJHckNf0ytzghD2mGuj6HTV9Jg39hPXE3eY+gImX8tAoo
-vQbilUDf0Ixhk1Nrt9KfLJgVVlPP1cFjNknyEZCJB50+MdwX+eBIewFU4bs59/pN
-DCXsMoVx+ae//Crl2Kb4ckiMdDICwUwVmc3WPr7zFOLQn51Y3p7SXWgQOH1kFq35
-jvZi+5VclZ3Z7TnzE8YSrHPPV/+Ab67ve42dS2AKtFpEOcp1mjlhs8abZPhg3cr0
-KYikk14j72z0M+XcuoPqQ8zwKO8Nq32vU4fiqBRfcl6/GA3kuMDjRjQzgw9rowZN
-lz+67yoeuYO4Xx/9w6AfaO2eOTkUcacgyJqbQhpL5mqZX75E+jH8FS8Ipw93IDn1
-S3mz3hhVHOQHB2BkzF7tOWvQDjvKhRwnVVUoM97QShTIBIDd7SBjUPi3GHdjgyLz
-LPD/lOdSpwfu3D/eo9884xrFILLyC6JX3KdAJ/G9F5eO6L0yEBebuL6JULJ7YA51
-H6tNG+1vHh3GaJPTxWUGL7/Am0eInGgk5fO2Svu1yOu6EeY0rfwpAkCyLuDDC1CG
-tviqp/m4/s2GawzAAMihDZUsQenf0WtraLs/qNEpUMtIblxXOVtmydqYa5H5N7dl
-zkz4wwUNosdMllyqoI20BYy2EV6LdcTbLXKCAahY1KxucyM+92SoNRApcUpoQ1k3
-j9WbXLuqaFwmoyzm+qcy+vf8qUNzm2hyUPTqt5pV/px/Srczgi6xVwYb/WYH6hJ4
-ZZl/qzcd83aygp86QmmAAkiK3ZtlIsPhWBMouRE1sUF4UPYpdL+KarpnwkeDgwSV
-lgmg4AWg6xphZz60ThzWuVOzeMwPv5UWQb5J7Lgu3dT7l7PCQ8OA2aa/0aNJZ8Nh
-31ND72whZIDbvRWMprzUZyYEV/d0QzCW0fIPcb0oHLcmGQjJLPikE2neSH7octSF
-34hL+v18NrCpCcImbJJlPN2zbGoO5wDDvFEJWjixccBFDfKA2A1drz19SslXkJtx
-qhZHxjxjodWViY47RjmyPOhSnxg1dWmFS4q9EkeuntaUrC1IcwlGurBTSujYN30w
-0Gm83IUluj99RggNeXclcQTYcETuIj7+lwQryaCJurYHF+7Q25eqUpCXzxevlqwv
-pt2BMhe00UAU0h4UDHDji5OldKSbx/sC19B9w5IOkGs4fRaAkqe6VY+f8VByX+td
-75gXJe/cGTi6CnJLPXSWQZfuAep5m6vZ3pzUiH0Ob19UBPzBX0/WRMiilLi6gdIj
-Gc43RJ4q+9QnnrEPlLkjijLCmzEupo8TyPXDR+BT9H05qVLBp4P5GfejqyxzR0AG
-xSQrDcV0CV+BFugcghAstRoPboxgc60VFDaqiv9iahH3mWFAa3C6wU5pOoJwfW04
-FoL+FZlnOhlONm5vS/H36lNKArr8oEAsonSgu6TyyNMosLZDpZwCWKb2vojxzSOK
-ATfoYD/KFGvt7jniulpeRCTHmY5fynmKAKYFhUNiUa+mfN5Ur+M5E/aUhE2jd+MA
-NWWwkSMMMCtGwtACZe8jlsXeMM4JqMEgQQLxxVr9VX4logSwhurqQm1NBwZKtRNg
-eo4+E/jybT7PcY1FBGUttoGeHiAc7D0fziwAJtTDOPq8cB0dpNjNEghwwZEfTr+f
-52tcEbpgDpq4zjfpqTHrCIrkatNiRbg2UwXDwBfKhf2Z0REHfhycjiK+UqvaBY39
-/QaDzLdaZOQdy597aaQrdsVc545MWwwpKQ7fWvVGoXERoGj+/dvMIKN5Kl3Kfd+m
-+K/55zGAKihCwD9qXp3qsvl9w9v7MK7EPT3rgvgSxkJd63s0rqc0p9w0ssepXnTS
-nYD3RrigRaboQ82uZNt7LfYOqWCJnPZWlOUArjm8SEI9Jpsh7Xu4xSEwJip69nje
-hYwi71ixFZoKucziYYFO7DPoGRxTvsJ9MjR0NDPBidEoX28fvgWGR6pDFIBgJ71I
-Bor8+6DV8GX7b4DRVs8AcA==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DualPortRAM.vhd
+-- Author: Craig Conway, Siddharth Sethi
+-- Original Project: SMC5
+-- Date: 7 July 2008
+--
+-------------------------------------------------------------------------------
+-- (c) 2008 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--   Wrapper for Vivado inferred version of Dual Port RAM
+--   Should implement a block RAM of the specified width/depth.
+--
+-- vreview_group rams
+-- vreview_closed http://review-board.natinst.com/r/79823/
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+entity DualPortRAM is
+  generic (
+    kAddressWidth : integer := 8;
+    kWidth : integer := 32;
+    kRamReadLatency : integer := 2
+  );
+  port (
+    IClk : in std_logic;
+    iClkEn : in boolean := true;
+    iWrite : in boolean;
+    iAddr : in unsigned(kAddressWidth-1 downto 0);
+    iDataIn : in std_logic_vector(kWidth-1 downto 0);
+
+    OClk : in std_logic;
+    oClkEn : in boolean := true;
+    oReset : in boolean := false;
+    oAddr : in unsigned(kAddressWidth-1 downto 0);
+    oDataOut : out std_logic_vector(kWidth-1 downto 0)
+  );
+end DualPortRAM;
+
+architecture rtl of DualPortRAM is
+
+begin
+
+  --vhook_e DualPortRAM_Vivado InferredRamx
+  InferredRamx: entity work.DualPortRAM_Vivado (rtl)
+    generic map (
+      kAddressWidth   => kAddressWidth,    --integer:=8
+      kWidth          => kWidth,           --integer:=32
+      kRamReadLatency => kRamReadLatency)  --integer range 1:3 :=2
+    port map (
+      IClk     => IClk,      --in  std_logic
+      iClkEn   => iClkEn,    --in  boolean
+      iWrite   => iWrite,    --in  boolean
+      iAddr    => iAddr,     --in  unsigned(kAddressWidth-1:0)
+      iDataIn  => iDataIn,   --in  std_logic_vector(kWidth-1:0)
+      OClk     => OClk,      --in  std_logic
+      oReset   => oReset,    --in  boolean
+      oClkEn   => oClkEn,    --in  boolean
+      oAddr    => oAddr,     --in  unsigned(kAddressWidth-1:0)
+      oDataOut => oDataOut); --out std_logic_vector(kWidth-1:0)
+
+end rtl;

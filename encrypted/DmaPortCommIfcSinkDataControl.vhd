@@ -1,190 +1,156 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-aMReDmrPskJscpWYThVKVItA5gecPPZO1R595p0GoIq1TSTG+UxXhmmUXc+VYHJ3
-u/C3EW5qePLufxmXxmhmDnr9U8/cYC1zLfk44v/2OPb1TBrTsludEDQZdGNWeV9l
-cPUMSIfZ0dHXN7L1M1E2XtgoTWQxf3VDHs7B7lU2y9Rdm/ibz0fWMow7op2nWdD8
-gJ4QlNl3f9Oiotp1p8vz9RFzzZOF5gBBslZxcTF5+z4qO2W7+xLByngthWm+exIr
-3Pzy8qyUo/m2DDwOz3VJSvSNm7RUq+0/yJNOOz3jr3j7ZyCj5OqT/jDAWjJSMH+i
-2402Un+wDMOQxi21JLo3cA==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="5R6K2aWI3OdbT2A+sz4o9+2XAInTqB1/cSw5W16RnA4="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-Gm/2BIZF5/H5qen8uQizPH9RftTuEE9mgEOF0SqeOKegtP64CfvEUnIxj/ahmIpA
-6xUR2v2l7E5duaLZh39Mc1GYsfqE91NCPU5whLaBPg0UuX4cgTkO4cYbW/7yvcrd
-4wavUfwXEp2VSiN7EVxL8RcZTSMSI0Jr/aojiilFqVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="TEmQtJ1Dsm7TOzpJk/CeTSSFx/zKExk04H6I8sT4Meg="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 6848 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DmaPortCommIfcSinkDataControl.vhd
+-- Author: Florin Hurgoi, Tamas Gyorfi
+-- Original Project: LV FPGA Dma Port Communication Interface
+-- Date: 15 June 2011
+--
+-------------------------------------------------------------------------------
+-- (c) 2007 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+--   The NI DMA IP also implements a single Input Data interface for all the requesters
+--   in the application logic. The NI DMA IP will always initiate the data transfer
+--   as a response to the request sent by the communication interface. The communication
+--   interface needs to be ready to transfer the associated data whenever
+--   the NI DMA IP desires. The Sink Data Control introduce a data latency based on
+--   the number of pipeline stages needed to multiplex Input Data interfaces coming
+--   from Sink Stream circuits. The module generator will define the
+--   kNiDmaInputDataReadLatency constant at compile time so that the NI DMA IP to know
+--   what the read latency is.
+--   The Sink Data Control component needs to introduce the same read data latency as 
+--   Input Data Control component. The read latency is set by the 'kInputDataDelay' 
+--   constant defined in PkgDmaPortCommIfcInputDataControl. Both the Sink Data Control
+--   and Input Data Control components set the read latency based on this constant.
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+
+  -- This package contains the definitions for the interface between the NI DMA IP and
+  -- the application specific logic
+  use work.PkgNiDma.all;
+  use work.PkgNiDmaConfig.all;
+
+  use work.PkgDmaPortCommunicationInterface.all;
+  use work.PkgDmaPortCommIfcInputDataControl.all;
+  use work.PkgCommIntConfiguration.all;
+
+entity DmaPortCommIfcSinkDataControl is
+  generic (
+    -------------------------------------------------------------------------------------
+    --The number of sink streams
+    -------------------------------------------------------------------------------------
+    kNumOfSinkStrms : natural := 16
+  );
+
+  port (
+    aReset : in  boolean;
+    BusClk : in  std_logic;
+
+    -------------------------------------------------------------------------------------
+    -- Input Data interface between the DMA controller and the Communication Interface
+    -------------------------------------------------------------------------------------
+    bNiDmaInputDataToDma : out NiDmaInputDataToDma_t;
+
+    -- This signal indicates when data on the bNiDmaInputDataToDma is valid.
+    -- This signal will be asserted irrespective of the DMA channel and it will be
+    -- used in the DmaPortCommunicationInterface to further multiplex the data coming
+    -- from this module.
+    bNiDmaInputDataToDmaValid : out boolean;
+
+    -------------------------------------------------------------------------------------
+    -- The interface with the Sink Stream circuits
+    -------------------------------------------------------------------------------------
+    bInputDataFromSinkStreamArray : in
+      NiDmaInputDataToDmaArray_t(Larger(kNumOfSinkStrms,1)-1 downto 0);
+
+    -- This vector must be a one-hot or none-hot vector for the correct operations
+    -- of the multiplexer.
+    bInputDataFromSinkStreamValidArray : in
+      BooleanVector(Larger(kNumOfSinkStrms,1)-1 downto 0)
+    );
+end DmaPortCommIfcSinkDataControl;
+
+
+architecture rtl of DmaPortCommIfcSinkDataControl is
+  
+  signal bNiDmaInputDataToDmaLocArray : NiDmaInputDataToDmaArray_t(Larger(kNumOfSinkStrms,1)-1 downto 0) := (others => kNiDmaInputDataToDmaZero);
+  
+  signal bDataValidDelayedArray : BooleanVector(0 to kInputDataDelay);
+  signal bNiDmaInputDataToDmaShiftReg : NiDmaInputDataToDmaArray_t ( 0 to kInputDataDelay ) := (others => kNiDmaInputDataToDmaZero);
+  
+  -- SelectData returns a copy of InputDataToDma where all but the
+  -- selected channel is set to "zero". The multiplexor can be completed
+  -- by simply "or"ing the array elements using the OrArray function. It
+  -- is crucial for this function to return "zero" if no channel is
+  -- selected.
+  --
+  -- For correct operations of the multiplexer, the Selector argument is 
+  -- expected to be a one-hot vector or none-hot vector.
+  function SelectData ( InputDataToDma : NiDmaInputDataToDmaArray_t;
+                        Selector : BooleanVector(Larger(kNumOfSinkStrms,1)-1 downto 0) ) return
+                        NiDmaInputDataToDmaArray_t is
+    variable rval : NiDmaInputDataToDmaArray_t ( InputDataToDma'range ) :=
+                    (others => kNiDmaInputDataToDmaZero);
+  begin
+    for i in rval'range loop
+      if Selector ( i ) then
+        rval ( i ) := InputDataToDma ( i );
+      end if;
+    end loop;
+
+    return rval;
+  end function SelectData;
+
+
+begin
+
+  bNiDmaInputDataToDmaLocArray <= SelectData(
+    bInputDataFromSinkStreamArray,
+    bInputDataFromSinkStreamValidArray);
+
+  -- Computing the data valid array coming from the sink stream circuits.
+  bDataValidDelayedArray(0) <= OrVector(bInputDataFromSinkStreamValidArray);
+  bNiDmaInputDataToDmaShiftReg(0) <= OrArray(bNiDmaInputDataToDmaLocArray);
+  
+  DataValidDelay: process (aReset, BusClk) is
+  begin
+    if aReset then
+      bDataValidDelayedArray(1 to kInputDataDelay) <= (others => false);
+      bNiDmaInputDataToDmaShiftReg(1 to kInputDataDelay) <= (others => kNiDmaInputDataToDmaZero);
+    elsif rising_edge(BusClk) then
+      bDataValidDelayedArray(1 to kInputDataDelay) <= bDataValidDelayedArray(0 to kInputDataDelay - 1);
+      bNiDmaInputDataToDmaShiftReg(1 to kInputDataDelay) <= bNiDmaInputDataToDmaShiftReg(0 to kInputDataDelay - 1);
+    end if;
+  end process;
+  bNiDmaInputDataToDmaValid <= bDataValidDelayedArray(kInputDataDelay);
+  bNiDmaInputDataToDma <= bNiDmaInputDataToDmaShiftReg(kInputDataDelay);
+  
+  --synthesis translate_off
+  CheckForOneOrNoneHotVector: process(BusClk)
+  begin
+    if rising_edge(BusClk) then
+      for i in 0 to bInputDataFromSinkStreamValidArray'length-1 loop
+        if bInputDataFromSinkStreamValidArray(i) then
+          for j in i+1 to bInputDataFromSinkStreamValidArray'length-1 loop
+            assert not bInputDataFromSinkStreamValidArray(j)
+              report "Sink streams #" & integer'image(i) & "and #" & integer'image(j) & " are both selected in Sink Data Control multiplexer."
+              severity Error;
+          end loop;
+        end if;
+      end loop;
+    end if;
+  end process CheckForOneOrNoneHotVector;
+  --synthesis translate_on
+
+end rtl;

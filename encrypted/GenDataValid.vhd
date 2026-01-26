@@ -1,92 +1,71 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-aMReDmrPskJscpWYThVKVItA5gecPPZO1R595p0GoIq1TSTG+UxXhmmUXc+VYHJ3
-u/C3EW5qePLufxmXxmhmDnr9U8/cYC1zLfk44v/2OPb1TBrTsludEDQZdGNWeV9l
-cPUMSIfZ0dHXN7L1M1E2XtgoTWQxf3VDHs7B7lU2y9Rdm/ibz0fWMow7op2nWdD8
-gJ4QlNl3f9Oiotp1p8vz9RFzzZOF5gBBslZxcTF5+z4qO2W7+xLByngthWm+exIr
-3Pzy8qyUo/m2DDwOz3VJSvSNm7RUq+0/yJNOOz3jr3j7ZyCj5OqT/jDAWjJSMH+i
-2402Un+wDMOQxi21JLo3cA==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="5R6K2aWI3OdbT2A+sz4o9+2XAInTqB1/cSw5W16RnA4="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-Gm/2BIZF5/H5qen8uQizPH9RftTuEE9mgEOF0SqeOKegtP64CfvEUnIxj/ahmIpA
-6xUR2v2l7E5duaLZh39Mc1GYsfqE91NCPU5whLaBPg0UuX4cgTkO4cYbW/7yvcrd
-4wavUfwXEp2VSiN7EVxL8RcZTSMSI0Jr/aojiilFqVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="TEmQtJ1Dsm7TOzpJk/CeTSSFx/zKExk04H6I8sT4Meg="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2128 )
-`protect data_block
-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
-1Ht0pnOOmKn4mWzIPRNBog==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: GenDataValid.vhd
+-- Author: Craig Conway
+-- Original Project: NI Cores
+-- Date: 25 February 2009
+--
+-------------------------------------------------------------------------------
+-- (c) 2009 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--   This module creates a delay of the oDataValid signal so that it
+-- asserts when data should be captured from the RAM
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+
+entity GenDataValid is
+  generic (
+    kRamReadLatency,
+    kFifoAdditiveLatency : natural
+  );
+  port(
+    aReset : in boolean;
+    Clk : in std_logic;
+    cRead,
+    cReset,
+    cClkEn : in boolean;
+    cDataValid : out boolean
+  );
+end GenDataValid;
+
+architecture rtl of GenDataValid is
+
+  constant kFifoReadLatency : positive := kRamReadLatency + kFifoAdditiveLatency;
+  signal cD, cQ : BooleanVector(kFifoReadLatency+2 downto 1);
+  constant kResetVal : BooleanVector(kFifoReadLatency+2 downto 1) := (others => false);
+
+begin
+
+  assert kFifoReadLatency>0
+    report "The sum of kRamReadLatency and kFifoAdditiveLatency must be > 0"
+    severity error;
+
+  cD(1) <= cRead and not cReset;
+  cD(cD'high downto 2) <= (others => false) when cReset else cQ(cD'high-1 downto 1);
+
+  --vhook_e DFlopBoolVec
+  --vhook_a cEn cClkEn
+  DFlopBoolVecx: entity work.DFlopBoolVec (rtl)
+    generic map (
+      kResetVal => kResetVal)  -- in  BooleanVector
+    port map (
+      aReset => aReset,  -- in  boolean
+      cEn    => cClkEn,  -- in  boolean
+      Clk    => Clk,     -- in  std_logic
+      cD     => cD,      -- in  BooleanVector(kResetVal'length-1 downto 0)
+      cQ     => cQ);     -- out BooleanVector(kResetVal'length-1 downto 0) := kResetVal
+
+  cDataValid <= cD(kFifoReadLatency);
+
+end rtl;

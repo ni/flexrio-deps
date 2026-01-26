@@ -1,91 +1,64 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-aMReDmrPskJscpWYThVKVItA5gecPPZO1R595p0GoIq1TSTG+UxXhmmUXc+VYHJ3
-u/C3EW5qePLufxmXxmhmDnr9U8/cYC1zLfk44v/2OPb1TBrTsludEDQZdGNWeV9l
-cPUMSIfZ0dHXN7L1M1E2XtgoTWQxf3VDHs7B7lU2y9Rdm/ibz0fWMow7op2nWdD8
-gJ4QlNl3f9Oiotp1p8vz9RFzzZOF5gBBslZxcTF5+z4qO2W7+xLByngthWm+exIr
-3Pzy8qyUo/m2DDwOz3VJSvSNm7RUq+0/yJNOOz3jr3j7ZyCj5OqT/jDAWjJSMH+i
-2402Un+wDMOQxi21JLo3cA==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="5R6K2aWI3OdbT2A+sz4o9+2XAInTqB1/cSw5W16RnA4="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-Gm/2BIZF5/H5qen8uQizPH9RftTuEE9mgEOF0SqeOKegtP64CfvEUnIxj/ahmIpA
-6xUR2v2l7E5duaLZh39Mc1GYsfqE91NCPU5whLaBPg0UuX4cgTkO4cYbW/7yvcrd
-4wavUfwXEp2VSiN7EVxL8RcZTSMSI0Jr/aojiilFqVE=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="TEmQtJ1Dsm7TOzpJk/CeTSSFx/zKExk04H6I8sT4Meg="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2096 )
-`protect data_block
-nvPqn26PC4XWLLQG0Fq8XsMTlhB4evbpiwGjZroFFLgtNlE6bBjdtwWsB89WW4j7
-jNfYbKN4sBv0hDeMH0AAR+8g+TCqoX7yLdIUd7aGwBUZJr6FdDs2wTUxRkXFYNTL
-Ki+x7brLQ4XN0RndiLuX1reEwTpYeTdRKNo3PMFav0lUTDUraJgobR1fizTi6/fz
-S8C2+dF+cUDrQN53PbYPvtEoB4nzHG27aUxWBRMWSxFb/614411Z0GqQ4A8HiFo9
-l03b4wJ2b4d3FthuRdBEIWTI2leX7ClZp5H53kaATqNxIZrZVoK3jSf3qUQPmlKO
-9zLhi/TrN1YrJjEz2p1l1cODFiW/mbRTHpppAqbVIuVf1TXsupHuwPhT1e/1vDgX
-RUzgwLx2lDOdkOzIjvDQX132dNVtnuZkTUG+2VVFVAxzxveenT+6Wdq3BXWRMOAP
-yMwMQn5mVEB2WrfLNPf8mcxlNMT7qZxND7qy/z0MgJmBhtoOphabeLaAY+2nmXLB
-i6tvPHYG2Go/e5tlh5GLjoN630G7FYrj89PoB71EL9QT6WCIw18KE7nx2kZsDA0c
-lEhqTsObVFEwICkiER6x4edch6ZUsk1y+bw93QB6IN1AZM6oMBGJNyV051ClkCzn
-DDanltNqLA+MCm5VwLflKDjQptcV/kgwu67cZc1+WOCmrHTrSKQegx7bTJxnDDUa
-BM3Z4gcXWJXqs7ZAPxKkNOCqmEmbwE8meVayxKoDdUGg2bNokVRFZnphjEsE5HKr
-cm773Dc09zo1KiR8Rp7acKpsT5tqMcVR1mSbWqOYYDtVeb+oHz4HSij6LkZtesYX
-JK36m82lRF97jX3xzDf5uIth/ZX0dZMDqF9Q8u4h5ZV37vYBuMRznkMrkkIRLlrG
-O1tPAr1Bm2DGz3HcSjswEtkZkrXG971GEk04fM/0LvqnE68ReML/FBMOGU5c6yex
-vKqzn6wAu4kEvMqurR6ui8JxNGMHsHwcbxfAuG2uavRwEtKujAsWCMrH9ZfcEV0F
-wr9v4zwFlIE/zWwkON1zn7W4Q4EAjmz141YNbvjGPnE/DI6XoOJUQiLcY+cyBbU1
-sae2ZgIveKM9K2uTdoFAc2m7CLCbNj+Jaa9GdVQ/Wyq0xWNGmuGPync9IgQbJlXK
-CbFNQbgGy4E+n3OTetQe3JwMvgBELe2m7Xf2gvN/5FCL6adlvH2JLsWGnsuzRXfK
-0+tlg1Hfz41lrczVJ2ZRELm0yqLhP0pzjNM3xjk725J4MlbZtGjzocji3nIQvOrl
-uGPHbGiRcroGMtn3RG8SLzoQi1yWCQY6RbHkjW/X66fQnjBnc4ugBffK7UkgEDNQ
-n599pO1pNMrammmmOEZjsNS+v2IQZjxarfGUnQ6N26D9/IJ8qSZ5rDydYQPzah0g
-E6aL5ynoA7mcJM9jkPGz4LMzcx7wxEg1b0GIR71eLaRX2VDInJ8zBze+2Gp0qWDh
-qoY98N+huFJlZ/thyQ44hEAPrdjqWbfHHJ/61up71oB806hQyV/EuoZkEGV7mdW0
-Vp+8zaZUfC5oY4hxPVDBOX/tZIICzxN1mTUxU7jcPgk09A7gILZuQr2n8pTa0imi
-eH1LXIPri1WCnwv1/CboHbVLG77W91q7Su7H1YSmIU04nKO2WoAnmhyghjLE/029
-t8tS+dS5AsGL/Ld3YVp2P3Al7gX/KUYiaK+APHEVQ5liroU1TpLtJPED3VAPEjrA
-3yKo7jiWufFwwlCWH3bTQeh3Z7cpOPQdPg1Pw27BgPHZxTPP5LnC0goISGTPod8v
-FuoLPI3v8D7FP9PfqcVcK92RNzv+S8z0d3gXQmczdnR109rtPLig60FD54gqfPUx
-EObIFou/ftMpEqJabl6PbZ0ICerQQJDcNOnmk8hWYxaolPkeWZn+TWcsyRh1SqRq
-kSSAIPv3h0Ng2NT1zhiBbs+2g+eM/3Y68heqU+9MMd7zHKEzUSc9f8grH1l07mll
-WeMsfhKty8zw7T+/mR/XEGRCi2FvppMdOMfYLgDX2i9tPWRKTvkumYWF4Z57MIua
-NVAQEqYaxVrADxHZmJ8iA08tVlYVZg/pZgshlGqOLwkByjTYfAIxzqIK7fP+iQVe
-TVFMqvUffvDb0Pm+fN0KQbl6JgLk0zaT/7xtWPQUnWGxyMZd1iaQwIkVjkbi3yWK
-BTxVQViStzEtIljfzlfI/njeSi/z9jYCnfFGAckDOOsGQf35VkPj6abHyVkMqzs6
-mdUUzp6c3IVgaxSGNPU4IEjsG/DFbXlfUbxBSKP4nodL9adhNw/3KTBil1arvJ+r
-4/f8jNM6tG/NZ5WR5IKp8nZDb28G0iswPoUvTpe6soh9Y6DKpyWVumYXhea2XI7e
-NibjTbtwMQY+yPHmtTsCK7/wcGeuoqf32ZfQiuHag4B/RQHNDAPOE4vp70lRl112
-whx89XeEZhnHXvCILyeL1MAkCXYr9PMMDW4mvYd1V5AJLyrVHNx+nsbgjduS7hds
-KSD+TdOwoHulEBtLqFpM/p2WENXEjqQ6XZhCLsEGjFmkdiepC+6w3j9N/mwMr7lC
-HWCyk4Se1s4Ei/snV1JfMo2tmH1iKPkvyV2BqJiK7m5lecTyEwKfXIfnC65tx5TD
-tw1QDpngaxan1extxUwnim6QszD7X1IskpodS8KQ+n6g9/io4AiH3umLX4eOUTUu
-5tQWt1KVStF/0oSMtxFDGzl6A63SzamQrHW93QVZ789hfYiNCAc4LjUyqkwAoVu5
-LsTtmoNRTTL96i7ViwHmxVLIHWunNubvo3L2Ya2SHlQ=
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DFlopBoolVec.vhd
+-- Author: Craig Conway
+-- Original Project: SMC4
+-- Date: 28 November 2006
+--
+-------------------------------------------------------------------------------
+-- (c) 2006 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--    Instantiates an array of DFlop components.  These components
+-- have a "hard" syn_hier attribute so that the enable logic won't
+-- get merged with the D logic.
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+
+entity DFlopBoolVec is
+  generic (kResetVal : BooleanVector);
+  port (
+    aReset, cEn  : in boolean;
+    Clk : in std_logic;
+    cD   : in BooleanVector(kResetVal'length-1 downto 0);
+    cQ   : out BooleanVector(kResetVal'length-1 downto 0) := kResetVal
+  );
+end DFlopBoolVec;
+
+architecture rtl of DFlopBoolVec is
+
+  signal cQ_SLV: std_logic_vector(kResetVal'length-1 downto 0);
+
+begin
+
+  --vhook_e DFlopSLV
+  --vhook_a kResetVal To_StdLogicVector(kResetVal)
+  --vhook_a cD To_StdLogicVector(cD)
+  --vhook_a cQ cQ_SLV
+  DFlopSLVx: entity work.DFlopSLV (rtl)
+    generic map (
+      kResetVal => To_StdLogicVector(kResetVal))  -- in  std_logic_vector
+    port map (
+      aReset => aReset,                 -- in  boolean
+      cEn    => cEn,                    -- in  boolean
+      Clk    => Clk,                    -- in  std_logic
+      cD     => To_StdLogicVector(cD),  -- in  std_logic_vector(kResetVal'length-1 downto
+      cQ     => cQ_SLV);                -- out std_logic_vector(kResetVal'length-1 downto
+
+  cQ <= to_BooleanVector(cQ_SLV);
+
+end rtl;
+
+-- The following comment is a checksum VScan uses to determine whether this
+-- file has been modified.  Please don't try to get around it.  It's there
+-- for a reason.
+--VScan_CS 5679021
