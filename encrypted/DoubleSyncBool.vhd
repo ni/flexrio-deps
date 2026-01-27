@@ -1,92 +1,74 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-YATj3kULTF7Ty4ORuRfFpnT6YIk4rUPRrM74bVTnc4GjdV8oSnW5PtQkMCLOi558
-1V+/wvDfc3y0Z8//ksX8sZm3JZWtrxUppw8c14g9Y7owiwp+JumRtO1zuk5xFbe3
-0MMnIxxoTKLhyRJtAxElG8sbx8N21OWDGiOk0Xyd5CqAmk9dcOIbxzMjW/wndBXi
-maijUdqS+5KiRCM9+Gsp6k/iEAa2LnYTt4WtjkmDD1P5jZKsiMgFck8WOqLymplZ
-ml3TTfn1UlLNm/+zD3SFGP0kABAiUT8NK2xBPQ5UzQ6sMFPd/np8iUZ5u4QLTWOZ
-hTrU9OSX7lOvRUo8pJ9vPg==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="BzW6NOo8eyBw+CxsNNo4wIDxODIsVe0ft0K5tGuSUZw="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-DhjJh9S2BY18dG77XPz3hsiSQ73+w0XqfJhD+f+lIDHHVjOB7CfC8ieNRTexgzn1
-5W+qoqOEwenoVQtit9u3XViXJSRJ0wfUC5a9axblRNyD2mUbyfH9+f59nWqGkVOh
-ieHxkA/DPprM70F3APxk51m7/gNSLICSvbONgLGndWc=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="L7NTNW/5Dqy+2kJZXKczEa3js87UJ8H00YWI+92sDHA="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2128 )
-`protect data_block
-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
-OOTPlDI174wKvFJnDyeJCA==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DoubleSyncBool.vhd
+-- Author: Craig Conway
+-- Original Project: NICores
+-- Date: 13 September 2002
+--
+-------------------------------------------------------------------------------
+-- (c) 2002 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--      This module transfers a boolean signal
+--  from one clock domain to another using a
+--  double synchronizer.
+--      It uses a single flip-flop in the IClk domain
+--  to resynchronize the signal so that the entire
+--  clock boundary crossing is within this module.
+--
+--      Refer to DoubleSyncBase for more information.
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+entity DoubleSyncBool is
+  port (
+    aReset: in  boolean;
+
+    IClk:   in  std_logic;
+    iSig:   in  boolean;
+
+    OClk:   in  std_logic;
+    oSig:   out boolean
+  );
+end DoubleSyncBool;
+
+architecture behavior of DoubleSyncBool is
+
+  signal iSigIn, oSigSL : std_logic;
+
+begin
+
+  -- Convert iSig to std_logic
+  iSigIn <= '1' when iSig else '0';
+
+  --vhook_e DoubleSyncBase
+  --vhook_a kResetVal '0'
+  --vhook_a {a[IO]Reset} aReset
+  --vhook_a iSigOut open
+  --vhook_a iClkEn true
+  --vhook_a oClkEn true
+  --vhook_a oSig oSigSL
+  DoubleSyncBasex: entity work.DoubleSyncBase (behavior)
+    generic map (
+      kResetVal => '0')  -- in  std_logic := '0'
+    port map (
+      aIReset => aReset,  -- in  boolean
+      IClk    => IClk,    -- in  std_logic
+      iClkEn  => true,    -- in  boolean
+      iSigIn  => iSigIn,  -- in  std_logic
+      iSigOut => open,    -- out std_logic
+      aOReset => aReset,  -- in  boolean
+      OClk    => OClk,    -- in  std_logic
+      oClkEn  => true,    -- in  boolean
+      oSig    => oSigSL); -- out std_logic
+
+  -- Convert oSigSL back to boolean
+  oSig <= oSigSL='1';
+
+end behavior;

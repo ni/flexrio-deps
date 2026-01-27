@@ -1,85 +1,47 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-YATj3kULTF7Ty4ORuRfFpnT6YIk4rUPRrM74bVTnc4GjdV8oSnW5PtQkMCLOi558
-1V+/wvDfc3y0Z8//ksX8sZm3JZWtrxUppw8c14g9Y7owiwp+JumRtO1zuk5xFbe3
-0MMnIxxoTKLhyRJtAxElG8sbx8N21OWDGiOk0Xyd5CqAmk9dcOIbxzMjW/wndBXi
-maijUdqS+5KiRCM9+Gsp6k/iEAa2LnYTt4WtjkmDD1P5jZKsiMgFck8WOqLymplZ
-ml3TTfn1UlLNm/+zD3SFGP0kABAiUT8NK2xBPQ5UzQ6sMFPd/np8iUZ5u4QLTWOZ
-hTrU9OSX7lOvRUo8pJ9vPg==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="BzW6NOo8eyBw+CxsNNo4wIDxODIsVe0ft0K5tGuSUZw="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-DhjJh9S2BY18dG77XPz3hsiSQ73+w0XqfJhD+f+lIDHHVjOB7CfC8ieNRTexgzn1
-5W+qoqOEwenoVQtit9u3XViXJSRJ0wfUC5a9axblRNyD2mUbyfH9+f59nWqGkVOh
-ieHxkA/DPprM70F3APxk51m7/gNSLICSvbONgLGndWc=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="L7NTNW/5Dqy+2kJZXKczEa3js87UJ8H00YWI+92sDHA="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 1808 )
-`protect data_block
-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
-`protect end_protected
+------------------------------------------------------------------------------------------
+--
+-- File: PkgSasquatch.vhd
+-- Author: Rolando Ortega
+-- Original Project: The Macallan Next-Gen FlexRIO
+-- Date: 13 February 2015
+--
+------------------------------------------------------------------------------------------
+-- (c) 2025 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+------------------------------------------------------------------------------------------
+--
+-- Purpose: Package in odds and ends
+------------------------------------------------------------------------------------------
+--
+-- vreview_group TargetConfig
+-- vreview_closed http://review-board.natinst.com/r/313041/
+-- vreview_reviewers kygreen dhearn esalinas hrubio lboughal rcastro
+--
+------------------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.PkgBaRegPort.all;
+
+package PkgSasquatch is
+
+  -- Number of MGTs
+  constant kMgtPortWidth : positive := 16;
+  subtype MgtPort_t is std_logic_vector (kMgtPortWidth-1 downto 0);
+
+  ---------------------------------------------------------------------------------------
+  -- I2c
+  ---------------------------------------------------------------------------------------
+  -- Number of I2c Interfaces
+  constant kNumI2cIfcs        : natural := 4;
+  -- Indexes to assign each I2c interface to an element in a vector.
+  constant kMezzSmbIndex      : natural := 0;
+  constant kBaseSmbIndex      : natural := 1;
+  constant kConfigI2cIndex    : natural := 2;
+  constant kPwrSupplyPmbIndex : natural := 3;
+  -- We don't use this one yet, hence the claim that there's only 4 I2c Interfaces.
+  constant kSysMonI2cIndex    : natural := 4;
+
+end package PkgSasquatch;

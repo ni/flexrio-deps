@@ -1,236 +1,203 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-YATj3kULTF7Ty4ORuRfFpnT6YIk4rUPRrM74bVTnc4GjdV8oSnW5PtQkMCLOi558
-1V+/wvDfc3y0Z8//ksX8sZm3JZWtrxUppw8c14g9Y7owiwp+JumRtO1zuk5xFbe3
-0MMnIxxoTKLhyRJtAxElG8sbx8N21OWDGiOk0Xyd5CqAmk9dcOIbxzMjW/wndBXi
-maijUdqS+5KiRCM9+Gsp6k/iEAa2LnYTt4WtjkmDD1P5jZKsiMgFck8WOqLymplZ
-ml3TTfn1UlLNm/+zD3SFGP0kABAiUT8NK2xBPQ5UzQ6sMFPd/np8iUZ5u4QLTWOZ
-hTrU9OSX7lOvRUo8pJ9vPg==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="BzW6NOo8eyBw+CxsNNo4wIDxODIsVe0ft0K5tGuSUZw="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-DhjJh9S2BY18dG77XPz3hsiSQ73+w0XqfJhD+f+lIDHHVjOB7CfC8ieNRTexgzn1
-5W+qoqOEwenoVQtit9u3XViXJSRJ0wfUC5a9axblRNyD2mUbyfH9+f59nWqGkVOh
-ieHxkA/DPprM70F3APxk51m7/gNSLICSvbONgLGndWc=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="L7NTNW/5Dqy+2kJZXKczEa3js87UJ8H00YWI+92sDHA="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 9056 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgChinchConfig.vhd
+-- Author: Glen Sescila
+-- Original Project: Sheltie
+-- Date: 24 February 2007
+--
+-------------------------------------------------------------------------------
+-- (c) 2005 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+-- This package configures the core logic for the x1 PIPE FPGA version of the
+-- Chinch.
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgChinch.all;
+
+package PkgChinchConfig is
+
+  -- The kTargetType constant is used to control technology-specific code.
+  -- RAM instantiation is the primary client of this constant.  Note that the
+  -- kTargetType constant should be set to the appropriate target value for
+  -- both simulation and synthesis.  The Simulation value is only used during
+  -- early simulation before a target technology has been selected.  Legal
+  -- values: Simulation, Virtex, Virtex2, Spartan3, Stratix, Stratix2
+
+  constant kTargetType : Target_t := Oki;
+  constant kUseInferredMemory : boolean := false;
+
+
+
+  -- The values in this record are used to optimize the Chinch core at
+  -- synthesis time.
+
+  constant kChinchConfig : ChinchCoreConfig_t := (
+    TwoClocks => false,           -- Setting this variable to true
+                                  -- configures the core to use independant
+                                  -- clocks for the host bus and IO port
+                                  -- logic.  Setting the variable to false
+                                  -- causes the entire core to operate
+                                  -- within a single clock domain.
+
+    DMA_TYPE => 16#50#,           -- The type of Traditional DMA
+                                  -- implemented.  legal values: 0
+
+    DMA_ChannelsLog2 => 4,        -- Log2 of number of DMA channels.  Note
+                                  -- that this also controls the number of
+                                  -- streams supported.  legal values: 0-15
+
+    LINKSZ_Log2 =>  9,            -- Log2 of the maximum DMA link size
+                                  -- supported.  legal values: 5-15
+
+    IncludeInputDma => true,      -- Set this to true if you want Input DMA
+                                  -- to work.
+
+    IncludeOutputDma => true,     -- Set this to true if you want Output
+                                  -- DMA to work.
+
+    IncludeTtccr => true,         -- Set this to true if you want the DMA
+                                  -- Total Transfer Count Compare interrupt
+                                  -- to work.
+
+    IncludeTimer => true,         -- Set this to true if you want the
+                                  -- Elapsed Time Register and its
+                                  -- associated interrupt to work.
+
+    IncludeIntStatPush => true,   -- Set this to true if you want Interrupt
+                                  -- Status Pushing to work.
+
+    IncludeMCU => true,           -- Set this to true to include the 8051
+                                  -- microcontroller in the ChinchCore.
+
+    RandomAccess => false,        -- the core logic implements the random
+                                  -- access functionality when this
+                                  -- variable is true.
+
+    IO_MPS => 512,                -- IO maximum payload size.  This is the
+                                  -- maximum size of data payload
+                                  -- supported.  legal values: powers of
+                                  -- two in the range 32-16384
+
+    HB_MPS => 512,                -- HB maximum payload size.  This is the
+                                  -- maximum size of data payload
+                                  -- supported.  legal values: powers of
+                                  -- two in the range 32-16384
+
+    IO_MSIT => 4,                 -- IO maximum simultaneous transactions
+                                  -- legal values: 2-4095
+
+    HB_MSIT => 16,                -- host bus maximum simultaneous
+                                  -- transactions.  legal values: 2-4095
+
+    IORXBE_MP => 8,               -- maximum packets in IORXBE FIFO
+                                      -- legal values: 1-1024
+    IORXBE_MW =>  256,            -- maximum words in IORXBE FIFO
+                                      -- legal values: 1-131072
+
+    IOTXBE_MP => 8,               -- maximum packets in IOTXBE FIFO
+                                      -- legal values: 1-1024
+    IOTXBE_MW => 256,             -- maximum words in IOTXBE FIFO
+                                      -- legal values: 1-131072
+
+    HBRXBE_MP => 8,               -- maximum packets in HBRXBE FIFO
+                                      -- legal values: 1-1024
+    HBRXBE_MW => 256,             -- maximum words in HBRXBE FIFO
+                                      -- legal values: 1-131072
+
+    HBTXBE_MP => 8,               -- maximum packets in HBTXBE FIFO
+                                      -- legal values: 1-1024
+    HBTXBE_MW => 256,             -- maximum words in HBTXBE FIFO
+                                      -- legal values: 1-131072
+
+    IO_RegProgEndian => false,    -- when true enables programmable
+                                  -- Endianess when accessing CHINCH
+                                  -- registers from IO Port 2.
+
+    IO_RegBigEndian => false,     -- when programmable Endianess is not
+                                  -- enabled this controls IO Port 2's view
+                                  -- of the CHINCH registers.  when
+                                  -- programmable Endianess is enabled this
+                                  -- is used as the default setting.
+
+    HB_RegProgEndian => false,    -- when true enables programmable
+                                  -- Endianess when accessing CHINCH
+                                  -- registers from the host bus.
+
+    HB_RegBigEndian => false,     -- when programmable Endianess is not
+                                  -- enabled this controls the host bus
+                                  -- view of the CHINCH registers.  when
+                                  -- programmable Endianess is enabled this
+                                  -- is used as the default setting.
+
+    IO_BaggageWidth => 1,         -- IO baggage width in number of bits
+
+    HB_BaggageWidth => 23,        -- HB baggage width in number of bits
+
+    IO_Windows => 2,              -- number of IO Port windows
+
+    CP_Windows => 4,              -- number of Configuration Port windows.
+                                  -- this also controls the number of chip
+                                  -- select outputs implemented on the    
+                                  -- Configuration Port.
+
+    ProgRomAddressWidth => 12,        -- Set the size of the 8051 program ram.
+                                      -- A value of 12 means 4K bytes
+
+    OnChipRamAddressWidth => 7,       -- Set the size of the 8051 internal data
+                                      -- memory. The IP we use only use 7 bit address
+                                      -- bus, so there's no need to have this number
+                                      -- larger than 7.
+
+    OffChipRamAddressWidth => 12,     -- Set the size of the 8051 external data
+                                      -- memory.  A value of 12 means 4K bytes 
+
+    NumGpios => 13                -- number of external GPIO pins to
+                                  -- implement.  legal values: 1-32
+                                --
+  );
+
+
+
+  -- This controls the amount of address space used for each Traditional DMA
+  -- channel.  The amount of space is 2 to the kDMA_SPACE_Log2 power bytes.
+
+  constant kDMA_SPACE_Log2 : natural :=
+    ChinchGetDMA_SPACE_Log2(kChinchConfig.DMA_TYPE);
+
+
+
+  -- This controls the base offset for the Traditional DMA register group.
+  -- This must be set to a boundary of the total space required by this
+  -- group.  The total space required by the group is the number of DMA
+  -- channels times the space required by each channel.
+
+  constant kDMA_BASE : unsigned(31 downto 0) :=
+    ChinchGetDMA_BASE(kDMA_SPACE_Log2, kChinchConfig.DMA_ChannelsLog2);
+
+
+
+  -- This controls the number of states to wait after the unassertion of the
+  -- asynchronous reset signal before allowing state machines to start.
+  -- This provides a general solution to the state machine start up problem.
+
+  constant kResetWaitStates : natural := 13;
+
+  -- This specifies the number of SysClock states required to time 10ms.  It is
+  -- used for the split completion timers.
+
+  constant kSplitTimeStates : natural := 1250000;
+
+end PkgChinchConfig;
+
+package body PkgChinchConfig is
+end PkgChinchConfig;

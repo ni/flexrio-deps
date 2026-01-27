@@ -1,82 +1,46 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-YATj3kULTF7Ty4ORuRfFpnT6YIk4rUPRrM74bVTnc4GjdV8oSnW5PtQkMCLOi558
-1V+/wvDfc3y0Z8//ksX8sZm3JZWtrxUppw8c14g9Y7owiwp+JumRtO1zuk5xFbe3
-0MMnIxxoTKLhyRJtAxElG8sbx8N21OWDGiOk0Xyd5CqAmk9dcOIbxzMjW/wndBXi
-maijUdqS+5KiRCM9+Gsp6k/iEAa2LnYTt4WtjkmDD1P5jZKsiMgFck8WOqLymplZ
-ml3TTfn1UlLNm/+zD3SFGP0kABAiUT8NK2xBPQ5UzQ6sMFPd/np8iUZ5u4QLTWOZ
-hTrU9OSX7lOvRUo8pJ9vPg==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="BzW6NOo8eyBw+CxsNNo4wIDxODIsVe0ft0K5tGuSUZw="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-DhjJh9S2BY18dG77XPz3hsiSQ73+w0XqfJhD+f+lIDHHVjOB7CfC8ieNRTexgzn1
-5W+qoqOEwenoVQtit9u3XViXJSRJ0wfUC5a9axblRNyD2mUbyfH9+f59nWqGkVOh
-ieHxkA/DPprM70F3APxk51m7/gNSLICSvbONgLGndWc=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="L7NTNW/5Dqy+2kJZXKczEa3js87UJ8H00YWI+92sDHA="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 1648 )
-`protect data_block
-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
-BOfEhk2JT4Ive7WZnX+ECg==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgDram2DPConstants.vhd
+-- Author: Neil Turley
+-- Original Project: Dram2DP
+-- Date: 31 Oct 2016
+--
+-------------------------------------------------------------------------------
+-- (c) 2016 Copyright National Instruments.
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+-- PkgDram2DP has some constants for Dram2DP
+--
+-------------------------------------------------------------------------------
+library IEEE;
+  use IEEE.std_logic_1164.all;
+  use IEEE.numeric_std.all;
+library work;
+  use work.PkgNiUtilities.all;
+  use work.PkgNiDma.all;
+
+package PkgDram2DPConstants is
+  -- Start our core version with a magic number to make it more recognizable
+  constant kCoreVersion : std_logic_vector(31 downto 0) := X"DEBB_B0FF";
+
+  -- Defined by DmaPort Interface
+  constant kReadCmd : std_logic_vector (2 downto 0) := B"001";
+  constant kWriteCmd : std_logic_vector (2 downto 0) := B"000";
+
+  -- 4 registers, 32 bits of data in a register, byte addressable
+  -- 4*32/8 = 16
+  constant kRegPortAddressesPerBuffer : integer := 16;
+
+  -- The application is given 32 bits of addressibility
+  constant kDramInterfaceAddressWidth : integer := 32;
+
+  -- The DRAM interface in LabVIEW FPGA should default to 64-bits
+  constant kDefaultDramInterfaceDataWidth : integer := 64;
+
+  -- Type of the baggage to be passed to Dram2DP
+  type NiD2DBaggageArr_t is array (integer range <>) of NiDmaBaggage_t;
+
+end package PkgDram2DPConstants;
