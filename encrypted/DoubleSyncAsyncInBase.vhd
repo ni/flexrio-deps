@@ -1,110 +1,91 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-gMcHP74wBZczB0bB0IzoP2xg5wC5NPjD/GsvSQ6VQgzYAsanETMwwsWi4yhFtJwv
-5kY07u0WerSDf8woJ0stqW5xF501W3JLIS8KMiCOd55RHBOnavjYiaaLeu7oUCmB
-TtTS1R4sO325rP2zOn9YwRbyyS5Ljn+PzFZZUmkt5xMca3p5NGqKtZW2dV6Babni
-5HlLuF20Au601B75m2nv+ZRoGSrpkNElxoTibONmX8gBflpIVE7BehhHwaKSucEF
-pp4QQ5zZAZjEC6aplZepouGVggAulz5AahlX5bf4opOVlB1J7IrgyjENtw6ysQ/q
-DzybQ+ipztSXBGhmcCVU3A==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="jAI3OJE9Sh00Sic4PtM/KZ4WjwT98XM8AMZrZsQkxWQ="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-hyw9IrFLPQsjvXplweG8O0lkaSLBN9Ijv4B5VdTRt6ipKJT9Kzsb5LxCKvkQyF9n
-sGPOd5i74hRHnkHfYISGkfxGJCa55ieOyFShOsqTKRLxclm4oja9vTIey6yFm1BZ
-54IDCG9h3PqfDiTD847UCSMRvFssyycwv+BRHQMQlFs=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="BnLuc3jxknmZOyxfJK70E5kp9u9O8IQ8cgkXv26kHA8="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2992 )
-`protect data_block
-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
-r1hkYvNiBlawzThEixC7gw==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DoubleSyncAsyncInBase.vhd
+-- Author: Craig Conway
+-- Original Project: NICores
+-- Date: 7 April 2010
+--
+-------------------------------------------------------------------------------
+-- (c) 2010 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--    This is a simple double synchronizer for an asynchronous
+--  std_logic input.
+--    This module does not automatically cause VScan to suppress
+--  clock crossing warnings, although if aSig is driven from
+--  a glitch-free source (such as a top-level glitch-free input
+--  or a flip-flop), VScan may not require an explanation.
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+
+entity DoubleSyncAsyncInBase is
+  generic (
+    kResetVal : std_logic := '0'
+  );
+  port (
+    aSig:    in  std_logic;     -- must be a glitch-free input
+
+    aOReset: in  boolean;     -- can drive this with false if needed
+    OClk:    in  std_logic;
+    oClkEn:  in  boolean := true;
+    oSig:    out std_logic := kResetVal
+  );
+end DoubleSyncAsyncInBase;
+
+architecture rtl of DoubleSyncAsyncInBase is
+
+  signal oSig_ms : std_logic := kResetVal;  -- metastable signal
+
+begin
+ 
+  -- Set the 'async_reg' attribute to "true" through kAsyncReg generic 
+  -- in order to preventreplication of the metastable flop and place the metastable 
+  -- and stable flop as close as possible
+
+  --vhook_e DFlop oSig_msx
+  --vhook_a kAsyncReg "true"
+  --vhook_a aReset aOReset
+  --vhook_a Clk OClk
+  --vhook_a cEn oClkEn
+  --vhook_a cD aSig
+  --vhook_a cQ oSig_ms
+  oSig_msx: entity work.DFlop (rtl)
+    generic map (
+      kResetVal => kResetVal,  -- in  std_logic := '0'
+      kAsyncReg => "true")     -- in  string := "false"
+    port map (
+      aReset => aOReset,  -- in  boolean
+      cEn    => oClkEn,   -- in  boolean
+      Clk    => OClk,     -- in  std_logic
+      cD     => aSig,     -- in  std_logic
+      cQ     => oSig_ms); -- out std_logic := kResetVal
+
+  --vhook_e DFlop oSigx
+  --vhook_a kAsyncReg "true"
+  --vhook_a aReset aOReset
+  --vhook_a Clk OClk
+  --vhook_a cEn oClkEn
+  --vhook_a cD oSig_ms
+  --vhook_a cQ oSig
+  oSigx: entity work.DFlop (rtl)
+    generic map (
+      kResetVal => kResetVal,  -- in  std_logic := '0'
+      kAsyncReg => "true")     -- in  string := "false"
+    port map (
+      aReset => aOReset,  -- in  boolean
+      cEn    => oClkEn,   -- in  boolean
+      Clk    => OClk,     -- in  std_logic
+      cD     => oSig_ms,  -- in  std_logic
+      cQ     => oSig);    -- out std_logic := kResetVal
+
+end rtl;
+
+-- The following comment is a checksum VScan uses to determine whether this
+-- file has been modified.  Please don't try to get around it.  It's there
+-- for a reason.
+--VScan_CS 5537718

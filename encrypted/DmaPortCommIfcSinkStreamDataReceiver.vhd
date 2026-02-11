@@ -1,301 +1,341 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-gMcHP74wBZczB0bB0IzoP2xg5wC5NPjD/GsvSQ6VQgzYAsanETMwwsWi4yhFtJwv
-5kY07u0WerSDf8woJ0stqW5xF501W3JLIS8KMiCOd55RHBOnavjYiaaLeu7oUCmB
-TtTS1R4sO325rP2zOn9YwRbyyS5Ljn+PzFZZUmkt5xMca3p5NGqKtZW2dV6Babni
-5HlLuF20Au601B75m2nv+ZRoGSrpkNElxoTibONmX8gBflpIVE7BehhHwaKSucEF
-pp4QQ5zZAZjEC6aplZepouGVggAulz5AahlX5bf4opOVlB1J7IrgyjENtw6ysQ/q
-DzybQ+ipztSXBGhmcCVU3A==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="jAI3OJE9Sh00Sic4PtM/KZ4WjwT98XM8AMZrZsQkxWQ="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-hyw9IrFLPQsjvXplweG8O0lkaSLBN9Ijv4B5VdTRt6ipKJT9Kzsb5LxCKvkQyF9n
-sGPOd5i74hRHnkHfYISGkfxGJCa55ieOyFShOsqTKRLxclm4oja9vTIey6yFm1BZ
-54IDCG9h3PqfDiTD847UCSMRvFssyycwv+BRHQMQlFs=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="BnLuc3jxknmZOyxfJK70E5kp9u9O8IQ8cgkXv26kHA8="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 12160 )
-`protect data_block
-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
-IlC4nu8NGGr588YCBsRlUA==
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: DmaPortCommIfcSinkStreamDataReceiver.vhd
+-- Author: Florin Hurgoi
+-- Original Project: LabVIEW FPGA
+-- Date: 24 July 2012
+--
+-------------------------------------------------------------------------------
+-- (c) 2008 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+--   This component implements the logic to receive incoming memory writes from
+-- DMA controller and push data associated with this stream into the FIFO.  Since
+-- the FIFO supports data packing, this component also controls which bytes
+-- are valid on each push to the FIFO.  Memory writes are considered as being
+-- targeted for this stream if the destination address lies between the FIFO
+-- base address and the base address plus the write window.
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+
+  -- This package contains the definitions for LabVIEW FPGA specific data
+  -- types used in the communication interface
+  use work.PkgCommunicationInterface.all;
+  use work.PkgDmaPortCommunicationInterface.all;
+
+  -- This package contains the definitions for the interface between the DMA Controller
+  -- and the application specific logic
+  use work.PkgNiDma.all;
+
+entity DmaPortCommIfcSinkStreamDataReceiver is
+    generic(
+
+      -- The base memory offset that the sink FIFO is mapped to.
+      kFifoBaseOffset : natural;
+
+      -- The length of the memory window that the FIFO is mapped to.
+      kWriteWindow : natural := 4096;
+
+      -- kStreamNumber   : This is the stream number associated with the DMA
+      --                   channel.
+      kStreamNumber      : natural
+
+    );
+    port(
+
+      -- aReset             : This is the asynchronous reset to the state
+      --                      machine registers.
+      aReset                : in boolean;
+
+      -- bReset             : This is a synchronous reset to the state
+      --                      machine.  This signal comes from the PCI-e
+      --                      reset signal.
+      bReset                : in boolean;
+
+      BusClk                : in std_logic;
+
+      -------------------------------------------------------------------------
+      -- DmaPort interface
+      -------------------------------------------------------------------------
+
+      bHighSpeedSink : in NiDmaHighSpeedSinkFromDma_t;
+
+      -------------------------------------------------------------------------
+      -- FIFO signals
+      -------------------------------------------------------------------------
+
+      -- bFifoWrite         : This signal is used to strobe data into the FIFO.
+      bFifoWrite            : out boolean;
+
+      -- bWriteLengthInBytes: The number of bytes that are being written when
+      --                      the write signal is strobed.
+      bWriteLengthInBytes   : out NiDmaBusByteCount_t;
+
+      -- bDataIn            : The data being written to the FIFO.
+      bFifoData             : out NiDmaData_t;
+
+      bByteEnable           : out NiDmaByteEnable_t;
+
+      -------------------------------------------------------------------------
+      -- Register flags
+      -------------------------------------------------------------------------
+
+      -- bDisable           : This is a flag from the DMA control register
+      --                      indicating that this stream should disable.
+      bDisable              : in boolean := true;
+
+      -- bDisabled          : This indicates to the DMA register when the
+      --                      stream has actually disabled.
+      bDisabled             : out boolean;
+
+      -- bStreamError       : This is a one clock cycle strobe indicating to
+      --                      the register component that an error has occurred
+      --                      and the stream should alert the driver.
+      bStreamError          : out boolean
+
+    );
+end DmaPortCommIfcSinkStreamDataReceiver;
+
+
+architecture rtl of DmaPortCommIfcSinkStreamDataReceiver is
+
+  -----------------------------------------------------------------------------
+  -- Registers
+  -----------------------------------------------------------------------------
+  signal bStartingByteLane, bStartingByteLaneNx : NiDmaByteLane_t;
+  signal bFifoWriteNx : boolean;
+  signal bFifoDataNx : NiDmaData_t;
+  signal bWriteLengthInBytesLoc, bWriteLengthInBytesNx : NiDmaBusByteCount_t;
+
+  -----------------------------------------------------------------------------
+  -- Combinatorial signals
+  -----------------------------------------------------------------------------
+  signal bDisabledNx : boolean;
+  signal bByteEnableNx : NiDmaByteEnable_t;
+  signal bSinkStreamAddressDecode, bSinkStreamDecodeLower,
+    bSinkStreamDecodeUpper  : boolean;
+
+
+  -----------------------------------------------------------------------------
+  -- State machine signals
+  -----------------------------------------------------------------------------
+  type SinkStreamDataReceiverState_t is (
+
+    -- Idle:              The data receiver is idle while it is disabled or
+    --                    while it is waiting for an incoming data packet.  If
+    --                    a packet intended for this stream is received, but
+    --                    the stream is disabled, then it moves to the
+    --                    DiscardData state where the packet is discarded.
+    Idle,
+
+    -- ReceiveData:       In this state, the data receiver is receiving data
+    --                    points from DmaPort and pushing them into the FIFO.
+    ReceiveData,
+
+    -- DiscardData:       The incoming data is received until the end of the
+    --                    packet.  The data is not pushed to the FIFO.
+    DiscardData
+
+  );
+
+  signal bSinkStreamDataReceiverStateNx, bSinkStreamDataReceiverState :
+    SinkStreamDataReceiverState_t;
+
+  signal bDisabledLoc : boolean := true;
+begin
+
+  bWriteLengthInBytes <= bWriteLengthInBytesLoc;
+  bDisabled <= bDisabledLoc;
+  
+  -- Registers used by the state machine.
+  StateRegs: process(BusClk, aReset)
+  begin
+
+    if(aReset) then
+
+      -- We reset to the Idle state.
+      bSinkStreamDataReceiverState <= Idle;
+      bStartingByteLane <= (others=>'0');
+      bFifoWrite <= false;
+      bFifoData <= (others=>'0');
+      bWriteLengthInBytesLoc <= (others=>'0');
+      bByteEnable <= (others=>false);
+      bDisabledLoc <= true;
+
+    elsif(rising_edge(BusClk)) then
+
+      bFifoData <= bFifoDataNx;
+
+      -- If bReset occurs, then it is always safe to return to the Idle state,
+      -- because the bus itself is being reset.
+
+      if(bReset) then
+
+        bSinkStreamDataReceiverState <= Idle;
+        bStartingByteLane <= (others=>'0');
+        bFifoWrite <= false;
+        bWriteLengthInBytesLoc <= (others=>'0');
+        bByteEnable <= (others=>false);
+        bDisabledLoc <= true;
+
+      else
+
+        bSinkStreamDataReceiverState <= bSinkStreamDataReceiverStateNx;
+        bStartingByteLane <= bStartingByteLaneNx;
+        bFifoWrite <= bFifoWriteNx;
+        bWriteLengthInBytesLoc <= bWriteLengthInBytesNx;
+        bByteEnable <= bByteEnableNx;
+        bDisabledLoc <= bDisabledNx;
+
+      end if;
+
+    end if;
+
+  end process StateRegs;
+
+
+  --!STATE MACHINE STARTUP!
+  --This state machine resets to the Idle state and only moves out of that state
+  --when it receives a register access on DmaPort.  However, there cannot be
+  --a packet available on DmaPort immediately following bus reset.  This is
+  --assuming that aReset is used and is tied to the bus reset.
+
+  -- The combinatorial state machine logic
+  DmaNextStateLogic: process(bSinkStreamDataReceiverState, bHighSpeedSink,
+    bDisable, bSinkStreamAddressDecode, bStartingByteLane, bWriteLengthInBytesLoc)
+  begin
+
+    -- Set initial signal values
+    bSinkStreamDataReceiverStateNx <= bSinkStreamDataReceiverState;
+    bStartingByteLaneNx <= bStartingByteLane;
+    bFifoDataNx <= (others=>'0');
+    bFifoWriteNx <= false;
+    bByteEnableNx <= (others=>false);
+    bDisabledNx <= false;
+    bStreamError <= false;
+    bWriteLengthInBytesNx <= bWriteLengthInBytesLoc;
+
+    case bSinkStreamDataReceiverState is
+
+      -------------------------------------------------------------------------
+      -- Idle:            The idle state waits until the stream is enabled
+      --                  and a header arrives with an address targeting this
+      --                  stream.
+      -------------------------------------------------------------------------
+      when Idle =>
+
+        if bHighSpeedSink.Push and bSinkStreamAddressDecode then
+
+          if not bHighSpeedSink.TransferEnd then
+
+            if bDisable then
+              bSinkStreamDataReceiverStateNx <= DiscardData;
+
+            else
+              bFifoWriteNx <= bHighSpeedSink.Push;
+              bFifoDataNx <= bHighSpeedSink.Data;
+              bByteEnableNx <= bHighSpeedSink.ByteEnable;
+              bWriteLengthInBytesNx <= bHighSpeedSink.ByteCount;
+
+              bSinkStreamDataReceiverStateNx <= ReceiveData;
+
+            end if;
+
+          elsif not bDisable then
+
+              bFifoWriteNx <= bHighSpeedSink.Push;
+              bFifoDataNx <= bHighSpeedSink.Data;
+              bByteEnableNx <= bHighSpeedSink.ByteEnable;
+              bWriteLengthInBytesNx <= bHighSpeedSink.ByteCount;
+
+              bStartingByteLaneNx <= resize(bHighSpeedSink.ByteLane +
+                bHighSpeedSink.ByteCount, bStartingByteLane'length);
+
+          end if;
+
+          if bHighSpeedSink.ByteLane /= bStartingByteLane then
+
+            bStreamError <= true;
+            bFifoWriteNx <= false;
+            bStartingByteLaneNx <= bStartingByteLane;
+
+            if not bHighSpeedSink.TransferEnd then
+
+              bSinkStreamDataReceiverStateNx <= DiscardData;
+
+            end if;
+
+          end if;
+
+        end if;
+
+        -- We are disabled while in the Idle state as long as the disable signal
+        -- is true.
+        bDisabledNx <= bDisable;
+
+
+      -------------------------------------------------------------------------
+      -- ReceiveData:       In this state, the data receiver is receiving data
+      --                    points from DmaPort and pushing them into the
+      --                    FIFO.
+      -------------------------------------------------------------------------
+      when ReceiveData =>
+
+        if bHighSpeedSink.Push and bSinkStreamAddressDecode then
+
+          bFifoWriteNx <= bHighSpeedSink.Push;
+          bFifoDataNx <= bHighSpeedSink.Data;
+          bByteEnableNx <= bHighSpeedSink.ByteEnable;
+          bWriteLengthInBytesNx <= bHighSpeedSink.ByteCount;
+
+          if bHighSpeedSink.TransferEnd then
+
+            bStartingByteLaneNx <= resize(bHighSpeedSink.ByteLane + bHighSpeedSink.ByteCount,
+              bStartingByteLane'length);
+            bSinkStreamDataReceiverStateNx <= Idle;
+
+          end if;
+
+        end if;
+
+
+      -------------------------------------------------------------------------
+      -- DiscardData:       The incoming data is received until the end of the
+      --                    packet.  The data is not pushed to the FIFO.
+      -------------------------------------------------------------------------
+      when DiscardData =>
+
+        if bHighSpeedSink.TransferEnd and bSinkStreamAddressDecode then
+
+          bSinkStreamDataReceiverStateNx <= Idle;
+
+        end if;
+
+        -- The stream is always disabled while discarding data.
+        bDisabledNx <= true;
+
+
+      when Others =>
+
+        bSinkStreamDataReceiverStateNx <= Idle;
+
+    end case;
+
+  end process DmaNextStateLogic;
+
+  -- Check to see if the packet is destined for this FIFO's memory space.
+  bSinkStreamAddressDecode <= bSinkStreamDecodeLower and bSinkStreamDecodeUpper;
+  bSinkStreamDecodeLower <= bHighSpeedSink.Address >= kFifoBaseOffset;
+  bSinkStreamDecodeUpper <= bHighSpeedSink.Address < kFifoBaseOffset + kWriteWindow;
+
+end architecture rtl;

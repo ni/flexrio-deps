@@ -1,178 +1,180 @@
-`protect begin_protected
-`protect version = 2
-`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
-`protect begin_commonblock
-`protect license_proxyname = "NI_LV_proxy"
-`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
-`protect license_keyowner = "NI_LV"
-`protect license_keyname = "NI_LV_2.0"
-`protect license_symmetric_key_method = "aes128-cbc"
-`protect license_public_key_method = "rsa"
-`protect license_public_key
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
-j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
-h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
-L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
-kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
-dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
-MwIDAQAB
-`protect end_commonblock
-`protect begin_toolblock
-`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
-`protect key_block
-gMcHP74wBZczB0bB0IzoP2xg5wC5NPjD/GsvSQ6VQgzYAsanETMwwsWi4yhFtJwv
-5kY07u0WerSDf8woJ0stqW5xF501W3JLIS8KMiCOd55RHBOnavjYiaaLeu7oUCmB
-TtTS1R4sO325rP2zOn9YwRbyyS5Ljn+PzFZZUmkt5xMca3p5NGqKtZW2dV6Babni
-5HlLuF20Au601B75m2nv+ZRoGSrpkNElxoTibONmX8gBflpIVE7BehhHwaKSucEF
-pp4QQ5zZAZjEC6aplZepouGVggAulz5AahlX5bf4opOVlB1J7IrgyjENtw6ysQ/q
-DzybQ+ipztSXBGhmcCVU3A==
-`protect control xilinx_schematic_visibility = "true"
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="jAI3OJE9Sh00Sic4PtM/KZ4WjwT98XM8AMZrZsQkxWQ="
-`protect begin_toolblock
-`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
-`protect key_method = "rsa"
-`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
-`protect key_block
-hyw9IrFLPQsjvXplweG8O0lkaSLBN9Ijv4B5VdTRt6ipKJT9Kzsb5LxCKvkQyF9n
-sGPOd5i74hRHnkHfYISGkfxGJCa55ieOyFShOsqTKRLxclm4oja9vTIey6yFm1BZ
-54IDCG9h3PqfDiTD847UCSMRvFssyycwv+BRHQMQlFs=
-`protect rights_digest_method = "sha256"
-`protect end_toolblock="BnLuc3jxknmZOyxfJK70E5kp9u9O8IQ8cgkXv26kHA8="
-`protect data_method = "aes128-cbc"
-`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 6288 )
-`protect data_block
-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
-`protect end_protected
+-------------------------------------------------------------------------------
+--
+-- File: PkgCommunicationInterface.vhd
+-- Author: Hector Rubio
+-- Original Project: NI DMA IP
+-- Date: 25 September 2014
+--
+-------------------------------------------------------------------------------
+-- (c) 2014 Copyright National Instruments Corporation
+-- All Rights Reserved
+-- National Instruments Internal Information
+-------------------------------------------------------------------------------
+--
+-- Purpose:
+--
+-- Local version of this file that should be provided by LabVEIW to LabVIEW
+--  clients. It is needed to define the types of the register ports  that we create
+--  on the exported wrappers of the PCIe InChWORM so it connects directly to LabVIEW
+--
+-- A local version allows us to compile local testbenches
+--
+-------------------------------------------------------------------------------
+
+library ieee;
+  use ieee.std_logic_1164.all;
+  use ieee.numeric_std.all;
+
+library work;
+  use work.PkgNiUtilities.all;
+
+package PkgCommunicationInterface is
+
+  subtype InterfaceData_t is std_logic_vector(31 downto 0);
+
+  -- The whole communication interface is 32bits by design. Therefore
+  -- we are removing bits 0 and 1 of the address to obtain 32bits
+  -- aligned address.
+
+  constant kAlignedAddressWidth : positive := 17; --19 - 2
+
+  -- RegPortIn contains the address plus 32 bits of data, a read
+  -- signal and a write signal (32 + 1 + 1 = 34)
+
+  constant kRegPortInSize  : positive := kAlignedAddressWidth + 34;
+
+  -- RegPortOut contains 32 bits of data, a DataValid signal and
+  -- a Ready signal (32 + 1 + 1 = 34)
+
+  constant kRegPortOutSize : positive := 34;
+
+  -----------------------------------------------------------------------------
+  -- Type Definitions
+  -----------------------------------------------------------------------------
+
+  -- The type of the signal used to communicate from the Interface
+  -- component to the frameworks
+  type RegPortIn_t is record
+    Address : unsigned(kAlignedAddressWidth - 1 downto 0);
+    Data    : InterfaceData_t;
+    Rd      : boolean;                  -- Must be a one clock cycle pulse
+    Wt      : boolean;                  -- Must be a one clock cycle pulse
+  end record;
+
+  -- The type of the signal used to communicate to the Interface
+  -- component from the frameworks
+  -- Ready is just the Ready signal from the Handshake component.
+  -- Address in RegPortIn_t should be valid in the cycle where Data, DataValid,
+  -- or Ready are being sampled by the bus communication interface.
+  type RegPortOut_t is record
+    Data      : InterfaceData_t;
+    DataValid : boolean;                -- Must be a one clock cycle pulse
+    Ready     : boolean;                -- Must be valid one clock after Wt assertion
+  end record;
+
+  -- The array containing all the signals from all the frameworks
+  type RegPortOutArray_t is array (natural range<>) of RegPortOut_t;
+  function SelectPort(arg : RegPortOutArray_t) return RegPortOut_t;
+  -- Constants for the RegPort
+  constant kRegPortInZero : RegPortIn_t := (
+    Address => to_unsigned(0,kAlignedAddressWidth),
+    Data => (others => '0'),
+    Rd => false,
+    Wt => false);
+
+  constant kRegPortOutZero : RegPortOut_t := (
+    Data => (others=>'0'),
+    DataValid => false,
+    Ready => true);
+
+  function BuildRegPortIn(
+    arg  : std_logic_vector(kRegPortInSize-1 downto 0))
+    return RegPortIn_t;
+
+  function BuildRegPortOut(
+    arg : std_logic_vector(kRegPortOutSize-1 downto 0))
+    return RegPortOut_t;
+
+  function to_StdLogicVector(arg : RegPortIn_t) return std_logic_vector;
+  function to_StdLogicVector(arg : RegPortOut_t) return std_logic_vector;
+
+end PkgCommunicationInterface;
+
+package body PkgCommunicationInterface is
+
+  -- This function prints one hot mux
+  function SelectPort(arg : RegPortOutArray_t) return RegPortOut_t is
+
+    type Array_t is array (arg'range) of InterfaceData_t;
+
+    variable ReturnVal     : RegPortOut_t;
+    -- ArrayToBeOred may seem a weird name as it is first used in the AND stage
+    -- of the OneHot Mux, but it gets ORed ultimately :-)
+    variable ArrayToBeOred : Array_t;
+  begin
+
+    -- Zero out input vector based on the DataValid
+    for i in arg'range loop
+      if arg(i).DataValid then
+        ArrayToBeOred(i) := arg(i).Data;
+      else
+        ArrayToBeOred(i) := (others => '0');
+      end if;
+    end loop;
+
+    -- Init values
+    ReturnVal.Data      := (others => '0');
+    ReturnVal.DataValid := false;
+    ReturnVal.Ready     := true;
+
+    for i in ArrayToBeOred'range loop
+      ReturnVal.Data      := ReturnVal.Data or ArrayToBeOred(i);
+      ReturnVal.DataValid := ReturnVal.DataValid or arg(i).DataValid;
+      ReturnVal.Ready     := ReturnVal.Ready and arg(i).Ready;
+    end loop;
+
+    return ReturnVal;
+
+  end SelectPort;
+
+  function BuildRegPortOut(arg : std_logic_vector(kRegPortOutSize - 1 downto 0))
+      return RegPortOut_t is
+    variable ReturnVal : RegPortOut_t;
+  begin
+    ReturnVal.Data      := arg(31 downto 0);
+    ReturnVal.DataValid := to_Boolean(arg(32));
+    ReturnVal.Ready     := to_Boolean(arg(33));
+    return ReturnVal;
+  end BuildRegPortOut;
+
+  function BuildRegPortIn(arg : std_logic_vector(kRegPortInSize - 1 downto 0))
+      return RegPortIn_t is
+    variable ReturnVal : RegPortIn_t;
+  begin
+    ReturnVal.Data    := arg(31 downto 0);
+    ReturnVal.Address := unsigned(arg(kRegPortInSize - 3 downto 32));
+    ReturnVal.Wt      := to_Boolean(arg(kRegPortInSize - 2));
+    ReturnVal.Rd      := to_Boolean(arg(kRegPortInSize - 1));
+    return ReturnVal;
+  end BuildRegPortIn;
+
+  function to_StdLogicVector(arg : RegPortOut_t) return std_logic_vector is
+    variable ReturnVal : std_logic_vector(kRegPortOutSize - 1 downto 0);
+  begin
+    ReturnVal := to_StdLogic(arg.Ready) & to_StdLogic(arg.DataValid) & arg.Data;
+    return ReturnVal;
+  end to_StdLogicVector;
+
+  function to_StdLogicVector(arg : RegPortIn_t) return std_logic_vector is
+    variable ReturnVal : std_logic_vector(kRegPortInSize - 1 downto 0);
+  begin
+    ReturnVal := to_StdLogic(arg.Rd) &
+                 to_StdLogic(arg.Wt) &
+                 std_logic_vector(arg.Address) &
+                 arg.Data;
+    return ReturnVal;
+
+  end to_StdLogicVector;
+
+
+end PkgCommunicationInterface;
