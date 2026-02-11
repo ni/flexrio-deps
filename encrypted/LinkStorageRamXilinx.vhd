@@ -1,194 +1,257 @@
------------------------------------------------------------------------------
---
--- File: LinkStorageRamXilinx.vhd
--- Author: Rolando Ortega
--- Original Project: NI Cores NiDmaIp
--- Date: 10 May 2019
---
--------------------------------------------------------------------------------
--- (c) 2019 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
--- See PkgLinkStorageRam for details on the logic behind separating LinkStorageRam* from
--- the NiDmaIp generally. This is a Xilinx-specific implementation of that general idea.
---
--- This module instantiates an Asymmetric Xilinx BlockRAM to store the chunky links used
--- by the NiDmaLinkProcessor to support Full Hardware Link Chaining Mode DMA. This version
--- of the LinkStorage Ram is, as the name implies, Xilinx-specific, in that it makes use
--- of special Xilinx primitives. Furthermore, it can only be used by Vivado 2016.2+,
--- because it uses the xpm library to implement the memory.
---
--------------------------------------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-use work.PkgNiUtilities.all;
-use work.PkgNiDma.all;
-use work.PkgLinkStorageRam.all;
-use work.PkgLinkStorageRamConfig.all;
-
-library xpm;
-use xpm.vcomponents.all;
-
-entity LinkStorageRamXilinx is
-  generic (
-    kEnabledChannels : in NiDmaDmaChannelOneHot_t);
-  port (
-    DmaClock : in std_logic;
-    -- Write
-    dLinkStorageRamWrite     : in boolean;
-    dLinkStorageRamWriteAddr : in unsigned(kLinkStorageRamAddrWidth-1 downto 0);
-    dLinkStorageRamWriteData : in std_logic_vector(kLinkStorageRamDataWidth-1 downto 0);
-    -- Read
-    dLinkStorageRamReadAddr : in  unsigned(kLinkStorageRamRdAddrWidth-1 downto 0);
-    dLinkStorageRamReadData : out std_logic_vector(kLinkStorageRamRdDataWidth-1 downto 0)
-  );
-
-end entity LinkStorageRamXilinx;
-
-architecture struct of LinkStorageRamXilinx is
-
-  ------------------------------------------------------------------------------
-  -- Address Mapping
-  ------------------------------------------------------------------------------
-
-  -- The ChunkyLinkSize is given in bytes per DMA channel, so we multiply by 8 (to get it
-  -- to bits), then by the number of (enabled) channels, and then finally by 2, because we
-  -- double-buffer the Chunky Links. This gives us the memory size.
-  constant kMemorySizeInBits : natural :=
-    kChunkyLinkSize * 8 * NumEnabledChannels(kEnabledChannels) * 2;
-
-  -- The memory's addresses are simply derived from the memory size. We divide by the data
-  -- width to achieve the depth as seen from each side. We use Larger because it's
-  -- possible that kMemorySizeInBits is 0, and Log2 isn't defined for 0. There's a special
-  -- "generate" case below for the case where there are 0 channels enabled anyway.
-  constant kMemoryWtAddrWidth : natural := Log2(Larger(kMemorySizeInBits / kLinkStorageRamDataWidth,1));
-  constant kMemoryRdAddrWidth : natural := Log2(Larger(kMemorySizeInBits / kLinkStorageRamRdDataWidth,1));
-
-  ------------------------------------------------------------------------------
-  -- BRAM Configuration
-  ------------------------------------------------------------------------------
-  -- The byte width for the write can be set to 8, 9 bits or to the data width. We use the
-  -- data width since we don't need byte enables. See definition of BYTE_WRITE_WIDTH_A
-  -- under XPM_MEMORY_SDPRAM in UG974 for more info.
-  constant kLinkStorageRamByteWriteWidth : natural := kLinkStorageRamDataWidth;
-
-  -- As a result, the write enables are a vector with a width that is the number of
-  -- enables (DataWidth/ByteWriteWidth), which in our case is a one-wide vector. We will
-  -- control all write enables with the same write signal, which we'll tie to 1. We'll use
-  -- 'ena' as write enable because it leads to less power consumption, as per UG974.
-  constant kLinkStorageRamWriteEn : std_logic_vector(kLinkStorageRamDataWidth/kLinkStorageRamByteWriteWidth-1 downto 0) := (others => '1');
-
-  --vhook_sigstart
-  signal dNewRamRdAddr: unsigned(kMemoryRdAddrWidth-1 downto 0);
-  signal dNewRamWtAddr: unsigned(kMemoryWtAddrWidth-1 downto 0);
-  --vhook_sigend
-
-begin
-
-  InstMemory : if NumEnabledChannels(kEnabledChannels) > 0 generate
-
-    ------------------------------------------------------------------------------
-    -- Address Mapping
-    ------------------------------------------------------------------------------
-    --vhook_e LinkStorageRamAddrMapper
-    LinkStorageRamAddrMapperx: entity work.LinkStorageRamAddrMapper (rtl)
-      generic map (
-        kEnabledChannels   => kEnabledChannels,    --NiDmaDmaChannelOneHot_t
-        kMemoryWtAddrWidth => kMemoryWtAddrWidth,  --natural
-        kMemoryRdAddrWidth => kMemoryRdAddrWidth)  --natural
-      port map (
-        dLinkStorageRamWriteAddr => dLinkStorageRamWriteAddr,  --in  unsigned(kLinkStorageRamAddrWidth-1:0)
-        dLinkStorageRamReadAddr  => dLinkStorageRamReadAddr,   --in  unsigned(kLinkStorageRamRdAddrWidth-1:0)
-        dNewRamWtAddr            => dNewRamWtAddr,             --out unsigned(kMemoryWtAddrWidth-1:0)
-        dNewRamRdAddr            => dNewRamRdAddr);            --out unsigned(kMemoryRdAddrWidth-1:0)
-
-    ------------------------------------------------------------------------------
-    -- Memory instantiation
-    ------------------------------------------------------------------------------
-    --vhook_i  xpm_memory_sdpram LinkStorageBramx
-    --vhook_#  Parameters
-    --vhook_#  ------------------------------------------------------
-    --vhook_#  Memory_size is the overall size of the memory in bits.
-    --vhook_g  MEMORY_SIZE        kMemorySizeInBits
-    --vhook_g  WRITE_DATA_WIDTH_A kLinkStorageRamDataWidth
-    --vhook_g  ADDR_WIDTH_A       kMemoryWtAddrWidth
-    --vhook_g  READ_DATA_WIDTH_B  kLinkStorageRamRdDataWidth
-    --vhook_g  ADDR_WIDTH_B       kMemoryRdAddrWidth
-    --vhook_g  BYTE_WRITE_WIDTH_A kLinkStorageRamByteWriteWidth
-    --vhook_g  READ_LATENCY_B     kLinkStorageRamReadLatency
-    --vhook_g  MEMORY_PRIMITIVE   "auto"
-    --vhook_g  WRITE_MODE_B       "read_first"
-    --vhook_#  Set this to 0 because the test reports are a nuisance.
-    --vhook_g  MESSAGE_CONTROL    0
-    --vhook_#  Set this to 0 because we realize we're not initializing the memory.
-    --vhook_g  USE_MEM_INIT       0
-    --vhook_#  Everything else can keep defaults.
-    --vhook_gh *
-    --vhook_#  Signals
-    --vhook_#  ----------------------------------------------
-    --vhook_a  clk*               DmaClock
-    --vhook_#  We don't use the reset because it needs to be synchronous.
-    --vhook_a  rstb               '0'
-    --vhook_#  Write
-    --vhook_a  ena                to_StdLogic(dLinkStorageRamWrite)
-    --vhook_a  addra              std_logic_vector(dNewRamWtAddr)
-    --vhook_a  dina               dLinkStorageRamWriteData
-    --vhook_a  wea                kLinkStorageRamWriteEn
-    --vhook_#  Read
-    --vhook_a  addrb              std_logic_vector(dNewRamRdAddr)
-    --vhook_a  doutb              dLinkStorageRamReadData
-    --vhook_#  Unused / Static
-    --vhook_a  enb                '1'
-    --vhook_a  sleep              '0'
-    --vhook_a  inject?biterr*     '0'
-    --vhook_a  regceb             '1'
-    --vhook_a  ?biterr?           open
-    LinkStorageBramx: xpm_memory_sdpram
-      generic map (
-        MEMORY_SIZE        => kMemorySizeInBits,              --integer:=2048
-        MEMORY_PRIMITIVE   => "auto",                         --string:="auto"
-        USE_MEM_INIT       => 0,                              --integer:=1
-        MESSAGE_CONTROL    => 0,                              --integer:=0
-        WRITE_DATA_WIDTH_A => kLinkStorageRamDataWidth,       --integer:=32
-        BYTE_WRITE_WIDTH_A => kLinkStorageRamByteWriteWidth,  --integer:=32
-        ADDR_WIDTH_A       => kMemoryWtAddrWidth,             --integer:=6
-        READ_DATA_WIDTH_B  => kLinkStorageRamRdDataWidth,     --integer:=32
-        ADDR_WIDTH_B       => kMemoryRdAddrWidth,             --integer:=6
-        READ_LATENCY_B     => kLinkStorageRamReadLatency,     --integer:=2
-        WRITE_MODE_B       => "read_first")                   --string:="no_change"
-      port map (
-        sleep          => '0',                                --in  std_logic
-        clka           => DmaClock,                           --in  std_logic
-        ena            => to_StdLogic(dLinkStorageRamWrite),  --in  std_logic
-        wea            => kLinkStorageRamWriteEn,             --in  std_logic_vector((WRITE_DATA_WIDTH_A/BYTE_WRITE_WIDTH_A)-1:0)
-        addra          => std_logic_vector(dNewRamWtAddr),    --in  std_logic_vector(ADDR_WIDTH_A-1:0)
-        dina           => dLinkStorageRamWriteData,           --in  std_logic_vector(WRITE_DATA_WIDTH_A-1:0)
-        injectsbiterra => '0',                                --in  std_logic
-        injectdbiterra => '0',                                --in  std_logic
-        clkb           => DmaClock,                           --in  std_logic
-        rstb           => '0',                                --in  std_logic
-        enb            => '1',                                --in  std_logic
-        regceb         => '1',                                --in  std_logic
-        addrb          => std_logic_vector(dNewRamRdAddr),    --in  std_logic_vector(ADDR_WIDTH_B-1:0)
-        doutb          => dLinkStorageRamReadData,            --out std_logic_vector(READ_DATA_WIDTH_B-1:0)
-        sbiterrb       => open,                               --out std_logic
-        dbiterrb       => open);                              --out std_logic
-
-  end generate InstMemory;
-
-  NoMemory : if NumEnabledChannels(kEnabledChannels) = 0 generate
-
-    -- If there are no enabled channels, we don't need a memory at all. Read data is just
-    -- 0s.
-    dLinkStorageRamReadData <= (others => '0');
-
-  end generate NoMemory;
-
-end architecture struct;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+lo1aN7iNdBTLw67VuJOtfVPhg/1VpitCNxPKK8HEDtUHaqHRn1PMsdXOmcfPCpz8
+znwG9D0D6sr0GbrNxqMH6jMkhx4Kn/e2caNFNGpc6MKzt0SFQ/jCAsu1lBhFGorm
+Ex603khHIwVgdEMRAhkQllJuNXd/kGVTpABKJMLW552lrLNmxOqhtj8/vz5I496p
+K5JOAnwPfvSnNDuGyrao1N3Y5rOyUm7TiWX7s8kynCK76HzN0ALzsEMLFuSDBuUA
+3EDgWPi/CWCLgdpIuXi584dwM3DgroavT2Fq+1E21fDtjiuBhJsY6Dn/j9bbSkqr
+QKS+RAsp10aQQRfKAnUiiw==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="yRMVo1EH+xh72XB4foxjoT/vpaO5vbXS9GGQiqnzK4g="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+kKtjDb8UGeRJ/o8J/IXKVVNa4n4WP0X7q/7KGgIZEMKsoETK0SCgu45FB+jGhKbB
+KVtkp3HQQRNerANy/lmpBpXyZnQFMZSFr0JrPUG1qRiugOTLFgfBJ8++8gHuWV+v
+w0tiWaL0RQSiB7eZDW6exU6bBbsEcWOOr8SJpTFkvaw=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="tNAMLc8GnMnK7Su52U7H28xMtJ9mAK5o4iRe6e85Vm0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 10080 )
+`protect data_block
+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
+`protect end_protected

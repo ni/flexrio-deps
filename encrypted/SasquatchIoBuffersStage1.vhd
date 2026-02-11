@@ -1,135 +1,148 @@
-------------------------------------------------------------------------------------------
---
--- File: SasquatchIoBuffersStage1.vhd
--- Author: Rolando Ortega
--- Original Project: Macallan Next FlexRIO
--- Date: 18 September 2017
---
-------------------------------------------------------------------------------------------
--- (c) 2025 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
-------------------------------------------------------------------------------------------
---
--- Purpose: This module groups together IO Buffer blocks that need to be applied to Stage 2
--- signals which have their ports in a bank that includes Stage 1 signals. The IO Buffers
--- for such signals need to be in Stage 1.
---
--- We ran into an issue with Vivado 2015.4 whereby the HD.TANDEM property was being
--- applied incorrectly when we tried to use some clever tcl-crafting to find the
--- (auto-generated) IBUF cells, so we're packing them all explicitly in this module
--- instead, and will use a simpler tcl constraint.
-------------------------------------------------------------------------------------------
---
--- vreview_group AppletonIoBuffers
--- vreview_closed http://review-board.natinst.com/r/329181/
--- vreview_closed http://review-board.natinst.com/r/313063/
--- vreview_reviewers kygreen dhearn esalinas hrubio lboughal rcastro
-------------------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library unisim;
-use unisim.vcomponents.all;
-
-library work;
-use work.PkgNiUtilities.all;
-
-entity SasquatchIoBuffersStage1 is
-  port (
-    -- Control signal to avoid pins turning on unnecessarily.
-    aStage2Enabled  : in    boolean;
-
-    -- Authentication
-    aAuthSda            : inout std_logic;
-
-    aAuthSdaInBuf      : out   std_logic;
-    aAuthSdaOutBuf     : in    std_logic;
-
-    -- PXI GA
-    aPxiGa               : in    std_logic_vector(4 downto 0);
-    aGa                  : out   std_logic_vector(4 downto 0);
-
-    -- PCIe Reset
-    aPcieRst_n      : in    std_logic;
-    aPcieRst        : out   std_logic
-  );
-end entity SasquatchIoBuffersStage1;
-
-architecture struct of SasquatchIoBuffersStage1 is
-
-  --vhook_sigstart
-  signal aAuthSdaTristate: std_ulogic;
-  signal aPcieRstIBuf_n: std_ulogic;
-  --vhook_sigend
-
-  -- Global tristate enable
-  signal aDisableOutputs : std_logic;
-
-begin  -- architecture struct
-
-  aDisableOutputs <= not to_StdLogic(aStage2Enabled);
-
-  ---------------------------------------------------------------------------------------
-  -- Authentication
-  ---------------------------------------------------------------------------------------
-
-  -- Single Wire interface is open-collector, has external pull-up. So we drive 'Z' when
-  -- aAuthSdaOut is '1', and '0' otherwise.
-
-  --vhook_i IOBUF       AuthSdaBuf      hidegeneric=true
-  --vhook_a IO          aAuthSda
-  --vhook_a I           '0'
-  --vhook_a O           aAuthSdaInBuf
-  --vhook_a T           aAuthSdaTristate
-  AuthSdaBuf: IOBUF
-    port map (
-      O  => aAuthSdaInBuf,     --out std_ulogic
-      IO => aAuthSda,          --inout std_ulogic
-      I  => '0',               --in  std_ulogic
-      T  => aAuthSdaTristate); --in  std_ulogic
-
-  -- Keep the buffer tristated until the Stage 2 is enabled. We hope the resulting LUT is
-  -- 1) Glitch-free
-  -- 2) Inside Stage 1
-  aAuthSdaTristate <= aAuthSdaOutBuf when aStage2Enabled else '1';
-
-  ---------------------------------------------------------------------------------------
-  -- PXI
-  ---------------------------------------------------------------------------------------
-
-  -- IOBUF ports
-  -- I:  data to drive to the pad
-  -- O:  data received from the pad
-  -- IO: the pad
-  GenPxiGaBufs: for i in aPxiGa'range generate
-
-    --vhook_i IBUF        PxiGaIbuf     hidegeneric=true
-    --vhook_a I           aPxiGa(i)
-    --vhook_a O           aGa(i)
-    PxiGaIbuf: IBUF
-      port map (
-        O => aGa(i),     --out std_ulogic
-        I => aPxiGa(i)); --in  std_ulogic
-
-  end generate GenPxiGaBufs;
-
-  ---------------------------------------------------------------------------------------
-  -- PCIe Reset
-  ---------------------------------------------------------------------------------------
-  -- Despite being part of the PCIe endpoint, we need for this IBUF to land in the IO
-  -- Buffer PBlock rather than inside the PCIe Pblock. So we put it in this module.
-
-  --vhook_i IBUF      PcieRstIBuf       hidegeneric=true
-  --vhook_a I         aPcieRst_n
-  --vhook_a O         aPcieRstIBuf_n
-  PcieRstIBuf: IBUF
-    port map (
-      O => aPcieRstIBuf_n,  --out std_ulogic
-      I => aPcieRst_n);     --in  std_ulogic
-
-  aPcieRst <= not aPcieRstIBuf_n;
-
-end architecture struct;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+lo1aN7iNdBTLw67VuJOtfVPhg/1VpitCNxPKK8HEDtUHaqHRn1PMsdXOmcfPCpz8
+znwG9D0D6sr0GbrNxqMH6jMkhx4Kn/e2caNFNGpc6MKzt0SFQ/jCAsu1lBhFGorm
+Ex603khHIwVgdEMRAhkQllJuNXd/kGVTpABKJMLW552lrLNmxOqhtj8/vz5I496p
+K5JOAnwPfvSnNDuGyrao1N3Y5rOyUm7TiWX7s8kynCK76HzN0ALzsEMLFuSDBuUA
+3EDgWPi/CWCLgdpIuXi584dwM3DgroavT2Fq+1E21fDtjiuBhJsY6Dn/j9bbSkqr
+QKS+RAsp10aQQRfKAnUiiw==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="yRMVo1EH+xh72XB4foxjoT/vpaO5vbXS9GGQiqnzK4g="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+kKtjDb8UGeRJ/o8J/IXKVVNa4n4WP0X7q/7KGgIZEMKsoETK0SCgu45FB+jGhKbB
+KVtkp3HQQRNerANy/lmpBpXyZnQFMZSFr0JrPUG1qRiugOTLFgfBJ8++8gHuWV+v
+w0tiWaL0RQSiB7eZDW6exU6bBbsEcWOOr8SJpTFkvaw=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="tNAMLc8GnMnK7Su52U7H28xMtJ9mAK5o4iRe6e85Vm0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 4816 )
+`protect data_block
+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
+vcVlh7buSbpp9fzLy1hCXA==
+`protect end_protected

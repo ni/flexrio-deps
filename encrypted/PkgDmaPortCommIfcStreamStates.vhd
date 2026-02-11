@@ -1,111 +1,127 @@
--------------------------------------------------------------------------------
---
--- File: PkgDmaPortCommIfcStreamStates.vhd
--- Author: Matthew Koenn
--- Original Project: CHInCh Interface
--- Date: 24 September 2008
---
--------------------------------------------------------------------------------
--- (c) 2008 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose: 
---
---   Holds utilities relating to stream state.
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-
-Package PkgDmaPortCommIfcStreamStates is
-
-  ---------------------------------------------------------------------------------------
-  -- Stream States
-  --
-  -- Unlinked : A channel is in the unlinked state before the driver has linked it to a
-  --            peer.
-  --
-  -- Stopped  : A channel is in the stopped state when it has been linked to a peer but
-  --            the driver has not yet enabled the stream.
-  --
-  -- Started  : A channel is started once the driver has activated the stream.  Data will
-  --            only be transmitted to or from this peer while it is in the started
-  --            state.
-  --
-  -- Flushing : A source channel is in the flushing state when it has received a request
-  --            to stop but is still transmitting data before it can actually stop.
-  --
-  ---------------------------------------------------------------------------------------
-  
-  
-  -- The stream states need to be linked to specific values so that it matches the values
-  -- expected by the driver.
-  subtype StreamStateValue_t is std_logic_vector(1 downto 0);
-  type StreamStateValueArray_t is array (natural range <>) of StreamStateValue_t;
-  
-  constant kStreamStateUnlinked  : StreamStateValue_t := "00";
-  constant kStreamStateDisabled  : StreamStateValue_t := "01";
-  constant kStreamStateEnabled   : StreamStateValue_t := "10";
-  constant kStreamStateFlushing  : StreamStateValue_t := "11";
-
-  type StreamState_t is (Unlinked, Disabled, Enabled, Flushing);
-  
-  -- Functions to convert between StreamState and StreamStateValue.
-  function to_StreamState(arg : StreamStateValue_t) return StreamState_t;
-  function to_StreamStateValue(arg : StreamState_t) return StreamStateValue_t;
-  
-end Package PkgDmaPortCommIfcStreamStates;
-
-Package body PkgDmaPortCommIfcStreamStates is
-  
-  -- Convert a StreamStateValue type to a StreamState type.
-  function to_StreamState(arg : StreamStateValue_t) return StreamState_t is
-    variable ReturnVal : StreamState_t;
-  begin
-    
-    if arg = kStreamStateUnlinked then
-      ReturnVal := Unlinked;
-    elsif arg = kStreamStateDisabled then
-      ReturnVal := Disabled;
-    elsif arg = kStreamStateEnabled then
-      ReturnVal := Enabled;
-    elsif arg = kStreamStateFlushing then
-      ReturnVal := Flushing;
-    else
-      ReturnVal := Unlinked;
-    end if;
-    
-    return ReturnVal;
-    
-  end to_StreamState;
-  
-  -- Convert a StreamState type to a StreamStateValue type.
-  function to_StreamStateValue(arg : StreamState_t) return StreamStateValue_t is
-    variable ReturnVal : StreamStateValue_t;
-  begin
-    
-    if arg = Unlinked then
-      ReturnVal := kStreamStateUnlinked;
-    elsif arg = Disabled then
-      ReturnVal := kStreamStateDisabled;
-    elsif arg = Enabled then
-      ReturnVal := kStreamStateEnabled;
-    elsif arg = Flushing then
-      ReturnVal := kStreamStateFlushing;
-    else
-      ReturnVal := kStreamStateUnlinked;
-    end if;
-    
-    return ReturnVal;
-    
-  end to_StreamStateValue;
-    
-end Package body PkgDmaPortCommIfcStreamStates;
-
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+lo1aN7iNdBTLw67VuJOtfVPhg/1VpitCNxPKK8HEDtUHaqHRn1PMsdXOmcfPCpz8
+znwG9D0D6sr0GbrNxqMH6jMkhx4Kn/e2caNFNGpc6MKzt0SFQ/jCAsu1lBhFGorm
+Ex603khHIwVgdEMRAhkQllJuNXd/kGVTpABKJMLW552lrLNmxOqhtj8/vz5I496p
+K5JOAnwPfvSnNDuGyrao1N3Y5rOyUm7TiWX7s8kynCK76HzN0ALzsEMLFuSDBuUA
+3EDgWPi/CWCLgdpIuXi584dwM3DgroavT2Fq+1E21fDtjiuBhJsY6Dn/j9bbSkqr
+QKS+RAsp10aQQRfKAnUiiw==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="yRMVo1EH+xh72XB4foxjoT/vpaO5vbXS9GGQiqnzK4g="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+kKtjDb8UGeRJ/o8J/IXKVVNa4n4WP0X7q/7KGgIZEMKsoETK0SCgu45FB+jGhKbB
+KVtkp3HQQRNerANy/lmpBpXyZnQFMZSFr0JrPUG1qRiugOTLFgfBJ8++8gHuWV+v
+w0tiWaL0RQSiB7eZDW6exU6bBbsEcWOOr8SJpTFkvaw=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="tNAMLc8GnMnK7Su52U7H28xMtJ9mAK5o4iRe6e85Vm0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 3824 )
+`protect data_block
+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
+`protect end_protected

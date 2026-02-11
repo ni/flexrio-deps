@@ -1,109 +1,126 @@
--------------------------------------------------------------------------------
---
--- File: DoubleSyncBase.vhd
--- Author: Craig Conway
--- Original Project: NICores
--- Date: 13 September 2002
---
--------------------------------------------------------------------------------
--- (c) 2002 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---    This module transfers a std_logic signal from one clock domain to
---  another using a double synchronizer.  It also uses clock enables.
---    It takes the signal in using a single flip-flop from the original clock
---  domain and then transfers it to the new clock domain with two flip-flops.
---    It also includes two asynchronous resets, allowing VScan to consider
---  this a safe reset crossing as well as a safe clock crossing.
---    The first flip-flop isn't strictly necessary, but it confines the
---  clock boundary crossing to be completely within this module, making it
---  easier to prove correctness.
---    This module can be conveniently used for registers writes.  Connect
---  the register write signal to iClkEn and the data line to iSigIn.  iSigOut
---  is the readable bit for the register.  oSig is that same signal transferred
---  to OClk's clock domain.
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-entity DoubleSyncBase is
-  generic (
-    kResetVal : std_logic := '0'
-  );
-  port (
-    aIReset: in  boolean;
-    IClk:    in  std_logic;
-    iClkEn:  in  boolean;
-    iSigIn:  in  std_logic;
-    iSigOut: out std_logic;
-
-    aOReset: in  boolean;
-    OClk:    in  std_logic;
-    oClkEn:  in  boolean;
-    oSig:    out std_logic
-  );
-end DoubleSyncBase;
-
-architecture behavior of DoubleSyncBase is
-
-  signal iDlySig : std_logic;
-
-  -- The keep is designed to prevent the signal renaming of iDlySig that would
-  -- invalidate timing constraints.
-  attribute keep : string;
-  attribute keep of iDlySig : signal is "true";
-
-begin
-
-  -- Bring in iSig into this module and reclock it to its
-  -- original clock domain.  This accomplishes two things:
-  -- First, it ensures that the clock boundary crossing remains
-  -- completely within this module.  Second, it keeps the
-  -- user from having to worry about whether iSig is a
-  -- a glitchy signal or not.
-
-  --vhook_e DFlop iDlySigx
-  --vhook_a kAsyncReg "false"
-  --vhook_a aReset aIReset
-  --vhook_a Clk IClk
-  --vhook_a cEn iClkEn
-  --vhook_a cD iSigIn
-  --vhook_a cQ iDlySig
-  iDlySigx: entity work.DFlop (rtl)
-    generic map (
-      kResetVal => kResetVal,  --std_logic:='0'
-      kAsyncReg => "false")    --string:="false"
-    port map (
-      aReset => aIReset,  --in  boolean
-      cEn    => iClkEn,   --in  boolean
-      Clk    => IClk,     --in  std_logic
-      cD     => iSigIn,   --in  std_logic
-      cQ     => iDlySig); --out std_logic:=kResetVal
-
-  iSigOut <= iDlySig;
-
-  --!CLOCK BOUNDARY CROSSING!  iDlySig is being double synchronized here
-
-  --vhook_e DoubleSyncAsyncInBase
-  --vhook_a aSig iDlySig
-  DoubleSyncAsyncInBasex: entity work.DoubleSyncAsyncInBase (rtl)
-    generic map (kResetVal => kResetVal)  --std_logic:='0'
-    port map (
-      aSig    => iDlySig,  --in  std_logic
-      aOReset => aOReset,  --in  boolean
-      OClk    => OClk,     --in  std_logic
-      oClkEn  => oClkEn,   --in  boolean:=true
-      oSig    => oSig);    --out std_logic:=kResetVal
-
-
-end behavior;
-
--- The following comment is a checksum VScan uses to determine whether this
--- file has been modified.  Please don't try to get around it.  It's there
--- for a reason.
---VScan_CS 490124
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+lo1aN7iNdBTLw67VuJOtfVPhg/1VpitCNxPKK8HEDtUHaqHRn1PMsdXOmcfPCpz8
+znwG9D0D6sr0GbrNxqMH6jMkhx4Kn/e2caNFNGpc6MKzt0SFQ/jCAsu1lBhFGorm
+Ex603khHIwVgdEMRAhkQllJuNXd/kGVTpABKJMLW552lrLNmxOqhtj8/vz5I496p
+K5JOAnwPfvSnNDuGyrao1N3Y5rOyUm7TiWX7s8kynCK76HzN0ALzsEMLFuSDBuUA
+3EDgWPi/CWCLgdpIuXi584dwM3DgroavT2Fq+1E21fDtjiuBhJsY6Dn/j9bbSkqr
+QKS+RAsp10aQQRfKAnUiiw==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="yRMVo1EH+xh72XB4foxjoT/vpaO5vbXS9GGQiqnzK4g="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+kKtjDb8UGeRJ/o8J/IXKVVNa4n4WP0X7q/7KGgIZEMKsoETK0SCgu45FB+jGhKbB
+KVtkp3HQQRNerANy/lmpBpXyZnQFMZSFr0JrPUG1qRiugOTLFgfBJ8++8gHuWV+v
+w0tiWaL0RQSiB7eZDW6exU6bBbsEcWOOr8SJpTFkvaw=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="tNAMLc8GnMnK7Su52U7H28xMtJ9mAK5o4iRe6e85Vm0="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 3792 )
+`protect data_block
+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
+`protect end_protected
