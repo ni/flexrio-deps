@@ -1,46 +1,82 @@
--------------------------------------------------------------------------------
---
--- File: PkgDram2DPConstants.vhd
--- Author: Neil Turley
--- Original Project: Dram2DP
--- Date: 31 Oct 2016
---
--------------------------------------------------------------------------------
--- (c) 2016 Copyright National Instruments.
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
--- PkgDram2DP has some constants for Dram2DP
---
--------------------------------------------------------------------------------
-library IEEE;
-  use IEEE.std_logic_1164.all;
-  use IEEE.numeric_std.all;
-library work;
-  use work.PkgNiUtilities.all;
-  use work.PkgNiDma.all;
-
-package PkgDram2DPConstants is
-  -- Start our core version with a magic number to make it more recognizable
-  constant kCoreVersion : std_logic_vector(31 downto 0) := X"DEBB_B0FF";
-
-  -- Defined by DmaPort Interface
-  constant kReadCmd : std_logic_vector (2 downto 0) := B"001";
-  constant kWriteCmd : std_logic_vector (2 downto 0) := B"000";
-
-  -- 4 registers, 32 bits of data in a register, byte addressable
-  -- 4*32/8 = 16
-  constant kRegPortAddressesPerBuffer : integer := 16;
-
-  -- The application is given 32 bits of addressibility
-  constant kDramInterfaceAddressWidth : integer := 32;
-
-  -- The DRAM interface in LabVIEW FPGA should default to 64-bits
-  constant kDefaultDramInterfaceDataWidth : integer := 64;
-
-  -- Type of the baggage to be passed to Dram2DP
-  type NiD2DBaggageArr_t is array (integer range <>) of NiDmaBaggage_t;
-
-end package PkgDram2DPConstants;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+gMcHP74wBZczB0bB0IzoP2xg5wC5NPjD/GsvSQ6VQgzYAsanETMwwsWi4yhFtJwv
+5kY07u0WerSDf8woJ0stqW5xF501W3JLIS8KMiCOd55RHBOnavjYiaaLeu7oUCmB
+TtTS1R4sO325rP2zOn9YwRbyyS5Ljn+PzFZZUmkt5xMca3p5NGqKtZW2dV6Babni
+5HlLuF20Au601B75m2nv+ZRoGSrpkNElxoTibONmX8gBflpIVE7BehhHwaKSucEF
+pp4QQ5zZAZjEC6aplZepouGVggAulz5AahlX5bf4opOVlB1J7IrgyjENtw6ysQ/q
+DzybQ+ipztSXBGhmcCVU3A==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="jAI3OJE9Sh00Sic4PtM/KZ4WjwT98XM8AMZrZsQkxWQ="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+hyw9IrFLPQsjvXplweG8O0lkaSLBN9Ijv4B5VdTRt6ipKJT9Kzsb5LxCKvkQyF9n
+sGPOd5i74hRHnkHfYISGkfxGJCa55ieOyFShOsqTKRLxclm4oja9vTIey6yFm1BZ
+54IDCG9h3PqfDiTD847UCSMRvFssyycwv+BRHQMQlFs=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="BnLuc3jxknmZOyxfJK70E5kp9u9O8IQ8cgkXv26kHA8="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 1648 )
+`protect data_block
+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
+fBWH0I6PjC8LZjeNdVDVyA==
+`protect end_protected

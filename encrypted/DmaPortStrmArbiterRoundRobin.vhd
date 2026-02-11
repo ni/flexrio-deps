@@ -1,385 +1,411 @@
-------------------------------------------------------------------------------------------
---
--- File: DmaPortStrmArbiterRoundRobin.vhd
--- Author: Rolando Ortega
--- Original Project: The Macallan (Next FlexRIO)
--- Date: 19 September 2016
---
-------------------------------------------------------------------------------------------
--- (c) 2016 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
-------------------------------------------------------------------------------------------
---
--- Purpose:
---
--- The module is designed to provide arbitration between multiple units requesting access
--- to a common resource. If a unit needs the resource it must assert its request and hold
--- it asserted at least until the same clock cycle in which Grant appears.
---
--- The Grant signal is kept asserted by the arbiter until it sees the Done signal strobed
--- by the requester.
---
--- After the grant is given, the resource is set free by strobing done (kept up for 1
--- cycle), after which the arbiter will give access to the next request. This arbiter will
--- never try to give Grant to another channel before it has received the Done for the last
--- request that got a grant.
---
------------------------------------------------------------------------------------------
--- Theory of Operation:
------------------------------------------------------------------------------------------
---
--- Objectives:
--- This module implements a "fair" arbiter. There is much discussion about the "fairness"
--- of arbiters. See, for example, here: https://en.wikipedia.org/wiki/Fair_queuing, and
--- here: https://en.wikipedia.org/wiki/Round-robin_scheduling. This arbiter strives to
--- achieve the following two objectives:
---
--- 1. For an arbiter with n requesters, a given requester may have to wait until all other
---    n-1 requesters have been serviced, but will never have to wait more than that. This
---    puts a maximum (and equal) bound on all requester's service time of
---    n*IndividualServeTime.
---
--- 2. On average, all requesters will be allocated whichever is LESS of:
---    a) However much bandwidth they request.
---    b) An approximately equal share of the total available bandwidth.
---
--- #2 is true because round-robin scheduling is said to have "max-min fairness"
--- (https://en.wikipedia.org/wiki/Max-min_fairness) when all packets are the same size,
--- which is true for the DmaPort during steady-state streaming. There are boundary
--- conditions in which some packets are smaller than the maximum, but that doesn't really
--- affect this analysis.
---
--- Round-robin Concept
---
--- A round-robin arbiter is effectively a priority encoder with a rotating priority, which
--- is determined by which requester was serviced last. So in a 4-stream arbiter, if the
--- last stream that was serviced was #2, the arbiter looks like a priority encoder with
--- maximum priority given to steam #3, then stream #0 (wrap around), then stream #1, and
--- then stream #2. This LSB-to-MSB priority rotates as different streams get serviced, so
--- that priority is always given to stream mod(i+1, n), where i is the last stream that
--- was serviced and n is the number of streams.
---
--- To achieve this in an efficient manner, this module utilizes a mask. This mask has 0s
--- for all the bits in the request vector "vec" between index 0 and the index i that was
--- last granted. In other words:
---
---  mask <= (i downto 0 => '0', others <= '1');
---
--- In order to determine the next grantee, the request vector gets duplicated, one of the
--- copies is AND'd with the mask, and a priority encoder is applied to the resulting (2*n
--- wide) vector. E.g. Assume we have a request vector defined as (4 downto 0) with the
--- value "11010". Further assume that the last grant was "00100", and therefore the
--- current mask is "11000". We would have the following combined vector:
---
---  Request vector:     ┌── 11010
---            Mask:     ˇ   11000
---    Pre-Priority:   11010 11000
---           Grant:          ^     3
---
--- We thus achieve the rotating priority by appending the unmasked request vector to the
--- left of the masked one. Let's continue working through this example:
---
---      Bit Index:   43210           43210                  4321043210
--- -------------------------------------------------------------------------------
--- Request Vector:   10010     Mask: 10000    Pre-priority: 1001010000    Grant: 4
---                                                               ^
---                   00010           00000                  0001000000    Grant: 1
---                                                             ^
--- Assume we get some more requests:
---                   11001           11100                  1100111000    Grant: 3
---                                                                ^
---                   10011           10000                  1001110000    Grant: 4
---                                                               ^
---                   00011           00000                  0001100000    Grant: 0
---                                                              ^
---                   01010           11110                  0101001010    Grant: 1
---                                                                  ^
---                   01010           11100                  0101001000    Grant: 3
---                                                                ^
---                   00010           10000                  0001000000    Grant: 1
---
--- The overall effect is that of a rotating priority. The bits that would "naturally" be
--- given priority in a straight priority encoder are blocked by the mask, but they remain
--- eligible to be selected if none of the bits to their left in the request vector are
--- '1's. Concatenating the un-masked vector to the masked one achieves the rotation.
---
--- Implementation Details:
---
--- In order to save resources and improve timing, some optimizations are made to the above
--- concept.
---
--- 1. Instead of concatenating the masked and unmasked request vectors, we multiplex them.
---    Observe above that the unmasked version of the vector is only ever relevant if the
---    masked vector is all '0's. So if the masked vector is all '0's we apply the priority
---    encoder to the unmasked vector, and otherwise we apply it to the masked vector. In
---    this way, we only need a priority encoder of length n instead of n*2.
---
--- 2. Rather than create the mask directly, we create a shifted version of it. We call
---    this a "thermometer", which is simply a string of 1's that grows from left to right.
---    The rightmost '1' in the thermometer lands on the bit that was granted. We do this
---    because it fulfills two purposes:
---
---    a) It's a shifted (to the right) version of the mask, so we can generate the mask
---    with a left shift without incurring any additional logic.
---
---    b) When this thermometer is XOR'd with a shifted-left version of itself, it outputs
---    our grant vector. Thus, this thermometer simultaneously creates our mask *and*
---    implements our priority encoder.
---
--- Additionally, we know that the request vector will be valid for two clock cycles before
--- we are expected to generate a grant. This allows us to pipeline the above process for
--- further timing improvements.
---
------------------------------------------------------------------------------------------
--- Ports and Generics:
------------------------------------------------------------------------------------------
---
--- kNumOfStrms: The number of streams that are competing to access a resource
---
--- aReset: Asynchronous reset.
---
--- SysClk: System clock.
---
--- sReset: Synchronous reset.
---
--- sAccReq: The request vector where each bit represents the request of a stream
---
--- sAccGnt: The request grant for an associated stream which is kept asserted until the
---          Done
---
--- sEnArb: Enables the arbiter by setting the grant value.
---
--- sAccDoneStrb: The Done strobe which should mark the stream as done
---
--- sStrmDone: This signal indicates when the arbiter has finished an arbitration which
---            does not result into a Grant (if the Request deasserted one clock cycle
---            before the Grant should have asserted i.e. the requestor changed its mind
---            over the Request assertion). WE DO NOT CONSIDER THIS VALID! And therefore we
---            don't drive this bit.
---
------------------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-
-entity DmaPortStrmArbiterRoundRobin is
-
-  generic (
-    kNumOfStrms : positive := 16);
-
-  port (
-    aReset        : in  boolean;
-    SysClk        : in  std_logic;
-    sReset        : in  boolean;
-    -- Input and Output vectors
-    sAccReq       : in  std_logic_vector(kNumOfStrms-1 downto 0);
-    sAccGnt       : out std_logic_vector(kNumOfStrms-1 downto 0);
-    -- Control
-    sEnArb        : in  boolean;
-    sAccDoneStrb  : in  boolean;
-    sStrmDone     : out boolean
-    );
-
-end entity DmaPortStrmArbiterRoundRobin;
-
-architecture rtl of DmaPortStrmArbiterRoundRobin is
-
-  subtype ArbVector_t is std_logic_vector(kNumOfStrms-1 downto 0);
-
-  -- Mask and masked vector
-  signal sMask, sMaskedVector : ArbVector_t := (others => '1');
-
-  -- Intermediate values
-  signal sNxTherm, sTherm : ArbVector_t := (others => '0');
-  signal sPrePriority     : ArbVector_t := (others => '0');
-
-  -- This signal tells us when we're holding the grant (waiting for done).
-  signal sHoldingGrant : boolean := false;
-
-  -- This signal lets us select between the masked vector and the unmasked vector.
-  signal sSelectMask : boolean := false;
-
-  -- This function creates a "thermometer" whereby a given output bit, retVal(j) will be
-  -- set iff some input bit vec(i) is set, where j >= i.
-  function Thermometer (
-    vec : ArbVector_t)
-    return ArbVector_t
-  is
-    variable retVal : ArbVector_t := (others => '0');
-  begin  -- function Thermometer
-    for i in retVal'range loop
-      retVal(i) := OrVector(vec(i downto 0));
-    end loop;  -- i
-
-    return retVal;
-  end function Thermometer;
-
-  function GrantFromTherm (
-    thermometer : ArbVector_t)
-    return ArbVector_t
-  is
-    variable shiftTherm : ArbVector_t;
-  begin  -- function GrantFromTherm
-
-    -- To derive the one-hot grant vector from the thermometer, we just need to XOR the
-    -- thermometer with a shifted-left (towards the MSB) version of itself. We will shift
-    -- in a '0' on the right-most bit (LSB).
-    --
-    -- Note that the thermometer is "monotonic": it has a '1' on the highest-priority bit
-    -- and in all bits to the left of it. All bits to the right (if any) are '0's.
-    -- Furthermore, there is at least one bit that is set to '1', because the arbiter is
-    -- only enabled when at least one bit in the request vector is '1'.
-    --
-    -- The shifted-left version (shiftTherm) is also monotonic: there's only one
-    -- "transition" point between '1's and '0's. Thus, when we XOR them together, there
-    -- will be one and only one bit asserted in the result, with its index corresponding
-    -- to the highest-priority bit that we're looking for.
-    shiftTherm := thermometer(thermometer'high-1 downto 0) & '0';
-    return ArbVector_t'(thermometer xor shiftTherm);
-
-  end function GrantFromTherm;
-
-begin  -- architecture rtl
-
-  -- We can create our mask using a version of the stored thermometer. The thermometer is
-  -- true for the bit we just assigned and all bits to the left of it. If we shift to the
-  -- left by one, it'll be false for all bits from 0 up to and including the most recent
-  -- grant. We can use this as a mask for the incoming vector. Note that this implies that
-  -- the mask's LSB is always a 0. That's ok: the case where we will select Stream 0 is
-  -- when the mask is all-0s, not when it's all-1s (see Theory of Operation above for an
-  -- example of this).
-  sMask         <= sTherm(sTherm'high-1 downto 0) & '0';
-  sMaskedVector <= sMask and sAccReq;
-
-  -- We want to use the masked vector whenever possible. However, if we are enabled and
-  -- there's no valid request in the masked vector, we'll give the requests in the
-  -- un-masked vector a chance.
-  sSelectMask <= to_Boolean(OrVector(sMaskedVector));
-
-  Pipeline : process (SysClk, aReset)
-  begin  -- process Pipeline
-    if aReset then
-      sPrePriority <= (others => '0');
-    elsif rising_edge(SysClk) then
-      if sReset then
-        sPrePriority <= (others => '0');
-      else
-        -- In the case where none of the un-masked streams are requesting, we will give a
-        -- chance to one of the masked ones. Combining both the masked and un-masked
-        -- vector in this way gives us the vector from which to decide who to grant to.
-        --
-        -- Because this mux winds up in the critical path of the Grant calculation, we're
-        -- effectively pipelining. This may cause us to miss some requests that may have
-        -- been valid when enabled but not a clock cycle before. That's ok, because those
-        -- requests weren't the ones that led the Arbiter to be enabled in the first
-        -- place, and we'll get to them eventually.
-        if sSelectMask then
-          sPrePriority <= sMaskedVector;
-        else
-          sPrePriority <= sAccReq;
-        end if;
-      end if;
-    end if;
-  end process Pipeline;
-
-  -- We can derive both the mask AND the priority encoding from the Thermometer, so we
-  -- start by generating said thermometer.
-  sNxTherm <= Thermometer(sPrePriority);
-
-  FFs : process (SysClk, aReset)
-  begin  -- process FFs
-    if aReset then
-      sTherm        <= (others => '0');
-      sHoldingGrant <= false;
-    elsif rising_edge(SysClk) then
-
-      if sReset then
-        sTherm        <= (others => '0');
-        sHoldingGrant <= false;
-      else
-        -- Do not update the last grant unless enabled. Also, don't update it if we're
-        -- holding the output. And once we do update it, start holding the output.
-        if sEnArb and not sHoldingGrant then
-          sTherm        <= sNxTherm;
-          sHoldingGrant <= true;
-        end if;
-
-        -- We want to stop holding the grant whenever we're disabled, but we can do that
-        -- faster if we look at the DoneStrb and save a clock cycle. We leave both
-        -- conditions here in case sEnArb goes away without us seeing the Done strobe for
-        -- some reason.
-        if sAccDoneStrb or not sEnArb then
-          sHoldingGrant <= false;
-        end if;
-
-      end if;
-
-    end if;
-  end process FFs;
-
-  -- We generate our grant from the latched thermometer, which contributes to the
-  -- pipelining efforts to keep the critical path short by pushing this part of the logic
-  -- to after the sTherm FFs.
-  --
-  -- Although we *are* creating a combinatorial path coming out of this module, it's not a
-  -- bad one: each bit depends only on two bits from the thermometer and the sHoldingGrant
-  -- bit. And there was a combinational path there anyway, because we "OR" the grants from
-  -- both the Normal and Emergency arbiters outside of this module.
-  --
-  -- Note that although the grant itself is one-hot, the output of this module is
-  -- zero-one-hot, since the module will revert to an output of all '0's once the grant
-  -- has been acknowledged by the grantee.
-  sAccGnt <= GrantFromTherm(sTherm) when sHoldingGrant else (others => '0');
-
-  --synthesis translate_off
-
-  -- We want to put in a (simulation) check to make sure that we never have a case where
-  -- we grant to a requester that rescinded (removed) its request. We'll actually check
-  -- for a stronger condition, which is that no request is allowed to be rescinded during
-  -- the clock cycle that it takes the arbiter to output a grant.
-
-  CheckForRescindedRequests : block is
-    signal sReqBeforeEnable : ArbVector_t := (others => '0');
-  begin  -- block CheckForRescindedRequests
-    Delays : process (SysClk, aReset)
-    begin  -- process Delays
-      if aReset then
-        sReqBeforeEnable <= (others => '0');
-      elsif rising_edge(SysClk) then
-
-        -- This old request value will keep being updated until the arbiter is enabled, so
-        -- it'll retain the last value of the request before the enable came.
-        if not sEnArb then
-          sReqBeforeEnable <= sAccReq;
-        end if;
-
-        -- This is the moment when the grant gets latched, so it's also the moment when we
-        -- make our check.
-        if sEnArb and not sHoldingGrant then
-          for i in sReqBeforeEnable'range loop
-            -- For each requester, if the request was asserted before, it should still be
-            -- asserted now.
-            if sReqBeforeEnable(i) = '1' then
-              assert sAccReq(i) = '1'
-                report "Stream # " & integer'image(i) &
-                " illegally rescinded its request during the Arbiter's enable period."
-                severity warning;
-            end if;
-          end loop;  -- i
-        end if;
-      end if;
-    end process Delays;
-
-  end block CheckForRescindedRequests;
-  --synthesis translate_on
-
-  -- Because we don't allow requests to be rescinded, we never have a need to assert the
-  -- "a request was rescinded" flag:
-  sStrmDone <= false;
-
-end architecture rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+gMcHP74wBZczB0bB0IzoP2xg5wC5NPjD/GsvSQ6VQgzYAsanETMwwsWi4yhFtJwv
+5kY07u0WerSDf8woJ0stqW5xF501W3JLIS8KMiCOd55RHBOnavjYiaaLeu7oUCmB
+TtTS1R4sO325rP2zOn9YwRbyyS5Ljn+PzFZZUmkt5xMca3p5NGqKtZW2dV6Babni
+5HlLuF20Au601B75m2nv+ZRoGSrpkNElxoTibONmX8gBflpIVE7BehhHwaKSucEF
+pp4QQ5zZAZjEC6aplZepouGVggAulz5AahlX5bf4opOVlB1J7IrgyjENtw6ysQ/q
+DzybQ+ipztSXBGhmcCVU3A==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="jAI3OJE9Sh00Sic4PtM/KZ4WjwT98XM8AMZrZsQkxWQ="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+hyw9IrFLPQsjvXplweG8O0lkaSLBN9Ijv4B5VdTRt6ipKJT9Kzsb5LxCKvkQyF9n
+sGPOd5i74hRHnkHfYISGkfxGJCa55ieOyFShOsqTKRLxclm4oja9vTIey6yFm1BZ
+54IDCG9h3PqfDiTD847UCSMRvFssyycwv+BRHQMQlFs=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="BnLuc3jxknmZOyxfJK70E5kp9u9O8IQ8cgkXv26kHA8="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 17440 )
+`protect data_block
+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
+eZ2GUTFB4hACHTYR8sCjzQ==
+`protect end_protected

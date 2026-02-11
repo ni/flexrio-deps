@@ -1,763 +1,805 @@
--------------------------------------------------------------------------------
---
--- File: PkgBaRegPort.vhd
--- Author: Glen Sescila
--- Original Project: NI DMA IP
--- Date: 19 July 2010
---
--------------------------------------------------------------------------------
--- (c) 2015 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
--- This RegPort implementation is byte addressable.  It is also designed for
--- both minimal gate count and pipelining.  Since data is not justified on the
--- data bus each register always connects to the same set of byte lanes.  This
--- eliminates the need for byte steering logic and reduces gate count compared
--- to the PkgRegPort nicore.  To facilitate pipelining this implementation uses
--- Strobe and Acknowledge pulses rather than the Holdoff signal from the
--- PkgRegPort nicore.  With the Holdoff signal the addressed register has a
--- bounded amount of time to assert Holdoff once it is accessed and the Holdoff
--- signals from all registers need to be OR'ed together.  The sum of pipeline
--- stages used to complete both of these operations cannot exceed the limited
--- amount of time.  With the Strobe and Acknowledge scheme it is easy to add
--- pipeline stages for decoding the address, OR'ing the Acknowledges, and
--- muxing the read data.  The number of pipeline stages for OR'ing the
--- Acknowledges needs to match the number used for muxing the read data.  The
--- number of pipeline stages can vary on a per-register or per-register group
--- basis.  Pipeline stages can optionally be added to the write data up to the
--- number used for address decoding on a per-register or group basis.
--- Pipelining is optional for write data and doesn't have to match the number
--- of stages used for address decoding exactly since the master is required to
--- keep write data stable from the state that WtStrobe asserts until the state
--- after Acknowledge.  The register is allowed to sample write data on any of
--- those states.
---
--- Note that care should be taken when pipelining address decodes.  Even though
--- the master is required to keep address valid until acknowledged, when the
--- access doesn't belong to you it could be acknowledged by someone else as
--- soon as the same state that strobes are asserted and you don't have
--- visibility of acknowledges from others.  When the access is yours you can
--- take advantage of the stable address but when it is someone else's your
--- pipeline stages should not inadvertently take action from the access.
--- Typically some form of the strobes should be pipelined along with the
--- address to ensure the address from the original strobe state is what's being
--- decoded.
---
--- The data width is configurable in this implementation.  With enough care a
--- design could be implemented in a data width agnostic way.  When the data bus
--- is narrower than the accessed register the hardware design should take care
--- to allow access to sub-portions of the register.  Note that the RegPort data
--- bus width doesn't necessarily limit the size of access that software can
--- perform natively.  If software initiates an access wider than the RegPort
--- data bus the access will be broken down into multiple cycles to increasing
--- address offsets by either the RegPort master circuitry or the system bus
--- itself.  When the data is wider than the accessed registers it may be
--- necessary for hardware to allow access to more than one register at a time.
--- In certain cases hardware is designed to expect that two particular
--- registers can't be written in the same state.  In such situations the
--- hardware should prevent such accesses through the definition of a
--- programming model that makes it illegal for software to perform such
--- accesses.  The functions in this package provide data and byte enable
--- interfaces that match the register size rather than the data bus width.
--- This should simplify implementing designs in a data bus width agnostic way.
---
--- It should be trivial to create a shim to interface other RegPort protocols
--- to this one if necessary.
---
--- It is important to only drive BaRegPortOut.Data in the state that
--- BaRegPortOut.Acknowledge is driven.  The reason for this is illustrated
--- below.  There are two registers (Reg1 and Reg2) at different depths
--- of pipelining.  Each register drives its RpOut.Ack 1 state after RpIn.Strobe.
--- If the registers drive RpOut.Data when their address is on the bus, the
--- following will occur.
---                  |-----|
---      RpIn -------|D  Q |---- RpIn2
---              |   |     |  |
---              |   |>    |  |
---              |   |_____|  |
---              |            |
---             Reg1         Reg2
---              |            |
---              |   |-----|  |
---      RpOut ------|Q   D|----- RpOut2
---                  |     |
---                  |    <|
---                  |_____|
---
---  Clock         __|--|__|--|__|--|__|--|__|--|__
---  RpIn.Strobe   ___|-----|_________________|-----|____________
---  RpIn.Addr     XXX| A2                    | A1              |XXX
---  RpIn2.Strobe  _________|-----|_________________|-----|______
---  RpIn2.Addr    XXXXXXXXX| A2                    | A1
---  RpOut2.Data   XXXXXXXXXXXXXXX| D2                    | 0
---  RpOut2.Ack    _______________|-----|____________________________
---  RpOut.Data    XXXXXXXXXXXXXXXXXXXXX| D2              | D1/2| 0
---  RpOut.Ack     _____________________|-----|___________|-----|______
---
--- Since the data from the access to Reg2 is still around during the access to
--- Reg1, the access to Reg1 is corrupted by Reg2's data being ORed in.
---
--- vreview_group NiDmaIp
--- vreview_closed http://review-board.natinst.com/r/218403/
--- vreview_closed http://review-board.natinst.com/r/154081/
--- vreview_closed http://review-board.natinst.com/r/151571/
--- vreview_closed http://review-board.natinst.com/r/149659/
---
--------------------------------------------------------------------------------
-
-library ieee;
-  use ieee.std_logic_1164.all;
-  use ieee.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-  use work.PkgXReg.all;
-  use work.PkgBaRegPortConfig.all;
-
-package PkgBaRegPort is
-
-  -- Make a package called PkgBaRegPortConfig that provides 2 constants of type
-  -- natural named kBaRegPortAddressWidthConfig and kBaRegPortDataWidthConfig.
-  -- This is how you configure the width of the address and data buses on
-  -- BaRegPort.  An example of this package can be found in the sample project.
-  -- Here is a P4 link:
-  -- //ASIC/NiGuidelines/ProjectSetup/vsmake3/dev/1.0/username/FpgaName/Source/VHDL/Packages/PkgBaRegPortConfig.vhd
-
-  -- These constants are just here to isolate the rest of the code in the design
-  -- from PkgBaRegPortConfig.
-  constant kBaRegPortAddressWidth : natural := kBaRegPortAddressWidthConfig;
-  constant kBaRegPortDataWidth : natural := kBaRegPortDataWidthConfig;
-
-  -- Derived constants.
-
-  constant kBaRegPortDataWidthInBytes : positive := kBaRegPortDataWidth / 8;
-  constant kBaRegPortByteWidthLog2 : natural := Log2(kBaRegPortDataWidthInBytes);
-
-
-  -- Base types.
-
-  subtype BaRegPortAddress_t is unsigned(kBaRegPortAddressWidth - 1 downto 0);
-
-  subtype BaRegPortData_t is std_logic_vector(kBaRegPortDataWidth - 1 downto 0);
-
-  subtype BaRegPortStrobe_t is BooleanVector(kBaRegPortDataWidthInBytes - 1 downto 0);
-
-  -- BaRegPort port types.  WtStrobe, RdStrobe, and Acknowledge are one-state
-  -- pulses.  The RegPort master must keep Address (and write Data during
-  -- writes) valid from the state in which *Strobe asserts until the state
-  -- after Acknowledge asserts as shown in the diagram below.  Acknowledge can
-  -- be asserted in the same state as *Strobe or any time later.  Read Data
-  -- should only be driven non zero in the state that Acknowledge asserts.  The
-  -- earliest that *Strobe can assert for an access is the state after
-  -- Acknowledge from the previous access.
-  --                __    __    __    __    __    __    __    __    __
-  --        clock _|  |__|  |__|  |__|  |__|  |__|  |__|  |__|  |__|  |_
-  --                      _________________ _________________
-  --      Address -------|_________________|_________________|----------
-  --                      _________________
-  --   write Data -------|_________________|----------------------------
-  --                      _____
-  --     WtStrobe _______|_____|________________________________________
-  --                                        _____
-  --     RdStrobe _________________________|_____|______________________
-  --                                                    _____
-  --    read Data -------------------------------------|_____|----------
-  --                                  _____             _____
-  --  Acknowledge ___________________|     |___________|     |__________
-
-  type BaRegPortIn_t is record
-    Address : BaRegPortAddress_t;
-    Data : BaRegPortData_t;
-    WtStrobe : BaRegPortStrobe_t;
-    RdStrobe : BaRegPortStrobe_t;
-  end record;
-
-  constant kBaRegPortInZero : BaRegPortIn_t := (
-    Address => (others => '0'),
-    Data => (others => '0'),
-    WtStrobe => (others => false),
-    RdStrobe => (others => false)
-  );
-
-  type BaRegPortInArray_t is array (natural range <>) of BaRegPortIn_t;
-
-  type BaRegPortOut_t is record
-    Data : BaRegPortData_t;
-    Ack : boolean;
-  end record;
-
-  constant kBaRegPortOutZero : BaRegPortOut_t := (
-    Data => (others => '0'),
-    Ack => false
-  );
-
-  type BaRegPortOutArray_t is array (natural range <>) of BaRegPortOut_t;
-
-  function SizeOf(Var : BaRegPortIn_t) return integer;
-  function SizeOf(Var : BaRegPortOut_t) return integer;
-
-  -- Use RegAccess to drive ack, this function only looks at the address.
-  -- Decodes the address for a particular register.  Will be true if any data
-  -- bus word within the register is addressed.
-  function RegSelected(RegOffset : integer;
-                       RegSize : integer;
-                       BaRegPortIn : BaRegPortIn_t) return boolean;
-
-  -- Returns true when the address of the current access matches any value between
-  -- AddrLo and AddrHi (including AddrLo and AddrHi)
-  function RangeSelected (AddrLo, AddrHi : integer; RPI : BaRegPortIn_t) return boolean;
-
-  -- Creates per-byte write enables for a particular register.  Output matches
-  -- register size regardless of data bus width.
-  function RegWriteEnables(RegOffset : integer;
-                           RegSize : integer;
-                           BaRegPortIn : BaRegPortIn_t) return BooleanVector;
-  -- Behaves the same as the function above but takes advantage of PkgXReg
-  function RegWriteEnables(RegInfo : XReg2_t;
-                           BaRegPortIn : BaRegPortIn_t;
-                           BaseAddr : natural := 0) return BooleanVector;
-
-  -- Creates write data for a particular register.  Output matches register
-  -- size regardless of data bus width.  This function needs to be qualified with
-  -- the write strobes by using RegWriteEnables.
-  function RegWriteData(RegOffset : integer;
-                        RegSize : integer;
-                        BaRegPortIn : BaRegPortIn_t) return std_logic_vector;
-  -- Creates updated write data for a register.  Takes in the old register data, and
-  -- only updates the bytes that were written.  The return value only differs from
-  -- OldData for each byte lane whose write strobe is asserted.
-  function RegWriteData(RegOffset : integer;
-                        RegSize : integer;
-                        OldData : std_logic_vector;
-                        BaRegPortIn : BaRegPortIn_t) return std_logic_vector;
-  -- Behaves the same as the function above but takes advantage of PkgXReg.
-  -- Note that if the register is not marked as writable by RegInfo this
-  -- function just always returns OldData.
-  -- Also this implements a special behavior for strobe bitfields (data is cleared if
-  --  register is not written).
-  -- Note for bitfields with clearable attribute: regmap constants created with older
-  --  versions of XmlParse or PkgXReg will not have information to identify a bitfield
-  --  as clearable. For newer versions, those bitfields will be considered strobes here.
-  function RegWriteData(RegInfo : XReg2_t;
-                        OldData : std_logic_vector;
-                        BaRegPortIn : BaRegPortIn_t;
-                        BaseAddr : natural := 0) return std_logic_vector;
-
-  -- Creates per-byte read enables for a particular register.  Output matches
-  -- register size regardless of data bus width.
-  function RegReadEnables(RegOffset : integer;
-                          RegSize : integer;
-                          BaRegPortIn : BaRegPortIn_t) return BooleanVector;
-  -- Behaves the same as the function above but takes advantage of PkgXReg
-  function RegReadEnables(RegInfo : XReg2_t;
-                          BaRegPortIn : BaRegPortIn_t;
-                          BaseAddr : natural := 0) return BooleanVector;
-
-  -- Creates read data for a particular register.  The data input to this
-  -- function is the size of the register while the output is sized to match
-  -- the data bus.  The output is appropriate for use in a BaRegPortOut_t
-  -- signal since it is forced to 0 when the register is not addressed.
-  function RegReadData(RegOffset : integer;
-                       RegSize : integer;
-                       RegReadValue : std_logic_vector;
-                       BaRegPortIn : BaRegPortIn_t) return BaRegPortData_t;
-  -- Behaves the same as the function above but takes advantage of PkgXReg.
-  -- Note that if the register is not marked as readable by RegInfo this
-  -- function just always returns 0.
-  function RegReadData(RegInfo : XReg2_t;
-                       RegReadValue : std_logic_vector;
-                       BaRegPortIn : BaRegPortIn_t;
-                       BaseAddr : natural := 0) return BaRegPortData_t;
-
-  -- This function returns true if any read or write strobe to the register is
-  -- asserted.  Note that this function will return true if a read-only
-  -- register is written or a write only register is read.
-  function RegAccess(RegOffset : integer;
-                     RegSize : integer;
-                     BaRegPortIn : BaRegPortIn_t) return boolean;
-  -- This function returns true if any strobe to the register is asserted,
-  -- taking into account whether the register is marked as readable and/or
-  -- writable by the RegInfo parameter.
-  function RegAccess(RegInfo : XReg2_t;
-                     BaRegPortIn : BaRegPortIn_t;
-                     BaseAddr : natural := 0) return boolean;
-
-  -- This function can be used to drive BaRegPortOut directly for a particular
-  -- register.  When driving Ack this function takes into account whether the
-  -- register is marked as readable and/or writable by the RegInfo parameter.
-  -- The RegReadValue parameter is unused for write-only registers.
-  function DriveRegPortOut(RegInfo : XReg2_t;
-                           RegReadValue : std_logic_vector;
-                           BaRegPortIn : BaRegPortIn_t;
-                           BaseAddr : natural := 0) return BaRegPortOut_t;
-  -- This function is the same as the one above but is more convenient for
-  -- write-only registers (no RegReadValue parameter).
-  function DriveRegPortOut(RegInfo : XReg2_t;
-                           BaRegPortIn : BaRegPortIn_t;
-                           BaseAddr : natural := 0) return BaRegPortOut_t;
-
-  -- The two functions below combine multiple BaRegPortOut_t records into one.
-  function "or" (L, R : BaRegPortOut_t) return BaRegPortOut_t;
-  function OrArray(BaRegPortOutArray : BaRegPortOutArray_t) return BaRegPortOut_t;
-  
-  -- Resize unsigned to BaRegPortAddress_t
-  function BaAddrResize(Offset : unsigned) return BaRegPortAddress_t;
-
-  -- Return a modified BaRegPortIn_t that has its address adjusted according to
-  -- the base address and disables WtStrobe and RdStrobe if the incoming address
-  -- is outside of the Base/Size range.
-  function WindowBaRegPortIn (kBase, kSize : natural;
-                              BaRegPortIn : BaRegPortIn_t) return BaRegPortIn_t;
-  function WindowBaRegPortIn (RegInfo : XReg2_t;
-                              BaRegPortIn : BaRegPortIn_t) return BaRegPortIn_t;
-
-end PkgBaRegPort;
-
-package body PkgBaRegPort is
-
-  function SizeOf(Var : BaRegPortIn_t) return integer is
-    variable RetVal : integer := 0;
-  begin
-    RetVal := RetVal + Var.Address'length;   -- Address
-    RetVal := RetVal + Var.Data'length;      -- Data
-    RetVal := RetVal + Var.WtStrobe'length;  -- WtStrobe
-    RetVal := RetVal + Var.RdStrobe'length;  -- RdStrobe
-    return RetVal;
-  end function SizeOf;
-
-  function SizeOf(Var : BaRegPortOut_t) return integer is
-    variable RetVal : integer := 0;
-  begin
-    RetVal := RetVal + Var.Data'length;  -- Data
-    RetVal := RetVal + 1;                -- Ack
-    return RetVal;
-  end function SizeOf;
-
-  -- Return the equivalent of Offset mod kBaRegPortDataWidthInBytes, but
-  -- without converting Offset to integer first. This allows values bigger
-  -- than 2^31 to work.
-  function OffsetMod (Offset : BaRegPortAddress_t) return integer is
-  begin
-    return To_Integer(Offset(kBaRegPortByteWidthLog2-1 downto 0));
-  end function OffsetMod;
-
-  -- Return unsigned version of a natural/integer offset
-  function To_BaAddr(Offset : natural) return BaRegPortAddress_t is
-  begin
-    return To_Unsigned(Offset, kBaRegPortAddressWidth);
-  end function To_BaAddr;
-
-  -- Return resized offset
-  function BaAddrResize(Offset : unsigned) return BaRegPortAddress_t is
-  begin
-    return resize(Offset, kBaRegPortAddressWidth);
-  end function BaAddrResize;
-
-  -- Returns true when the address is accessing a bus data word that contains
-  -- at least one byte of the register in question.  Since we have a separate
-  -- strobe for each byte lane we don't particularly care about the least
-  -- significant address bits.
-  function RegSelected(RegOffset : BaRegPortAddress_t;
-                       RegSize : integer;
-                       BaRegPortIn : BaRegPortIn_t) return boolean is
-    -- There are two cases.  If the register size is less than or equal to the
-    -- data bus width we check that the address is accessing the data bus word
-    -- that contains the register.  The strobes will then determine if the
-    -- actual portion of the data bus where the register is located is being
-    -- accessed.  If the register size is larger than the data bus width this
-    -- function has to decode the address based on the register size.  In this
-    -- case the decode is indicating that one of the data words that are part
-    -- of the register is being accessed.  Subsequent functions will have to
-    -- look at the least significant address bits to determine which word is
-    -- being accessed.
-    constant kUseWidth : integer := Larger(kBaRegPortDataWidthInBytes,
-                                           (RegSize / 8));
-  begin
-    --synopsys translate_off
-    assert (RegSize >= 8) and ((RegSize mod 8) = 0) and IsPowerOf2(RegSize)
-      report "Register size must be a power-of-two multiple of eight."
-      severity FAILURE;
-    assert (RegOffset mod (RegSize / 8)) = 0
-      report "Register offset must be naturally aligned to the register size."
-      severity FAILURE;
-    --synopsys translate_on
-    return (BaRegPortIn.Address(BaRegPortIn.Address'high downto Log2(kUseWidth)) =
-            (RegOffset / kUseWidth));
-  end function RegSelected;
-
-  -- Integer version of RegSelected
-  function RegSelected(RegOffset : integer;
-                       RegSize : integer;
-                       BaRegPortIn : BaRegPortIn_t) return boolean is
-  begin
-    return RegSelected(To_BaAddr(RegOffset), RegSize, BaRegPortIn);
-  end function RegSelected;
-
-  -- Returns true when the address of the current access matches any value between
-  -- AddrLo and AddrHi (including AddrLo and AddrHi)
-  function RangeSelected (AddrLo, AddrHi : BaRegPortAddress_t;
-                          RPI : BaRegPortIn_t) return boolean is
-  begin
-    --synopsys translate_off
-    assert (AddrHi > AddrLo) and (OffsetMod(AddrLo) = 0) and (OffsetMod(AddrHi + 1) = 0)
-      report "Range cannot cross data bus word boundaries."
-      severity FAILURE;
-    --synopsys translate_on
-    return (RPI.Address >= AddrLo) and
-           (RPI.Address <= AddrHi) and
-           (OrVector(RPI.RdStrobe) or OrVector(RPI.WtStrobe));
-  end function RangeSelected;
-
-  -- Integer version of RangeSelected
-  function RangeSelected (AddrLo, AddrHi : integer; RPI : BaRegPortIn_t) return boolean is
-  begin
-    return RangeSelected(To_BaAddr(AddrLo), To_BaAddr(AddrHi), RPI);
-  end function RangeSelected;
-
-  -- Returns enables appropriate for gating writes or reads to each byte of a
-  -- particular register.  The output of this function matches the size of the register
-  -- even if the register is wider than the data bus.
-  function RegEnables(RegOffset : BaRegPortAddress_t;
-                      RegSize : integer;
-                      BaRegPortIn : BaRegPortIn_t;
-                      DoWt : boolean := true) return BooleanVector is
-    variable RegWord : integer;
-    variable RetVal : BooleanVector(RegSize / 8 - 1 downto 0) := (others => false);
-    variable Strobes : BaRegPortStrobe_t;
-  begin
-    if DoWt then Strobes := BaRegPortIn.WtStrobe;
-            else Strobes := BaRegPortIn.RdStrobe;
-    end if;
-    if RegSelected(RegOffset, RegSize, BaRegPortIn) then
-      if RegSize <= kBaRegPortDataWidth then
-        -- If the register is smaller than the data bus, then we can return the slice
-        -- of the write enables that correspond to the lower bits of the register's offset
-        -- up to the register's size.
-        -- For example, if the register is 32 bits, but the bus is 64, then the
-        -- access would select WtStrobe(3:0). A 16-bit register with an address of 2
-        -- would select WtStrobe(3:2).
-        RetVal := Strobes(OffsetMod(RegOffset)+RegSize/8-1 downto OffsetMod(RegOffset));
-      else
-        -- If the register is larger than the data bus, then we assign Strobes to
-        -- the appropriate slice of RetVal
-        RegWord := To_Integer(BaRegPortIn.Address(Log2(RegSize/8)-1 downto kBaRegPortByteWidthLog2))
-                       * kBaRegPortDataWidthInBytes;
-        for i in BaRegPortStrobe_t'range loop
-          RetVal(RegWord + i) := Strobes(i);
-        end loop;
-      end if;
-    end if;
-    return RetVal;
-  end function RegEnables;
-
-  -- Returns enables appropriate for gating writes to each byte of a particular
-  -- register.  The output of this function matches the size of the register
-  -- even if the register is wider than the data bus.
-  function RegWriteEnables(RegOffset : BaRegPortAddress_t;
-                           RegSize : integer;
-                           BaRegPortIn : BaRegPortIn_t) return BooleanVector is
-  begin
-    return RegEnables(RegOffset, RegSize, BaRegPortIn, DoWt=>true);
-  end function RegWriteEnables;
-
-  -- Integer version of RegWriteEnables.
-  function RegWriteEnables(RegOffset : integer;
-                           RegSize : integer;
-                           BaRegPortIn : BaRegPortIn_t) return BooleanVector is
-  begin
-    return RegEnables(To_BaAddr(RegOffset), RegSize, BaRegPortIn, DoWt=>true);
-  end function RegWriteEnables;
-
-  -- XReg2 version of RegWriteEnables
-  function RegWriteEnables(RegInfo : XReg2_t;
-                           BaRegPortIn : BaRegPortIn_t;
-                           BaseAddr : natural := 0) return BooleanVector is
-  begin
-    return RegWriteEnables(BaAddrResize(BaseAddr + RegInfo.offset), RegInfo.size, BaRegPortIn);
-  end function RegWriteEnables;
-
-  -- Returns write data appropriate for a particular register.  The output of
-  -- this function matches the size of the register even if the register is
-  -- wider than the data bus.  Since RegOffset and RegSize should be constants
-  -- this function should synthesize to zero gates.
-  function RegWriteData(RegOffset : BaRegPortAddress_t;
-                        RegSize : integer;
-                        BaRegPortIn : BaRegPortIn_t) return std_logic_vector is
-    variable RetVal : std_logic_vector(RegSize - 1 downto 0);
-  begin
-    if RegSize <= kBaRegPortDataWidth then
-      RetVal := BaRegPortIn.Data(OffsetMod(RegOffset)*8+RegSize-1 downto OffsetMod(RegOffset)*8);
-    else
-      for i in 0 to (RegSize / kBaRegPortDataWidth) - 1 loop
-        RetVal((i+1)*kBaRegPortDataWidth-1 downto i*kBaRegPortDataWidth) := BaRegPortIn.Data;
-      end loop;
-    end if;
-    return RetVal;
-  end function RegWriteData;
-
-  -- Integer version of RegWriteData.
-  function RegWriteData(RegOffset : integer;
-                        RegSize : integer;
-                        BaRegPortIn : BaRegPortIn_t) return std_logic_vector is
-  begin
-    return RegWriteData(To_BaAddr(RegOffset), RegSize, BaRegPortIn);
-  end function RegWriteData;
-
-  -- Creates updated write data for a register.  Takes in the old register data, and
-  -- only updates the bytes that were written.  The return value only differs from
-  -- OldData for each byte lane whose write strobe is asserted.
-  function RegWriteData(RegOffset : integer;
-                        RegSize : integer;
-                        OldData : std_logic_vector;
-                        BaRegPortIn : BaRegPortIn_t) return std_logic_vector is
-    variable ByteEnables : BooleanVector(RegSize / 8 - 1 downto 0);
-    variable NewData : std_logic_vector(RegSize - 1 downto 0);
-    variable ReturnVal : std_logic_vector(RegSize - 1 downto 0) := OldData;
-  begin
-    --synopsys translate_off
-    assert OldData'length = RegSize
-      report "RegSize must match data length"
-      severity FAILURE;
-    --synopsys translate_on
-    ByteEnables := RegWriteEnables(RegOffset, RegSize, BaRegPortIn);
-    NewData := RegWriteData(RegOffset, RegSize, BaRegPortIn);
-    for i in ByteEnables'range loop
-      if ByteEnables(i) then
-        ReturnVal(8*i + 7 downto 8*i) := NewData(8*i + 7 downto 8*i);
-      end if;
-    end loop;
-    return ReturnVal;
-  end function RegWriteData;
-
-  -- Behaves similar to the function above but takes advantage of PkgXReg.
-  -- Differences:
-  --   1. If the register is not marked as writable by RegInfo this
-  --      function just always returns OldData.
-  --   2. Strobe bits are masked off from OldData
-  --   3. BaseAddr argument allows base address to be added to RegInfo.offset
-  --   4. Bits that are not writable always return OldData
-  function RegWriteData(RegInfo : XReg2_t;
-                        OldData : std_logic_vector;
-                        BaRegPortIn : BaRegPortIn_t;
-                        BaseAddr : natural := 0) return std_logic_vector is
-    variable ByteEnables : BooleanVector(RegInfo.size / 8 - 1 downto 0);
-    variable WtMask, NewData, ReturnVal : std_logic_vector(RegInfo.size - 1 downto 0);
-  begin
-    --synopsys translate_off
-    assert OldData'length = RegInfo.size
-      report "RegInfo.size must match data length"
-      severity FAILURE;
-    --synopsys translate_on
-    -- ReturnVal starts out as OldData, with the strobe bits masked off
-    ReturnVal := OldData and not GetStrobeMask(RegInfo);
-    -- If the register is writable, then process the write, otherwise the
-    -- old data will be returned
-    if RegInfo.writable then
-      -- Figure out the byte enables and the value being written
-      ByteEnables := RegWriteEnables(RegInfo, BaRegPortIn, BaseAddr);
-      NewData := RegWriteData(BaAddrResize(BaseAddr + RegInfo.offset), RegInfo.size, BaRegPortIn);
-      WtMask := GetWtMask(RegInfo);
-      -- For each byte that is enabled, update any writable bits
-      for i in ByteEnables'range loop
-        if ByteEnables(i) then
-          for b in 8*i to 8*i+7 loop
-            if WtMask(b)='1' then
-              ReturnVal(b) := NewData(b);
-            end if;
-          end loop;
-        end if;
-      end loop;
-    end if;
-    return ReturnVal;
-  end function RegWriteData;
-
-  -- Returns enables appropriate for gating reads to each byte of a particular
-  -- register.  The output of this function matches the size of the register
-  -- even if the register is wider than the data bus.
-  function RegReadEnables(RegOffset : BaRegPortAddress_t;
-                          RegSize : integer;
-                          BaRegPortIn : BaRegPortIn_t) return BooleanVector is
-  begin
-    return RegEnables(RegOffset, RegSize, BaRegPortIn, DoWt=>false);
-  end function RegReadEnables;
-
-  -- Integer version of RegReadEnables.
-  function RegReadEnables(RegOffset : integer;
-                          RegSize : integer;
-                          BaRegPortIn : BaRegPortIn_t) return BooleanVector is
-  begin
-    return RegEnables(To_BaAddr(RegOffset), RegSize, BaRegPortIn, DoWt=>false);
-  end function RegReadEnables;
-
-  -- XReg version of RegReadEnables
-  function RegReadEnables(RegInfo : XReg2_t;
-                          BaRegPortIn : BaRegPortIn_t;
-                          BaseAddr : natural := 0) return BooleanVector is
-  begin
-    return RegReadEnables(BaAddrResize(BaseAddr + RegInfo.offset), RegInfo.size, BaRegPortIn);
-  end function RegReadEnables;
-
-  -- Creates the data field of a BaRegPortOut_t record from a particular
-  -- register's read value.
-  function RegReadData(RegOffset : BaRegPortAddress_t;
-                       RegSize : integer;
-                       RegReadValue : std_logic_vector;
-                       BaRegPortIn : BaRegPortIn_t) return BaRegPortData_t is
-    alias LocalData : std_logic_vector(RegReadValue'length - 1 downto 0) is RegReadValue;
-    variable RegByte : integer;
-    variable RetVal : BaRegPortData_t := (others => '0');
-  begin
-    --synopsys translate_off
-    assert RegReadValue'length = RegSize
-      report "Register read value must match register size."
-      severity FAILURE;
-    --synopsys translate_on
-    if RegSelected(RegOffset, RegSize, BaRegPortIn) then
-      if RegSize <= kBaRegPortDataWidth then
-        RetVal(OffsetMod(RegOffset)*8+RegSize-1 downto OffsetMod(RegOffset)*8) := LocalData;
-      else
-        RegByte := to_integer(BaRegPortIn.Address(Log2(RegSize / 8) - 1 downto
-                       kBaRegPortByteWidthLog2)) *
-                       kBaRegPortDataWidth;
-        RetVal := LocalData(RegByte + kBaRegPortDataWidth - 1 downto RegByte);
-      end if;
-    end if;
-    return RetVal;
-  end function RegReadData;
-
-  -- Integer version of RegReadData.
-  function RegReadData(RegOffset : integer;
-                       RegSize : integer;
-                       RegReadValue : std_logic_vector;
-                       BaRegPortIn : BaRegPortIn_t) return BaRegPortData_t is
-  begin
-    return RegReadData(To_BaAddr(RegOffset), RegSize, RegReadValue, BaRegPortIn);
-  end function RegReadData;
-
-  -- Behaves the same as the function above but takes advantage of PkgXReg.
-  -- Note that if the register is not marked as readable by RegInfo this
-  -- function just always returns 0.
-  function RegReadData(RegInfo : XReg2_t;
-                       RegReadValue : std_logic_vector;
-                       BaRegPortIn : BaRegPortIn_t;
-                       BaseAddr : natural := 0) return BaRegPortData_t is
-    variable RetVal : BaRegPortData_t := (others => '0');
-    variable RdData : std_logic_vector(RegReadValue'length - 1 downto 0) := RegReadValue;
-  begin
-    RdData := RdData and GetRdMask(RegInfo);
-    if RegInfo.readable then
-      RetVal := RegReadData(BaAddrResize(BaseAddr + RegInfo.offset), RegInfo.size, RdData, BaRegPortIn);
-    end if;
-    return RetVal;
-  end function RegReadData;
-
-  -- This function returns true if any read or write strobe to the register is
-  -- asserted.  Note that this function will return true if a read-only
-  -- register is written or a write only register is read.
-  function RegAccess(RegOffset : integer; RegSize : integer;
-                     BaRegPortIn : BaRegPortIn_t) return boolean is
-  begin
-    return OrVector(RegWriteEnables(RegOffset, RegSize, BaRegPortIn)) or
-           OrVector(RegReadEnables(RegOffset, RegSize, BaRegPortIn));
-  end function RegAccess;
-
-  -- This function returns true if any strobe to the register is asserted,
-  -- taking into account whether the register is marked as readable and/or
-  -- writable by the RegInfo parameter.
-  function RegAccess(RegInfo : XReg2_t;
-                     BaRegPortIn : BaRegPortIn_t;
-                     BaseAddr : natural := 0) return boolean is
-  begin
-    return (OrVector(RegWriteEnables(RegInfo, BaRegPortIn, BaseAddr)) and RegInfo.writable) or
-           (OrVector(RegReadEnables(RegInfo, BaRegPortIn, BaseAddr)) and RegInfo.readable);
-  end function RegAccess;
-
-  -- This function can be used to drive BaRegPortOut directly for a particular
-  -- register.  When driving Ack this function takes into account whether the
-  -- register is marked as readable and/or writable by the RegInfo parameter.
-  -- The RegReadValue parameter is unused for write-only registers.
-  function DriveRegPortOut(RegInfo : XReg2_t;
-                           RegReadValue : std_logic_vector;
-                           BaRegPortIn : BaRegPortIn_t;
-                           BaseAddr : natural := 0) return BaRegPortOut_t is
-    variable Accessed : boolean;
-    variable ReturnVal : BaRegPortOut_t := kBaRegPortOutZero;
-  begin
-    Accessed := RegAccess(RegInfo, BaRegPortIn, BaseAddr);
-    if RegInfo.readable and Accessed then
-      ReturnVal.Data := RegReadData(RegInfo, RegReadValue, BaRegPortIn, BaseAddr);
-    end if;
-    ReturnVal.Ack := Accessed;
-    return ReturnVal;
-  end function DriveRegPortOut;
-
-  -- This function is the same as the one above but is more convenient for
-  -- write-only registers (no RegReadValue parameter).
-  function DriveRegPortOut(RegInfo : XReg2_t;
-                           BaRegPortIn : BaRegPortIn_t;
-                           BaseAddr : natural := 0) return BaRegPortOut_t is
-  begin
-    --synopsys translate_off
-    assert not RegInfo.readable
-      report "Readable registers need a RegReadValue."
-      severity FAILURE;
-    --synopsys translate_on
-    return DriveRegPortOut(RegInfo, Zeros(RegInfo.size), BaRegPortIn, BaseAddr);
-  end function DriveRegPortOut;
-
-  -- Combine two BaRegPortOut_t busses together into a common bus.
-  function "or" (L, R : BaRegPortOut_t) return BaRegPortOut_t is
-    variable RetVal : BaRegPortOut_t;
-  begin
-    RetVal.Data := L.Data or R.Data;
-    RetVal.Ack := L.Ack or R.Ack;
-    return RetVal;
-  end function "or";
-
-  -- OR all the elements of an array of BaRegPortOut_t.
-  function OrArray(BaRegPortOutArray : BaRegPortOutArray_t) return BaRegPortOut_t is
-    variable RetVal : BaRegPortOut_t := kBaRegPortOutZero;
-  begin
-    for i in BaRegPortOutArray'range loop
-      RetVal := RetVal or BaRegPortOutArray(i);
-    end loop;
-    return RetVal;
-  end function OrArray;
-
-  -- Return a modified BaRegPortIn_t that has its address adjusted according to
-  -- the base address and disables WtStrobe and RdStrobe if the incoming address
-  -- is outside of the Base/Size range.
-  function WindowBaRegPortIn (kBase, kSize : natural;
-                              BaRegPortIn : BaRegPortIn_t) return BaRegPortIn_t is
-    variable RPI : BaRegPortIn_t;
-  begin
-    --synopsys translate_off
-    assert (kBase mod kBaRegPortDataWidthInBytes = 0) and (kSize mod kBaRegPortDataWidthInBytes = 0)
-      report "Window cannot cross data bus word boundaries."
-      severity FAILURE;
-    --synopsys translate_on
-    RPI := BaRegPortIn;
-      RPI.Address := BaRegPortIn.Address - kBase;
-    if not RangeSelected(AddrLo=>kBase, AddrHi=>kBase+kSize-1, RPI=>BaRegPortIn) then
-      RPI.WtStrobe := (others => false);
-      RPI.RdStrobe := (others => false);
-    end if;
-    return RPI;
-  end function WindowBaRegPortIn;
-
-  -- XReg2_t version of WindowBaRegPortIn
-  function WindowBaRegPortIn (RegInfo : XReg2_t;
-                              BaRegPortIn : BaRegPortIn_t) return BaRegPortIn_t is
-  begin
-    --synopsys translate_off
-    assert not RegInfo.isreg
-      report "WindowBaRegPortIn must be called on a RAM or a Window"
-      severity failure;
-    --synopsys translate_on
-    return WindowBaRegPortIn(kBase=>GetOffset(RegInfo), kSize=>GetSize(RegInfo), BaRegPortIn=>BaRegPortIn);
-  end function WindowBaRegPortIn;
-
-end PkgBaRegPort;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+gMcHP74wBZczB0bB0IzoP2xg5wC5NPjD/GsvSQ6VQgzYAsanETMwwsWi4yhFtJwv
+5kY07u0WerSDf8woJ0stqW5xF501W3JLIS8KMiCOd55RHBOnavjYiaaLeu7oUCmB
+TtTS1R4sO325rP2zOn9YwRbyyS5Ljn+PzFZZUmkt5xMca3p5NGqKtZW2dV6Babni
+5HlLuF20Au601B75m2nv+ZRoGSrpkNElxoTibONmX8gBflpIVE7BehhHwaKSucEF
+pp4QQ5zZAZjEC6aplZepouGVggAulz5AahlX5bf4opOVlB1J7IrgyjENtw6ysQ/q
+DzybQ+ipztSXBGhmcCVU3A==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="jAI3OJE9Sh00Sic4PtM/KZ4WjwT98XM8AMZrZsQkxWQ="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+hyw9IrFLPQsjvXplweG8O0lkaSLBN9Ijv4B5VdTRt6ipKJT9Kzsb5LxCKvkQyF9n
+sGPOd5i74hRHnkHfYISGkfxGJCa55ieOyFShOsqTKRLxclm4oja9vTIey6yFm1BZ
+54IDCG9h3PqfDiTD847UCSMRvFssyycwv+BRHQMQlFs=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="BnLuc3jxknmZOyxfJK70E5kp9u9O8IQ8cgkXv26kHA8="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 36368 )
+`protect data_block
+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
+`protect end_protected

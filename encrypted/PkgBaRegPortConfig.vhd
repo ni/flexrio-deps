@@ -1,36 +1,78 @@
--------------------------------------------------------------------------------
---
--- File: PkgBaRegPortConfig.vhd
--- Author: James Gorman
--- Original Project: NI DMA IP
--- Date: 11 Feburary 2015
---
--------------------------------------------------------------------------------
--- (c) 2015 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
--- Configures the with of the address and data on Reg Port.
--- Each design will modify this package based on the application requirements.
--------------------------------------------------------------------------------
---
--- vreview_group CommonFixedLogic
--- vreview_closed http://review-board.natinst.com/r/313040/
--- vreview_reviewers kygreen dhearn esalinas hrubio lboughal rcastro
---
-------------------------------------------------------------------------------------------
-
-package PkgBaRegPortConfig is
-
-  --Allowing BaRegport to see the whole Local address space, including the
-  -- ConfigMemoryWindow which has visibility of the whole configuration flash without
-  -- windowing.
-
-  -- The setting of 28 matches (at the time of this writing) the configuration for the
-  -- Gen3 InchWorm.
-  constant kBaRegPortAddressWidthConfig : natural := 28;
-  constant kBaRegPortDataWidthConfig    : natural := 64;
-
-end PkgBaRegPortConfig;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+gMcHP74wBZczB0bB0IzoP2xg5wC5NPjD/GsvSQ6VQgzYAsanETMwwsWi4yhFtJwv
+5kY07u0WerSDf8woJ0stqW5xF501W3JLIS8KMiCOd55RHBOnavjYiaaLeu7oUCmB
+TtTS1R4sO325rP2zOn9YwRbyyS5Ljn+PzFZZUmkt5xMca3p5NGqKtZW2dV6Babni
+5HlLuF20Au601B75m2nv+ZRoGSrpkNElxoTibONmX8gBflpIVE7BehhHwaKSucEF
+pp4QQ5zZAZjEC6aplZepouGVggAulz5AahlX5bf4opOVlB1J7IrgyjENtw6ysQ/q
+DzybQ+ipztSXBGhmcCVU3A==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="jAI3OJE9Sh00Sic4PtM/KZ4WjwT98XM8AMZrZsQkxWQ="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+hyw9IrFLPQsjvXplweG8O0lkaSLBN9Ijv4B5VdTRt6ipKJT9Kzsb5LxCKvkQyF9n
+sGPOd5i74hRHnkHfYISGkfxGJCa55ieOyFShOsqTKRLxclm4oja9vTIey6yFm1BZ
+54IDCG9h3PqfDiTD847UCSMRvFssyycwv+BRHQMQlFs=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="BnLuc3jxknmZOyxfJK70E5kp9u9O8IQ8cgkXv26kHA8="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 1456 )
+`protect data_block
+xABArkLxBOK6xG+7CdOOiGu0zbCbHMrEntFfAZEE/xRFxZaAZl1QLkuFI77OC2KL
+XxG/mrHJzO3taVHgwRXNLDdc8ePbxbAiQfzV3NJLBO+gsBjmIymaCa480cPNpHLx
+EiggSl0xPd/AJHEZui0eXp63fuzgPIxPcFF/bAnsijrFZGehi/Sc8COxGklrWBuJ
+eT0GPjl3nCUF1zuGZ0yBW3FC6F7AGoA9BJOg+01oyIZGJkmOPY0P0I4HeYDoCTQP
+c2H4J5sGmZv0is0B3FrygujbAJsGbeFe0x7eHFr0oUjFfrqO2ZErYoszmCoeJ7Os
+xCROnTB4ki/rzuKjNatNZ5MlQ/e8JxKxzzpot26YZw8d/vAS5wrPZfbr5kWTE891
+YeFyOA106docfWRCZ4MBNWBy+Kdj7BtWN6QoLRCdudFjFk0gomonhzdaulTqK9ph
+wC/1d6X+6OJ+VQiWnQnyYzB2D4TximzyXKmkw1yjknJQLClO/rcUmsF39pZB1x//
+09mMhRqf5a6M7YsPq/W5blz0giIi71h+UWvIhqRRM9WA8/7+hhrquRzoeQQs32OY
+6QmBMQcTkio2GhIwBoV4hldtQHuKLBJNYVWAcceKaCSJCBtwfY23C+o5/awUpnFD
+NalcQ7uOBbfJB7V0HzcFwkwD0VX2RhXhiwRC1/pIMXeUm6ONbMnb5umplzLh4X5b
+1MY860Tx1d3p/5I5nw8LIOcSztuOwM0Ag9KPJVqH3GzlERd7/ImAWiodwwP7JAPk
+EQcl5UKH+3BwWygNNgFC+ms+USO0sfWXnVrLuUWDclrE+7ZQAue26btYRuHhhqA7
+RHqH3i8MYtZQjCPGWDB7/aZ74t7259UwTt1KVKuXl8+6y6OrXQIQ32ZYdETfvI/r
+uJGtkZ60NXbvxCmUdDwnXGCi+Eyyf0thU3G7XcDZLhfmdv76jCXvdjB6NouWZFc/
+YlJFJ9rnprjhsT8x4I4viw0BKBASK6N7fJDXvo2on/Wcyn9mYylfyHgTk8pPn50P
+ZdNGreQ/64tYB1N4LNNdDZHgC1hSGzVO5dCn8RE/Za5yZOfwBSMvsfgmBTszyDrV
+CempBfF47It2s4C8/jVNjnuTPplb2Z2DqO1TvJaK5XIPWnUpLzXr6pxRiIK6pmfe
+y8SFCUcbrEz+FpsGsVBdIpo5FerQ9bAa5TqeGz3S1g1+lSQQjRTHWbf+uTldiTmg
+eBDc8kMpNbmtavHlwBMzKbHYhDv8cizGSVF1bN2hbFAEw7ToczEJ4Jy1uAj/yanz
+mvT2q54I2Uxe1D4m+bYfuBNrsQP3XXxN/ZPy5k1aVeWzZcXw2VZYRZAW7dXfLIbW
+OaO8M0YlFB1ewv+JAPaegQ8+LZJX1WRfRLWoYhp2ytzdbtkMS3X7TlYO1nut/F9e
+nhRdB9Ei9DAOhUANCtZ46LOUMPZPa0t5UvPbGKRBdDjerXa1isuujHGk26cJP5Sk
+pIXY9W8TWSDNZwcZPjsQH59EENHnl04WBEAESlmlmvcKzDOe/aVG9P89SfMug+ob
+4WjpuBQWG71dVhxpXTjuhx07hEQUsHhN4pzZHof+J0rMScJTzRvhxQ43tglfPsEo
+mTFtSLwRHe8ToL2qgbwADBIdrfwhLSA80JKz+W1KTt8l/xTvCghp460VBzOzQrRG
+XB3KQGnUw9GqK6UXyseK9a9vFM2gU6yCXn/bKEBrKz7csQj47gJ2yCOWWpzUUJhY
+qTtsBPR00H2YxyLDL3GzQk39IJHDSLhzI2zZWkQMneoeFA1ZYAsbmw3Xq66NFJjb
+TxPZ7YVJlRf/wpHTx+Dp09vPaBUAbtGqPQU3qCMvHUy8Zq7yNq3iSoT/bK6vbY4p
+Z8XyhVDxkKPDyies66zwtkp95Fv2DeLdX8TnbJWIijqcKkUFyh0cEBOy/BKd1NPP
+oBjfgvJv9zgx9cv/3aIJNw==
+`protect end_protected
