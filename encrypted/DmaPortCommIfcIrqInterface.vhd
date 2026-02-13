@@ -1,147 +1,138 @@
--------------------------------------------------------------------------------
---
--- File: DmaPortCommIfcIrqInterface.vhd
--- Author: Matthew Koenn
--- Original Project: LvFpga Communication Interface
--- Date: 26 June 2008
---
--------------------------------------------------------------------------------
--- (c) 2008 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
---   This is the IRQ component that lives in the Pele communication
---   interface in the top level (external to TheWindow). It simply OR's the 
---   status bits from the virtual IRQs to set a single level interrupt line.
---   The Clear bit from the virtual IRQs is ignored, since we are only supporting
---   level interrupts.  The Clear is only needed when message based interrupts 
---   are used.
---
--------------------------------------------------------------------------------
-
-library IEEE;
-  use IEEE.std_logic_1164.all;
-  use IEEE.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-  use work.PkgCommunicationInterface.all;
-  use work.PkgDmaPortCommunicationInterface.all;
-  use work.PkgCommIntConfiguration.all;
-  
-entity DmaPortCommIfcIrqInterface is
-  generic (
-    
-    -- The number of IRQ ports used by DMA channels
-    kNumDmaIrqPorts : natural := 0
-  
-  );
-  port (
-  
-    aReset           : in boolean;
-    
-    -- This synchronously resets the entire component.
-    bReset           : in boolean;
-    
-    BusClk           : in std_logic;
-    
-    IrqClk           : in std_logic;
-
-    -- This is the actual interrupt line going to the Host.
-    bIrq             : out std_logic;
-    
-    -- These are the signals from rvi_foo indicating the status of the IRQs.
-    iLvFpgaIrq       : in IrqToInterfaceArray_t(Larger(kNumberOfIrqs,1)-1 downto 0);
-    
-    -- These are the IRQ signals from the fixed-logic DMA components
-    bFixedLogicDmaIrq: in IrqStatusArray_t;
-
-    -- These are the IRQ signals from the DMA components.
-    bDmaIrq          : in IrqStatusArray_t(Larger(kNumDmaIrqPorts-1,0) downto 0)
-    
-  );
-end DmaPortCommIfcIrqInterface;
-
-architecture rtl of DmaPortCommIfcIrqInterface is
-
-  signal bLvFpgaIrqSet, bDmaIrqSet : std_logic;
-  signal iLvFpgaIrqSet : std_logic;
-
-  --vhook_sigstart
-  --vhook_sigend
-
-begin
-  
-  -- This sets the reset signal going out of the device.  This is registered
-  -- so that it is not glitchy.
-  SetIrq: process(aReset, BusClk)
-  begin
-  
-    if aReset then
-    
-      bIrq <= '0';
-      
-    elsif rising_edge(BusClk) then
-      
-      if bReset then
-        bIrq <= '0';
-      else
-        -- Set the IRQ whenever a LvFpga IRQ is set or a DMA IRQ is set.
-        bIrq <= bLvFpgaIrqSet or bDmaIrqSet;
-      end if;
-      
-    end if;
-  
-  end process SetIrq;
-  
-  --vhook_e DoubleSyncSL
-  --vhook_a IClk IrqClk
-  --vhook_a iSig iLvFpgaIrqSet
-  --vhook_a OClk BusClk
-  --vhook_a oSig bLvFpgaIrqSet
-  DoubleSyncSLx: entity work.DoubleSyncSL (behavior)
-    port map (
-      aReset => aReset,         -- in  boolean
-      IClk   => IrqClk,         -- in  std_logic
-      iSig   => iLvFpgaIrqSet,  -- in  std_logic
-      OClk   => BusClk,         -- in  std_logic
-      oSig   => bLvFpgaIrqSet); -- out std_logic
-  
-  -- Determine if there is a LV FPGA IRQ set.
-  SetLvFpgaIrq: process(iLvFpgaIrq)
-  begin
-    iLvFpgaIrqSet <= '0';
-    for VectorIndex in 0 to iLvFpgaIrq'length-1 loop
-      for IrqIndex in 0 to iLvFpgaIrq(VectorIndex)'length -1 loop
-        if iLvFpgaIrq(VectorIndex)(IrqIndex).Status = '1' then
-          iLvFpgaIrqSet <= '1';
-        end if;
-      end loop; --IrqIndex
-    end loop; --VectorIndex
-  end process SetLvFpgaIrq;
-  
-  -- Determine if the client has set an IRQ. This simply OR's the status 
-  -- field from all the DMA components (both the LV DMA channels and the 
-  -- fixed-logic DMA channels).
-  SetDmaIrq: process(bDmaIrq, bFixedLogicDmaIrq)
-  begin
-    bDmaIrqSet <= '0';
-    for IrqIndex in 0 to bDmaIrq'length-1 loop
-      if bDmaIrq(IrqIndex).Status = '1' then
-        bDmaIrqSet <= '1';
-      end if;
-    end loop; --IrqIndex
-
-    for i in bFixedLogicDmaIrq'range loop
-      if bFixedLogicDmaIrq(i).Status = '1' then
-        bDmaIrqSet <= '1';
-      end if;
-    end loop;
-
-  end process SetDmaIrq;
-   
-  
-end rtl;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+FiK9KBulhkoyUl7dzWtZLepqOja/wRUqNoKfRczMihfNA0+vuPNW1Ro/ajw+Cx5B
+SDe8eyBny6eFH4xtvKUngeXul5rqgheY3/ic0k/OtaNKGyZsayd5ov6Sq3T+mdx/
+dqVg8KgeSP6dpN4MMFgLSHKCCAJ9LgRM3tJ2LdBh/hG79qxKyy3/9yuExMs3TIv+
+8DVps9Q0SxwthbRDeATgOrnJ95E5eK3dvuNT8dFp5cQvyYPV1KaeJy4GUAn99gn/
+8Mg7xrjHncr/MxpV5kn1Zvz9XKgAR34sNro1t16LQzWNULjRbgtr0WyPkRrBqfmz
+MNLEn4pRUPAf7ynOdmPbig==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="je2UZFMZBKLAw0ycXhOix6Mzrit1BQgW38MjgJnVOLM="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+dTasYuXuXXYsdKWrlSNxlzwKHoVs3kUzJuN610sYrZjpGFmu90ROjpuqHFLiloSM
+BSkl5i7hVB7IbVIFxEnJA2vvumaph8tBhRFiP5L6D900GYHevUdiU41QrAIhK2vG
+cxkZl11fE7X015vErVMm+6FLEXoxR42NXngd/Hq2RC4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="8MBqDLcIFGCAccq514Hz32xwDEuFHooG9Pd59L66LCc="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 4368 )
+`protect data_block
+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
+`protect end_protected

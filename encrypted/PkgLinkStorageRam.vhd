@@ -1,144 +1,186 @@
--------------------------------------------------------------------------------
---
--- File: PkgLinkStorageRam.vhd
--- Author: Rolando Ortega
--- Original Project: NI Cores NiDmaIp
--- Date: 10 May 2019
---
--------------------------------------------------------------------------------
--- (c) 2019 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
--- This package provides constants and functions that are shared between different
--- target-specific implementations of LinkStorageRam, to avoid double-sourcing them. As
--- such, the purpose statement for those modules is also single-sourced here.
---
--- Link-Chaning DMA is only required by some channels. When talking about a LVFPGA design,
--- for example, it's only required by Output DMA, Input DMA, and P2P Writers. Unused
--- channels, and those used as P2P readers, have no need to instantiate expensive memory
--- for Chunky Links that they'll never fetch nor use.
---
--- The LinkStorageRam module used to exist as part of NiDmaLinkProcessor. It's been moved
--- to its own module (actually, to a plurality of target-specific modules), which is
--- expected to be instantiated outside the Inchworm netlist, if there is one, based on the
--- following observations:
---
--- 1. It's inefficient to treat the Link Storage memory as _n_ individual memories, where
---    _n_ is the total number of channels supported by a given Inchworm instantiation.
---    This is because RAM primitives usually come in fixed sizes, and combining all the
---    memories together yields better resource utilization. We can combine all memories
---    together because there is only one NiDmaLinkProcessor, and it only requires one read
---    and one write port into the memory.
---
--- 2. There is no way for the synthesizer to automatically know at synthesis time whether
---    a given channel will require its allotment of Link Storage memory. From the
---    synthesizer's perspective, all channels could be requested to load up chunky links,
---    and all channels could very well use them.
---
--- 3. Because of (2), we need to tell the synthesizer which channels require instantiating
---    memory and which do not.
---
--- 4. Even if we do (3), the block containing the memory needs to live outside the
---    Inchworm Netlist, because knowledge of which channels require Link Storage is only
---    available when we synthesize the final application, not when we synthesize the
---    Inchworm Netlist.
---
--- 5. Because of (1), each channel's memory space is simply a subset of a bigger memory.
---    So even if we tell the synthesizer which channels require Link Storage and which do
---    not in satisfaction of (3), we risk arriving at a fragmented memory, which will take
---    up no fewer resources than the full memory.
---
--- 5. Because of (5), we need to "defragment" the memory. Namely, we need to create a
---    contiguous block of memory which contains only the memory for those channels which
---    require Link Storage.
---
--- 6. To achieve (6), we implement a simple address translation which will map the
---    addresses that are expected by the NiDmaLinkProcessor into addresses in our
---    reduced-size memory.
---
------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-use work.PkgNiDma.all;
-use work.PkgNiDmaConfig.all;
-use work.PkgNiUtilities.all;
---synopsys translate_off
-use work.PkgNiSim.all;
---synopsys translate_on
-use work.PkgLinkStorageRamConfig.all;
-
-package PkgLinkStorageRam is
-
-  ------------------------------------------------------------------------------
-  -- LinkStorageRam as seen by Inchworm
-  ------------------------------------------------------------------------------
-  -- Because the Inchworm doesn't know (at compile time) how many DMA channels will
-  -- actually get used (and therefore need chunky links), we size the memory for the
-  -- maximum number of allowed DMA Channels.
-
-  -- # of channels * # of links per channel (2) * Max Link Size
-  constant kLinkStorageSizeInBytes : natural := kNiDmaDmaChannels * 2 * kChunkyLinkSize;
-
-  --The RAM needs to be written at kNiDmaDataWidth and read 8 bytes wide.  There is an assertion
-  --preventing kNiDmaDataWidth less than 8 bytes wide, therefore the ram can always be
-  --kNiDmaDataWidth wide.
-  constant kLinkStorageRamDataWidth : natural := kNiDmaDataWidth;
-  constant kLinkStorageRamAddrWidth : natural := Log2(kLinkStorageSizeInBytes*8/kLinkStorageRamDataWidth);
-
-  --constants for the processing state machine which works on 8 byte words.  This constant
-  --cannot be changed without significant modification to the ProcessSm
-  constant kLinkOffsetByteCount : integer := 8;
-  constant kLinkOffsetMaxValue  : integer := kChunkyLinkSize / kLinkOffsetByteCount;
-
-  --sizes for the ProcessSm to access the LinkStorage
-  constant kLinkStorageRamRdDataWidth : integer := kLinkOffsetByteCount*8;
-  constant kLinkStorageRamRdAddrWidth : natural := Log2(kLinkStorageSizeInBytes/kLinkOffsetByteCount);
-
-  constant kLinkStorageRamWidthRatio : natural := kLinkStorageRamDataWidth/kLinkStorageRamRdDataWidth;
-
-  ------------------------------------------------------------------------------
-  -- Memory Sizing
-  ------------------------------------------------------------------------------
-  -- The size of the actual RAM we implement will depend on how many channels are enabled,
-  -- not what the max number of possible channels would be. We'll count the enabled ones
-  -- here.
-  function NumEnabledChannels (
-      constant kEnabledChannels : NiDmaDmaChannelOneHot_t
-    ) return natural;
-
-  ------------------------------------------------------------------------------
-  -- RAM Configuration
-  ------------------------------------------------------------------------------
-  -- The NiDmaLinkProcessor expects a read latency of 2.
-  constant kLinkStorageRamReadLatency : natural := 2;
-
-end package PkgLinkStorageRam;
-
-package body PkgLinkStorageRam is
-
-  function NumEnabledChannels (
-      constant kEnabledChannels : NiDmaDmaChannelOneHot_t)
-    return natural is
-    variable ChannelCount : natural := 0;
-  begin -- NumEnabledChannels
-
-    -- Just go through the vector, and add one for every value that is true.
-    for i in kEnabledChannels'range loop
-      if kEnabledChannels(i) then
-        ChannelCount := ChannelCount + 1;
-      end if;
-    end loop;
-
-    return ChannelCount;
-
-  end function NumEnabledChannels;
-
-end package body PkgLinkStorageRam;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+FiK9KBulhkoyUl7dzWtZLepqOja/wRUqNoKfRczMihfNA0+vuPNW1Ro/ajw+Cx5B
+SDe8eyBny6eFH4xtvKUngeXul5rqgheY3/ic0k/OtaNKGyZsayd5ov6Sq3T+mdx/
+dqVg8KgeSP6dpN4MMFgLSHKCCAJ9LgRM3tJ2LdBh/hG79qxKyy3/9yuExMs3TIv+
+8DVps9Q0SxwthbRDeATgOrnJ95E5eK3dvuNT8dFp5cQvyYPV1KaeJy4GUAn99gn/
+8Mg7xrjHncr/MxpV5kn1Zvz9XKgAR34sNro1t16LQzWNULjRbgtr0WyPkRrBqfmz
+MNLEn4pRUPAf7ynOdmPbig==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="je2UZFMZBKLAw0ycXhOix6Mzrit1BQgW38MjgJnVOLM="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+dTasYuXuXXYsdKWrlSNxlzwKHoVs3kUzJuN610sYrZjpGFmu90ROjpuqHFLiloSM
+BSkl5i7hVB7IbVIFxEnJA2vvumaph8tBhRFiP5L6D900GYHevUdiU41QrAIhK2vG
+cxkZl11fE7X015vErVMm+6FLEXoxR42NXngd/Hq2RC4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="8MBqDLcIFGCAccq514Hz32xwDEuFHooG9Pd59L66LCc="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 6656 )
+`protect data_block
+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
+`protect end_protected

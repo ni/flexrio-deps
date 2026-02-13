@@ -1,439 +1,624 @@
-------------------------------------------------------------------------------------------
---
--- File: FixedLogicWrapper.vhd
--- Author: Rolando Ortega
--- Original Project: The Macallan
--- Date: 18 August 2016
---
-------------------------------------------------------------------------------------------
--- (c) 2025 Copyright National Instruments Corporation
--- 
--- SPDX-License-Identifier: MIT
-------------------------------------------------------------------------------------------
---
--- Purpose: Wrapper for FixedLogic netlist.
---
--- This module instantiates the FixedLogic netlist and does type conversion to more
--- easily vhook at higher levels of the hierarchy.
---
-------------------------------------------------------------------------------------------
---
--- githubvisible=true
---
--- vreview_group CorubaFixedLogic
--- vreview_closed http://review-board.natinst.com/r/266932/
--- vreview_closed http://review-board.natinst.com/r/260921/
--- vreview_closed http://review-board.natinst.com/r/255990/
--- vreview_closed http://review-board.natinst.com/r/237876/
--- vreview_closed http://review-board.natinst.com/r/217971/
--- vreview_reviewers kygreen dhearn esalinas hrubio lboughal rcastro
---
-------------------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-use work.PkgNiUtilities.all;
--- InChWORM Imports
-use work.PkgBaRegPort.all;
--- Dma Types
-use work.PkgNiDma.all;
-use work.PkgDmaPortRecordFlattening.all;
-
--- Constants from SW
-use work.PkgLvFpgaConst.all;
-
--- Axi Stream
-use work.PkgFlexRioAxiStream.all;
-
---synthesis translate_off
---frmake_addlibrary
---synthesis translate_on
-
-entity FixedLogicWrapper is
-
-  port (
-    -------------------------------------------------------------------------------------
-    -- Clocks/resets
-    -------------------------------------------------------------------------------------
-    aPonReset                          : in  boolean;
-    aBusReset                          : in  boolean;
-    aDiagramReset                      : in  std_logic;
-    DmaClk                             : in  std_logic;
-    BusClk                             : in  std_logic;
-    MbClk                              : in  std_logic;
-    -------------------------------------------------------------------------------------
-    -- RegPort
-    -------------------------------------------------------------------------------------
-    dFixedLogicBaRegPortIn             : in  BaRegPortIn_t;
-    dFixedLogicBaRegPortOut            : out BaRegPortOut_t;
-    -- Trigger Routing BaRegPort
-    bTriggerRoutingBaRegPortInAddress  : out std_logic_vector(BaRegPortAddress_t'range);
-    bTriggerRoutingBaRegPortInData     : out std_logic_vector(BaRegPortData_t'range);
-    bTriggerRoutingBaRegPortInWtStrobe : out std_logic_vector(BaRegPortStrobe_t'range);
-    bTriggerRoutingBaRegPortInRdStrobe : out std_logic_vector(BaRegPortStrobe_t'range);
-    bTriggerRoutingBaRegPortOutData    : in  std_logic_vector(BaRegPortData_t'range);
-    bTriggerRoutingBaRegPortOutAck     : in  std_logic;
-    --Routing Socket ID
-    bRoutingClipPresent                : in  std_logic;
-    bRoutingClipNiCompatible           : in  std_logic;
-    -------------------------------------------------------------------------------------
-    -- Labview generated constants
-    -------------------------------------------------------------------------------------
-    stEnableIoRefClk10                 : in  std_logic;
-    stEnableIoRefClk100                : in  std_logic;
-    -------------------------------------------------------------------------------------
-    -- AxiStream
-    -------------------------------------------------------------------------------------
-    -- AXI4-Stream iFIFO Ports
-    bAxiStreamDataToCtrl               : in  AxiStreamData_t;
-    bAxiStreamReadyFromCtrl            : out boolean;
-    bAxiStreamDataFromCtrl             : out AxiStreamData_t;
-    bAxiStreamReadyToCtrl              : in  boolean;
-    -------------------------------------------------------------------------------------
-    -- Board Control
-    -------------------------------------------------------------------------------------
-    -- Monitoring SMBus
-    bBaseSmbSclOut                     : out std_logic;
-    bBaseSmbSclIn                      : in  std_logic;
-    bBaseSmbSclTri                     : out std_logic;
-    bBaseSmbSdaIn                      : in  std_logic;
-    bBaseSmbSdaOut                     : out std_logic;
-    bBaseSmbSdaTri                     : out std_logic;
-    -- Control I2C Bus
-    bConfigI2cSclIn                    : in  std_logic;
-    bConfigI2cSclOut                   : out std_logic;
-    bConfigI2cSclTri                   : out std_logic;
-    bConfigI2cSdaIn                    : in  std_logic;
-    bConfigI2cSdaOut                   : out std_logic;
-    bConfigI2cSdaTri                   : out std_logic;
-    -- Power supply PMBus
-    bPwrSupplyPmbSclIn                 : in  std_logic;
-    bPwrSupplyPmbSclOut                : out std_logic;
-    bPwrSupplyPmbSclTri                : out std_logic;
-    bPwrSupplyPmbSdaIn                 : in  std_logic;
-    bPwrSupplyPmbSdaOut                : out std_logic;
-    bPwrSupplyPmbSdaTri                : out std_logic;
-    -- Mezzanine board SMBus
-    bMezzSmbSclIn                      : in  std_logic;
-    bMezzSmbSclOut                     : out std_logic;
-    bMezzSmbSclTri                     : out std_logic;
-    bMezzSmbSdaIn                      : in  std_logic;
-    bMezzSmbSdaOut                     : out std_logic;
-    bMezzSmbSdaTri                     : out std_logic;
-    -- Dram Clock Status
-    bDramClocksValid                   : out std_logic;
-    -- I/O clocking power supply status
-    a3v3APwrGood                       : in    std_logic;
-    a1v8APwrGood                       : in    std_logic;
-    -- LTM4700 Dithering
-    a0v85PwrSync                       : out std_logic;
-    -------------------------------------------------------------------------------------
-    -- Diagram-Reset-driven Board Control
-    -------------------------------------------------------------------------------------
-    abDiagramReset                     : out boolean;
-    --RefClk Control
-    bdSetIoRefClk100Enable             : out std_logic;
-    bdClearIoRefClk100Enable           : out std_logic;
-    bdSetIoRefClk10Enable              : out std_logic;
-    bdClearIoRefClk10Enable            : out std_logic;
-    bdSelectIoRefClk100                : out std_logic;
-    bdSelectIoRefClk10                 : out std_logic;
-    --RefClk Status
-    bdIoRefClk100Enabled               : in  std_logic;
-    bdIoRefClk10Enabled                : in  std_logic;
-    bdIoRefClkSwitch                   : in  std_logic;
-    -------------------------------------------------------------------------------------
-    -- FAM Communication interface
-    -------------------------------------------------------------------------------------
-    --Module Capabilities
-    stIoModuleSupportsFRAGLs           : in  std_logic;
-    -- Axi4Lite
-    bdClipAxi4LiteArAddr               : in  std_logic_vector(31 downto 0);
-    bdClipAxi4LiteArProt               : in  std_logic_vector(2 downto 0);
-    bdClipAxi4LiteArReady              : out std_logic;
-    bdClipAxi4LiteArValid              : in  std_logic;
-    bdClipAxi4LiteAwAddr               : in  std_logic_vector(31 downto 0);
-    bdClipAxi4LiteAwProt               : in  std_logic_vector(2 downto 0);
-    bdClipAxi4LiteAwReady              : out std_logic;
-    bdClipAxi4LiteAwValid              : in  std_logic;
-    bdClipAxi4LiteBReady               : in  std_logic;
-    bdClipAxi4LiteBResp                : out std_logic_vector(1 downto 0);
-    bdClipAxi4LiteBValid               : out std_logic;
-    bdClipAxi4LiteRData                : out std_logic_vector(31 downto 0);
-    bdClipAxi4LiteRReady               : in  std_logic;
-    bdClipAxi4LiteRResp                : out std_logic_vector(1 downto 0);
-    bdClipAxi4LiteRValid               : out std_logic;
-    bdClipAxi4LiteWData                : in  std_logic_vector(31 downto 0);
-    bdClipAxi4LiteWReady               : out std_logic;
-    bdClipAxi4LiteWStrb                : in  std_logic_vector(3 downto 0);
-    bdClipAxi4LiteWValid               : in  std_logic;
-    -------------------------------------------------------------------------------------
-    -- Reconfiguration CPLD
-    -------------------------------------------------------------------------------------
-    SidebandClk                        : out std_logic;
-    sSidebandDataOut                   : out std_logic_vector(3 downto 0);
-    aSidebandDataIn                    : in  std_logic;
-    aSidebandFifoFull                  : in  std_logic;
-    -------------------------------------------------------------------------------------
-    -- Triggers
-    -------------------------------------------------------------------------------------
-    aPxiTrigExtTri                   : out std_logic_vector(7 downto 0);
-    -------------------------------------------------------------------------------------
-    -- System Monitor
-    -------------------------------------------------------------------------------------
-    aSysMonVector_p                    : in  std_logic_vector(15 downto 0);
-    aSysMonVector_n                    : in  std_logic_vector(15 downto 0);
-    -------------------------------------------------------------------------------------
-    -- CPLD JTAG Field Update
-    -------------------------------------------------------------------------------------
-    aFldUpdJtagSel                     : out std_logic;
-    bFldUpdJtagTck                     : out std_logic;
-    bFldUpdJtagTdi                     : out std_logic;
-    aFldUpdJtagTdo                     : in  std_logic;
-    bFldUpdJtagTms                     : out std_logic;
-    -------------------------------------------------------------------------------------
-    -- Interrupt
-    -------------------------------------------------------------------------------------
-    dIrqFromFixedLogic                 : out std_logic
-    );
-
-end entity FixedLogicWrapper;
-
-architecture struct of FixedLogicWrapper is
-
-  component MacallanFixedLogic
-    port (
-      aPonReset                          : in  boolean;
-      aBusReset                          : in  boolean;
-      aDiagramReset                      : in  std_logic;
-      DmaClk                             : in  std_logic;
-      BusClk                             : in  std_logic;
-      MbClk                              : in  std_logic;
-      dFixedLogicBaRegPortInFlat         : in  FlatBaRegPortIn_t;
-      dFixedLogicBaRegPortOutFlat        : out FlatBaRegPortOut_t;
-      bTriggerRoutingBaRegPortInAddress  : out std_logic_vector(BaRegPortAddress_t'range);
-      bTriggerRoutingBaRegPortInData     : out std_logic_vector(BaRegPortData_t'range);
-      bTriggerRoutingBaRegPortInWtStrobe : out std_logic_vector(BaRegPortStrobe_t'range);
-      bTriggerRoutingBaRegPortInRdStrobe : out std_logic_vector(BaRegPortStrobe_t'range);
-      bTriggerRoutingBaRegPortOutData    : in  std_logic_vector(BaRegPortData_t'range);
-      bTriggerRoutingBaRegPortOutAck     : in  std_logic;
-      bRoutingClipPresent                : in  std_logic;
-      bRoutingClipNiCompatible           : in  std_logic;
-      stExpectedTbId                     : in  std_logic_vector(31 downto 0);
-      stEnableIoRefClk10                 : in  std_logic;
-      stEnableIoRefClk100                : in  std_logic;
-      stInsertBank0Mig                   : in  boolean;
-      stInsertBank1Mig                   : in  boolean;
-      bFlatAxiStreamDataToCtrl           : in  FlatAxiStreamData_t;
-      bAxiStreamReadyFromCtrl            : out boolean;
-      bFlatAxiStreamDataFromCtrl         : out FlatAxiStreamData_t;
-      bAxiStreamReadyToCtrl              : in  boolean;
-      bBaseSmbSclOut                     : out std_logic;
-      bBaseSmbSclIn                      : in  std_logic;
-      bBaseSmbSclTri                     : out std_logic;
-      bBaseSmbSdaIn                      : in  std_logic;
-      bBaseSmbSdaOut                     : out std_logic;
-      bBaseSmbSdaTri                     : out std_logic;
-      bConfigI2cSclIn                    : in  std_logic;
-      bConfigI2cSclOut                   : out std_logic;
-      bConfigI2cSclTri                   : out std_logic;
-      bConfigI2cSdaIn                    : in  std_logic;
-      bConfigI2cSdaOut                   : out std_logic;
-      bConfigI2cSdaTri                   : out std_logic;
-      bPwrSupplyPmbSclIn                 : in  std_logic;
-      bPwrSupplyPmbSclOut                : out std_logic;
-      bPwrSupplyPmbSclTri                : out std_logic;
-      bPwrSupplyPmbSdaIn                 : in  std_logic;
-      bPwrSupplyPmbSdaOut                : out std_logic;
-      bPwrSupplyPmbSdaTri                : out std_logic;
-      bMezzSmbSclIn                      : in  std_logic;
-      bMezzSmbSclOut                     : out std_logic;
-      bMezzSmbSclTri                     : out std_logic;
-      bMezzSmbSdaIn                      : in  std_logic;
-      bMezzSmbSdaOut                     : out std_logic;
-      bMezzSmbSdaTri                     : out std_logic;
-      bDramClocksValid                   : out std_logic;
-      a3v3APwrGood                       : in  std_logic;
-      a1v8APwrGood                       : in  std_logic;
-      a0v85PwrSync                       : out std_logic;
-      abDiagramReset                     : out boolean;
-      bdSetIoRefClk100Enable             : out std_logic;
-      bdClearIoRefClk100Enable           : out std_logic;
-      bdSetIoRefClk10Enable              : out std_logic;
-      bdClearIoRefClk10Enable            : out std_logic;
-      bdSelectIoRefClk100                : out std_logic;
-      bdSelectIoRefClk10                 : out std_logic;
-      bdIoRefClk100Enabled               : in  std_logic;
-      bdIoRefClk10Enabled                : in  std_logic;
-      bdIoRefClkSwitch                   : in  std_logic;
-      stIoModuleSupportsFRAGLs           : in  std_logic;
-      bdClipAxi4LiteArAddr               : in  std_logic_vector(31 downto 0);
-      bdClipAxi4LiteArProt               : in  std_logic_vector(2 downto 0);
-      bdClipAxi4LiteArReady              : out std_logic;
-      bdClipAxi4LiteArValid              : in  std_logic;
-      bdClipAxi4LiteAwAddr               : in  std_logic_vector(31 downto 0);
-      bdClipAxi4LiteAwProt               : in  std_logic_vector(2 downto 0);
-      bdClipAxi4LiteAwReady              : out std_logic;
-      bdClipAxi4LiteAwValid              : in  std_logic;
-      bdClipAxi4LiteBReady               : in  std_logic;
-      bdClipAxi4LiteBResp                : out std_logic_vector(1 downto 0);
-      bdClipAxi4LiteBValid               : out std_logic;
-      bdClipAxi4LiteRData                : out std_logic_vector(31 downto 0);
-      bdClipAxi4LiteRReady               : in  std_logic;
-      bdClipAxi4LiteRResp                : out std_logic_vector(1 downto 0);
-      bdClipAxi4LiteRValid               : out std_logic;
-      bdClipAxi4LiteWData                : in  std_logic_vector(31 downto 0);
-      bdClipAxi4LiteWReady               : out std_logic;
-      bdClipAxi4LiteWStrb                : in  std_logic_vector(3 downto 0);
-      bdClipAxi4LiteWValid               : in  std_logic;
-      SidebandClk                        : out std_logic;
-      sSidebandDataOut                   : out std_logic_vector(3 downto 0);
-      aSidebandDataIn                    : in  std_logic;
-      aSidebandFifoFull                  : in  std_logic;
-      aPxiTrigExtTri                     : out std_logic_vector(7 downto 0);
-      aSysMonVector_p                    : in  std_logic_vector(15 downto 0);
-      aSysMonVector_n                    : in  std_logic_vector(15 downto 0);
-      aFldUpdJtagSel                     : out std_logic;
-      bFldUpdJtagTck                     : out std_logic;
-      bFldUpdJtagTdi                     : out std_logic;
-      aFldUpdJtagTdo                     : in  std_logic;
-      bFldUpdJtagTms                     : out std_logic;
-      dIrqFromFixedLogic                 : out std_logic);
-  end component;
-
-  --vhook_sigstart
-  --vhook_sigend
-
-  ---------------------------------------------------------------------------------------
-  -- Default Interface Assignments
-  ---------------------------------------------------------------------------------------
-  -- Axi Stream
-  signal bFlatAxiStreamDataFromCtrl  : FlatAxiStreamData_t := Flatten(kAxiStreamDataZero);
-  signal bFlatAxiStreamDataToCtrl    : FlatAxiStreamData_t := Flatten(kAxiStreamDataZero);
-  -- BaRegPort
-  signal dFixedLogicBaRegPortInFlat  : FlatBaRegPortIn_t   := Flatten(kBaRegPortInZero);
-  signal dFixedLogicBaRegPortOutFlat : FlatBaRegPortOut_t  := Flatten(kBaRegPortOutZero);
-
-begin  -- architecture struct
-
-  ---------------------------------------------------------------------------------------
-  -- Fixed Logic
-  ---------------------------------------------------------------------------------------
-
-  --vhook   MacallanFixedLogic
-  --vhook_a stExpectedTbId              kExpectedTbId
-  --vhook_a stInsertBank0Mig            kInsertBank0Mig
-  --vhook_a stInsertBank1Mig            kInsertBank1Mig
-  MacallanFixedLogicx: MacallanFixedLogic
-    port map (
-      aPonReset                          => aPonReset,                           --in  boolean
-      aBusReset                          => aBusReset,                           --in  boolean
-      aDiagramReset                      => aDiagramReset,                       --in  std_logic
-      DmaClk                             => DmaClk,                              --in  std_logic
-      BusClk                             => BusClk,                              --in  std_logic
-      MbClk                              => MbClk,                               --in  std_logic
-      dFixedLogicBaRegPortInFlat         => dFixedLogicBaRegPortInFlat,          --in  FlatBaRegPortIn_t
-      dFixedLogicBaRegPortOutFlat        => dFixedLogicBaRegPortOutFlat,         --out FlatBaRegPortOut_t
-      bTriggerRoutingBaRegPortInAddress  => bTriggerRoutingBaRegPortInAddress,   --out std_logic_vector(BaRegPortAddress_t'range)
-      bTriggerRoutingBaRegPortInData     => bTriggerRoutingBaRegPortInData,      --out std_logic_vector(BaRegPortData_t'range)
-      bTriggerRoutingBaRegPortInWtStrobe => bTriggerRoutingBaRegPortInWtStrobe,  --out std_logic_vector(BaRegPortStrobe_t'range)
-      bTriggerRoutingBaRegPortInRdStrobe => bTriggerRoutingBaRegPortInRdStrobe,  --out std_logic_vector(BaRegPortStrobe_t'range)
-      bTriggerRoutingBaRegPortOutData    => bTriggerRoutingBaRegPortOutData,     --in  std_logic_vector(BaRegPortData_t'range)
-      bTriggerRoutingBaRegPortOutAck     => bTriggerRoutingBaRegPortOutAck,      --in  std_logic
-      bRoutingClipPresent                => bRoutingClipPresent,                 --in  std_logic
-      bRoutingClipNiCompatible           => bRoutingClipNiCompatible,            --in  std_logic
-      stExpectedTbId                     => kExpectedTbId,                       --in  std_logic_vector(31:0)
-      stEnableIoRefClk10                 => stEnableIoRefClk10,                  --in  std_logic
-      stEnableIoRefClk100                => stEnableIoRefClk100,                 --in  std_logic
-      stInsertBank0Mig                   => kInsertBank0Mig,                     --in  boolean
-      stInsertBank1Mig                   => kInsertBank1Mig,                     --in  boolean
-      bFlatAxiStreamDataToCtrl           => bFlatAxiStreamDataToCtrl,            --in  FlatAxiStreamData_t
-      bAxiStreamReadyFromCtrl            => bAxiStreamReadyFromCtrl,             --out boolean
-      bFlatAxiStreamDataFromCtrl         => bFlatAxiStreamDataFromCtrl,          --out FlatAxiStreamData_t
-      bAxiStreamReadyToCtrl              => bAxiStreamReadyToCtrl,               --in  boolean
-      bBaseSmbSclOut                     => bBaseSmbSclOut,                      --out std_logic
-      bBaseSmbSclIn                      => bBaseSmbSclIn,                       --in  std_logic
-      bBaseSmbSclTri                     => bBaseSmbSclTri,                      --out std_logic
-      bBaseSmbSdaIn                      => bBaseSmbSdaIn,                       --in  std_logic
-      bBaseSmbSdaOut                     => bBaseSmbSdaOut,                      --out std_logic
-      bBaseSmbSdaTri                     => bBaseSmbSdaTri,                      --out std_logic
-      bConfigI2cSclIn                    => bConfigI2cSclIn,                     --in  std_logic
-      bConfigI2cSclOut                   => bConfigI2cSclOut,                    --out std_logic
-      bConfigI2cSclTri                   => bConfigI2cSclTri,                    --out std_logic
-      bConfigI2cSdaIn                    => bConfigI2cSdaIn,                     --in  std_logic
-      bConfigI2cSdaOut                   => bConfigI2cSdaOut,                    --out std_logic
-      bConfigI2cSdaTri                   => bConfigI2cSdaTri,                    --out std_logic
-      bPwrSupplyPmbSclIn                 => bPwrSupplyPmbSclIn,                  --in  std_logic
-      bPwrSupplyPmbSclOut                => bPwrSupplyPmbSclOut,                 --out std_logic
-      bPwrSupplyPmbSclTri                => bPwrSupplyPmbSclTri,                 --out std_logic
-      bPwrSupplyPmbSdaIn                 => bPwrSupplyPmbSdaIn,                  --in  std_logic
-      bPwrSupplyPmbSdaOut                => bPwrSupplyPmbSdaOut,                 --out std_logic
-      bPwrSupplyPmbSdaTri                => bPwrSupplyPmbSdaTri,                 --out std_logic
-      bMezzSmbSclIn                      => bMezzSmbSclIn,                       --in  std_logic
-      bMezzSmbSclOut                     => bMezzSmbSclOut,                      --out std_logic
-      bMezzSmbSclTri                     => bMezzSmbSclTri,                      --out std_logic
-      bMezzSmbSdaIn                      => bMezzSmbSdaIn,                       --in  std_logic
-      bMezzSmbSdaOut                     => bMezzSmbSdaOut,                      --out std_logic
-      bMezzSmbSdaTri                     => bMezzSmbSdaTri,                      --out std_logic
-      bDramClocksValid                   => bDramClocksValid,                    --out std_logic
-      a3v3APwrGood                       => a3v3APwrGood,                        --in  std_logic
-      a1v8APwrGood                       => a1v8APwrGood,                        --in  std_logic
-      a0v85PwrSync                       => a0v85PwrSync,                        --out std_logic
-      abDiagramReset                     => abDiagramReset,                      --out boolean
-      bdSetIoRefClk100Enable             => bdSetIoRefClk100Enable,              --out std_logic
-      bdClearIoRefClk100Enable           => bdClearIoRefClk100Enable,            --out std_logic
-      bdSetIoRefClk10Enable              => bdSetIoRefClk10Enable,               --out std_logic
-      bdClearIoRefClk10Enable            => bdClearIoRefClk10Enable,             --out std_logic
-      bdSelectIoRefClk100                => bdSelectIoRefClk100,                 --out std_logic
-      bdSelectIoRefClk10                 => bdSelectIoRefClk10,                  --out std_logic
-      bdIoRefClk100Enabled               => bdIoRefClk100Enabled,                --in  std_logic
-      bdIoRefClk10Enabled                => bdIoRefClk10Enabled,                 --in  std_logic
-      bdIoRefClkSwitch                   => bdIoRefClkSwitch,                    --in  std_logic
-      stIoModuleSupportsFRAGLs           => stIoModuleSupportsFRAGLs,            --in  std_logic
-      bdClipAxi4LiteArAddr               => bdClipAxi4LiteArAddr,                --in  std_logic_vector(31:0)
-      bdClipAxi4LiteArProt               => bdClipAxi4LiteArProt,                --in  std_logic_vector(2:0)
-      bdClipAxi4LiteArReady              => bdClipAxi4LiteArReady,               --out std_logic
-      bdClipAxi4LiteArValid              => bdClipAxi4LiteArValid,               --in  std_logic
-      bdClipAxi4LiteAwAddr               => bdClipAxi4LiteAwAddr,                --in  std_logic_vector(31:0)
-      bdClipAxi4LiteAwProt               => bdClipAxi4LiteAwProt,                --in  std_logic_vector(2:0)
-      bdClipAxi4LiteAwReady              => bdClipAxi4LiteAwReady,               --out std_logic
-      bdClipAxi4LiteAwValid              => bdClipAxi4LiteAwValid,               --in  std_logic
-      bdClipAxi4LiteBReady               => bdClipAxi4LiteBReady,                --in  std_logic
-      bdClipAxi4LiteBResp                => bdClipAxi4LiteBResp,                 --out std_logic_vector(1:0)
-      bdClipAxi4LiteBValid               => bdClipAxi4LiteBValid,                --out std_logic
-      bdClipAxi4LiteRData                => bdClipAxi4LiteRData,                 --out std_logic_vector(31:0)
-      bdClipAxi4LiteRReady               => bdClipAxi4LiteRReady,                --in  std_logic
-      bdClipAxi4LiteRResp                => bdClipAxi4LiteRResp,                 --out std_logic_vector(1:0)
-      bdClipAxi4LiteRValid               => bdClipAxi4LiteRValid,                --out std_logic
-      bdClipAxi4LiteWData                => bdClipAxi4LiteWData,                 --in  std_logic_vector(31:0)
-      bdClipAxi4LiteWReady               => bdClipAxi4LiteWReady,                --out std_logic
-      bdClipAxi4LiteWStrb                => bdClipAxi4LiteWStrb,                 --in  std_logic_vector(3:0)
-      bdClipAxi4LiteWValid               => bdClipAxi4LiteWValid,                --in  std_logic
-      SidebandClk                        => SidebandClk,                         --out std_logic
-      sSidebandDataOut                   => sSidebandDataOut,                    --out std_logic_vector(3:0)
-      aSidebandDataIn                    => aSidebandDataIn,                     --in  std_logic
-      aSidebandFifoFull                  => aSidebandFifoFull,                   --in  std_logic
-      aPxiTrigExtTri                     => aPxiTrigExtTri,                      --out std_logic_vector(7:0)
-      aSysMonVector_p                    => aSysMonVector_p,                     --in  std_logic_vector(15:0)
-      aSysMonVector_n                    => aSysMonVector_n,                     --in  std_logic_vector(15:0)
-      aFldUpdJtagSel                     => aFldUpdJtagSel,                      --out std_logic
-      bFldUpdJtagTck                     => bFldUpdJtagTck,                      --out std_logic
-      bFldUpdJtagTdi                     => bFldUpdJtagTdi,                      --out std_logic
-      aFldUpdJtagTdo                     => aFldUpdJtagTdo,                      --in  std_logic
-      bFldUpdJtagTms                     => bFldUpdJtagTms,                      --out std_logic
-      dIrqFromFixedLogic                 => dIrqFromFixedLogic);                 --out std_logic
-
-  ---------------------------------------------------------------------------------------
-  -- Breakouts
-  ---------------------------------------------------------------------------------------
-  -- From IFifo
-  bFlatAxiStreamDataToCtrl   <= Flatten(bAxiStreamDataToCtrl);
-  bAxiStreamDataFromCtrl     <= UnFlatten(bFlatAxiStreamDataFromCtrl);
-  -- To IFifo
-  dFixedLogicBaRegPortInFlat <= Flatten(dFixedLogicBaRegPortIn);
-  dFixedLogicBaRegPortOut    <= UnFlatten(dFixedLogicBaRegPortOutFlat);
-
-end architecture struct;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+FiK9KBulhkoyUl7dzWtZLepqOja/wRUqNoKfRczMihfNA0+vuPNW1Ro/ajw+Cx5B
+SDe8eyBny6eFH4xtvKUngeXul5rqgheY3/ic0k/OtaNKGyZsayd5ov6Sq3T+mdx/
+dqVg8KgeSP6dpN4MMFgLSHKCCAJ9LgRM3tJ2LdBh/hG79qxKyy3/9yuExMs3TIv+
+8DVps9Q0SxwthbRDeATgOrnJ95E5eK3dvuNT8dFp5cQvyYPV1KaeJy4GUAn99gn/
+8Mg7xrjHncr/MxpV5kn1Zvz9XKgAR34sNro1t16LQzWNULjRbgtr0WyPkRrBqfmz
+MNLEn4pRUPAf7ynOdmPbig==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="je2UZFMZBKLAw0ycXhOix6Mzrit1BQgW38MjgJnVOLM="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+dTasYuXuXXYsdKWrlSNxlzwKHoVs3kUzJuN610sYrZjpGFmu90ROjpuqHFLiloSM
+BSkl5i7hVB7IbVIFxEnJA2vvumaph8tBhRFiP5L6D900GYHevUdiU41QrAIhK2vG
+cxkZl11fE7X015vErVMm+6FLEXoxR42NXngd/Hq2RC4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="8MBqDLcIFGCAccq514Hz32xwDEuFHooG9Pd59L66LCc="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 27696 )
+`protect data_block
+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
+`protect end_protected

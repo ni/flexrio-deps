@@ -1,876 +1,665 @@
--------------------------------------------------------------------------------
---
--- File: PkgDmaPortDmaFifosFlatTypes.vhd
--- Author: Florin Hurgoi
--- Original Project: LabVIEW Fpga Communication Interface
--- Date: 07 December 2011
---
--------------------------------------------------------------------------------
--- (c) 2008 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
--- This package contains functions for flattening and unflattening the records and
--- arrays of records into std_logic_vector's.
---
-
--- Harmish - 08/04/2014 - Added support for Flush Method.
--- + Flatten and Unflatten functions are updated for InputStreamInterfaceFromFifo_t record.
--- + To reflect this change in modegen, the following VI is modified.
---   \\lvfpga\fpga\main\trunk\8.0\source\LabVIEW\resource\RVI\CommunicationInterface\PlugIns\DmaPortModGen.llb\Utilities\niFpgaGetDmaStreamPortSignalWidth.vi
--------------------------------------------------------------------------------
-
-library IEEE;
-  use IEEE.std_logic_1164.all;
-  use IEEE.numeric_std.all;
-
-library work;
-  use work.PkgNiUtilities.all;
-
-  use work.PkgDmaPortDmaFifos.all;
-
-Package PkgDmaPortDmaFifosFlatTypes is
-
-  subtype InputStreamInterfaceToFifoFlat_t is 
-    std_logic_vector(SizeOf(kInputStreamInterfaceToFifoZero)-1 downto 0);
-  subtype InputStreamInterfaceFromFifoFlat_t is
-    std_logic_vector(SizeOf(kInputStreamInterfaceFromFifoZero)-1 downto 0);
-  subtype OutputStreamInterfaceToFifoFlat_t is
-    std_logic_vector(SizeOf(kOutputStreamInterfaceToFifoZero)-1 downto 0);
-  subtype OutputStreamInterfaceFromFifoFlat_t is
-    std_logic_vector(SizeOf(kOutputStreamInterfaceFromFifoZero)-1 downto 0);
-
-  -- Arrays of flattened stream interface types
-  type InputStreamInterfaceFromFifoFlatArray_t is array (natural range <>) of
-    InputStreamInterfaceFromFifoFlat_t;
-  type InputStreamInterfaceToFifoFlatArray_t is array (natural range <>) of
-    InputStreamInterfaceToFifoFlat_t;
-  type OutputStreamInterfaceFromFifoFlatArray_t is array (natural range <>) of
-    OutputStreamInterfaceFromFifoFlat_t;
-  type OutputStreamInterfaceToFifoFlatArray_t is array (natural range <>) of
-    OutputStreamInterfaceToFifoFlat_t;
-
-
-  -- Functions to flatten the stream interface types
-  function FlattenStreamInterface(arg : InputStreamInterfaceFromFifo_t) return
-    InputStreamInterfaceFromFifoFlat_t;
-  function FlattenStreamInterface(arg : InputStreamInterfaceToFifo_t) return
-    InputStreamInterfaceToFifoFlat_t;
-  function FlattenStreamInterface(arg : OutputStreamInterfaceFromFifo_t) return
-    OutputStreamInterfaceFromFifoFlat_t;
-  function FlattenStreamInterface(arg : OutputStreamInterfaceToFifo_t) return
-    OutputStreamInterfaceToFifoFlat_t;
-
-  function FlattenStreamInterface(arg : InputStreamInterfaceFromFifoArray_t) return
-    std_logic_vector;
-  function FlattenStreamInterface(arg : InputStreamInterfaceToFifoArray_t) return
-    std_logic_vector;
-  function FlattenStreamInterface(arg : OutputStreamInterfaceFromFifoArray_t) return
-    std_logic_vector;
-  function FlattenStreamInterface(arg : OutputStreamInterfaceToFifoArray_t) return
-    std_logic_vector;
-
-  -- Functions to unflatten the stream interface types
-  function UnflattenStreamInterface(arg : InputStreamInterfaceFromFifoFlat_t) return
-    InputStreamInterfaceFromFifo_t;
-  function UnflattenStreamInterface(arg : InputStreamInterfaceToFifoFlat_t) return
-    InputStreamInterfaceToFifo_t;
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceFromFifoFlat_t) return
-    OutputStreamInterfaceFromFifo_t;
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceToFifoFlat_t) return
-    OutputStreamInterfaceToFifo_t;
-  function UnflattenStreamInterface(Vector : std_logic_vector) return
-    InputStreamInterfaceFromFifoArray_t;
-  function UnflattenStreamInterface(Vector : std_logic_vector) return
-    InputStreamInterfaceToFifoArray_t;
-  function UnflattenStreamInterface(Vector : std_logic_vector) return
-    OutputStreamInterfaceFromFifoArray_t;
-  function UnflattenStreamInterface(Vector : std_logic_vector) return
-    OutputStreamInterfaceToFifoArray_t;
-
-  -- Functions to flatten arrays of stream interface types
-  function FlattenStreamInterface(arg : InputStreamInterfaceFromFifoArray_t) return
-    InputStreamInterfaceFromFifoFlatArray_t;
-  function FlattenStreamInterface(arg : InputStreamInterfaceToFifoArray_t) return
-    InputStreamInterfaceToFifoFlatArray_t;
-  function FlattenStreamInterface(arg : OutputStreamInterfaceFromFifoArray_t) return
-    OutputStreamInterfaceFromFifoFlatArray_t;
-  function FlattenStreamInterface(arg : OutputStreamInterfaceToFifoArray_t) return
-    OutputStreamInterfaceToFifoFlatArray_t;
-
-  -- Functions to unflatten arrays of stream interface types
-  function UnflattenStreamInterface(arg : InputStreamInterfaceFromFifoFlatArray_t) return
-    InputStreamInterfaceFromFifoArray_t;
-  function UnflattenStreamInterface(arg : InputStreamInterfaceToFifoFlatArray_t) return
-    InputStreamInterfaceToFifoArray_t;
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceFromFifoFlatArray_t)
-    return OutputStreamInterfaceFromFifoArray_t;
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceToFifoFlatArray_t) return
-    OutputStreamInterfaceToFifoArray_t;
-
-  -- Functions to convert the stream interface array types to std logic vectors.
-  function StreamInterfaceArrayToVector(
-    arg : InputStreamInterfaceFromFifoFlatArray_t) return std_logic_vector;
-  function StreamInterfaceArrayToVector(
-    arg : InputStreamInterfaceToFifoFlatArray_t) return std_logic_vector;
-  function StreamInterfaceArrayToVector(
-    arg : OutputStreamInterfaceFromFifoFlatArray_t) return std_logic_vector;
-  function StreamInterfaceArrayToVector(
-    arg : OutputStreamInterfaceToFifoFlatArray_t) return std_logic_vector;
-
-  -- Functions to convert the stream interface array types from std logic vectors.
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return InputStreamInterfaceFromFifoFlatArray_t;
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return InputStreamInterfaceToFifoFlatArray_t;
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return OutputStreamInterfaceFromFifoFlatArray_t;
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return OutputStreamInterfaceToFifoFlatArray_t;
-
-end PkgDmaPortDmaFifosFlatTypes;
-
-
-package body PkgDmaPortDmaFifosFlatTypes is
-
-  ---------------------------------------------------------------------------------------
-  -- Flattening functions for Stream Interface types.
-  ---------------------------------------------------------------------------------------
-
-  function FlattenStreamInterface(arg : InputStreamInterfaceFromFifo_t) return
-    InputStreamInterfaceFromFifoFlat_t is
-
-    variable ReturnVal : InputStreamInterfaceFromFifoFlat_t;
-    variable index: natural := 0;
-
-  begin
-
-    ReturnVal(index) := to_StdLogic(arg.ResetDone);
-    index := index + 1;
-    ReturnVal(index + arg.FifoDataOut'length-1 downto index) := arg.FifoDataOut;
-    index := index + arg.FifoDataOut'length;
-    ReturnVal(index + arg.FifoFullCount'length-1 downto index) :=
-      std_logic_vector(arg.FifoFullCount);
-    index := index + arg.FifoFullCount'length;
-    ReturnVal(index) := to_StdLogic(arg.FifoOverflow);
-    index := index + 1;
-    ReturnVal(index + arg.ByteLanePtr'length-1 downto index) :=
-      std_logic_vector(arg.ByteLanePtr);
-    index := index + arg.ByteLanePtr'length;
-    ReturnVal(index) := to_StdLogic(arg.StartStreamRequest);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.StopStreamRequest);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.StopStreamWithFlushRequest);
-    index := index + 1;
-	ReturnVal(index) := to_StdLogic(arg.FlushRequest);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.WritesDisabled);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.WriteDetected);
-    index := index + 1;
-    ReturnVal(index + arg.StateInDefaultClkDomain'length-1 downto index) :=
-      arg.StateInDefaultClkDomain;
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(arg : InputStreamInterfaceToFifo_t) return
-    InputStreamInterfaceToFifoFlat_t is
-
-    variable ReturnVal : InputStreamInterfaceToFifoFlat_t;
-    variable index: natural := 0;
-
-  begin
-
-    ReturnVal(index) := to_StdLogic(arg.DmaReset);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.Pop);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.TransferEnd);
-    index := index + 1;
-    ReturnVal(index + arg.ByteCount'length-1 downto index) :=
-      std_logic_vector(arg.ByteCount);
-    index := index + arg.ByteCount'length;
-    ReturnVal(index + arg.ByteEnable'length-1 downto index) :=
-      to_StdLogicVector(arg.ByteEnable);
-    index := index + arg.ByteEnable'length;
-    ReturnVal(index + arg.NumReadSamples'length-1 downto index) :=
-      std_logic_vector(arg.NumReadSamples);
-    index := index + arg.NumReadSamples'length;
-    ReturnVal(index) := to_StdLogic(arg.RsrvReadSpaces);
-    index := index + 1;
-    ReturnVal(index + arg.StreamState'length-1 downto index) := arg.StreamState;
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(arg : OutputStreamInterfaceFromFifo_t) return
-    OutputStreamInterfaceFromFifoFlat_t is
-
-    variable ReturnVal : OutputStreamInterfaceFromFifoFlat_t;
-    variable index: natural := 0;
-
-  begin
-
-    ReturnVal(index) := to_StdLogic(arg.ResetDone);
-    index := index + 1;
-    ReturnVal(index + arg.EmptyCount'length-1 downto index) :=
-      std_logic_vector(arg.EmptyCount);
-    index := index + arg.EmptyCount'length;
-    ReturnVal(index) := to_StdLogic(arg.RsrvdSpacesFilled);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.FifoUnderflow);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.StartStreamRequest);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.StopStreamRequest);
-    index := index + 1;
-    ReturnVal(index + arg.HostReadableFullCount'length-1 downto index) :=
-      std_logic_vector(arg.HostReadableFullCount);
-    index := index + arg.HostReadableFullCount'length;
-    ReturnVal(index + arg.StateInDefaultClkDomain'length-1 downto index) :=
-      arg.StateInDefaultClkDomain;
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(arg : OutputStreamInterfaceToFifo_t) return
-    OutputStreamInterfaceToFifoFlat_t is
-
-    variable ReturnVal : OutputStreamInterfaceToFifoFlat_t;
-    variable index: natural := 0;
-
-  begin
-
-    ReturnVal(index) := to_StdLogic(arg.DmaReset);
-    index := index + 1;
-    ReturnVal(index) := to_StdLogic(arg.FifoWrite);
-    index := index + 1;
-    ReturnVal(index + arg.WriteLengthInBytes'length-1 downto index) :=
-      std_logic_vector(arg.WriteLengthInBytes);
-    index := index + arg.WriteLengthInBytes'length;
-    ReturnVal(index + arg.FifoData'length-1 downto index) := arg.FifoData;
-    index := index + arg.FifoData'length;
-    ReturnVal(index + arg.ByteEnable'length-1 downto index) :=
-      to_StdLogicVector(arg.ByteEnable);
-    index := index + arg.ByteEnable'length;
-    ReturnVal(index) := to_StdLogic(arg.RsrvWriteSpaces);
-    index := index + 1;
-    ReturnVal(index + arg.NumWriteSpaces'length-1 downto index) :=
-      std_logic_vector(arg.NumWriteSpaces);
-    index := index + arg.NumWriteSpaces'length;
-    ReturnVal(index + arg.StreamState'length-1 downto index) := arg.StreamState;
-    index := index + arg.StreamState'length;
-    ReturnVal(index) := to_StdLogic(arg.ReportDisabledToDiagram);
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  ---------------------------------------------------------------------------------------
-  -- Unflattening functions for Stream Interface types.
-  ---------------------------------------------------------------------------------------
-
-  function UnflattenStreamInterface(arg : InputStreamInterfaceFromFifoFlat_t) return
-    InputStreamInterfaceFromFifo_t is
-
-    variable ReturnVal : InputStreamInterfaceFromFifo_t;
-    variable index : natural := 0;
-
-  begin
-
-    ReturnVal.ResetDone := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.FifoDataOut := arg(index + ReturnVal.FifoDataOut'length-1 downto index);
-    index := index + ReturnVal.FifoDataOut'length;
-    ReturnVal.FifoFullCount :=
-      unsigned(arg(index + ReturnVal.FifoFullCount'length-1 downto index));
-    index := index + ReturnVal.FifoFullCount'length;
-    ReturnVal.FifoOverflow := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.ByteLanePtr := unsigned(arg(index + ReturnVal.ByteLanePtr'length-1 downto index));
-    index := index + ReturnVal.ByteLanePtr'length;
-    ReturnVal.StartStreamRequest := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.StopStreamRequest := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.StopStreamWithFlushRequest := to_Boolean(arg(index));
-    index := index + 1;
-	ReturnVal.FlushRequest := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.WritesDisabled := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.WriteDetected := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.StateInDefaultClkDomain :=
-      arg(index + ReturnVal.StateInDefaultClkDomain'length-1 downto index);
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-
-  function UnflattenStreamInterface(arg : InputStreamInterfaceToFifoFlat_t) return
-    InputStreamInterfaceToFifo_t is
-
-    variable ReturnVal : InputStreamInterfaceToFifo_t;
-    variable index : natural := 0;
-
-  begin
-
-    ReturnVal.DmaReset := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.Pop := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.TransferEnd := to_Boolean(arg(2));
-    index := index + 1;
-    ReturnVal.ByteCount :=
-      unsigned(arg(index + ReturnVal.ByteCount'length-1 downto index));
-    index := index + ReturnVal.ByteCount'length;
-    ReturnVal.ByteEnable := 
-      to_BooleanVector(arg(index + ReturnVal.ByteEnable'length-1 downto index));
-    index := index + ReturnVal.ByteEnable'length;
-    ReturnVal.NumReadSamples :=
-      unsigned(arg(index + ReturnVal.NumReadSamples'length-1 downto index));
-    index := index + ReturnVal.NumReadSamples'length;
-    ReturnVal.RsrvReadSpaces := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.StreamState := arg(index + ReturnVal.StreamState'length-1 downto index);
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceFromFifoFlat_t) return
-    OutputStreamInterfaceFromFifo_t is
-
-    variable ReturnVal : OutputStreamInterfaceFromFifo_t;
-    variable index : natural := 0;
-
-  begin
-
-    ReturnVal.ResetDone := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.EmptyCount := 
-      unsigned(arg(index + ReturnVal.EmptyCount'length-1 downto index));
-    index := index + ReturnVal.EmptyCount'length;
-    ReturnVal.RsrvdSpacesFilled := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.FifoUnderflow := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.StartStreamRequest := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.StopStreamRequest := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.HostReadableFullCount :=
-      unsigned(arg(index + ReturnVal.HostReadableFullCount'length-1 downto index));
-    index := index + ReturnVal.HostReadableFullCount'length;
-    ReturnVal.StateInDefaultClkDomain :=
-      arg(index + ReturnVal.StateInDefaultClkDomain'length-1 downto index);
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceToFifoFlat_t) return
-    OutputStreamInterfaceToFifo_t is
-
-    variable ReturnVal : OutputStreamInterfaceToFifo_t;
-    variable index : natural := 0;
-
-  begin
-
-    ReturnVal.DmaReset := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.FifoWrite := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.WriteLengthInBytes :=
-      unsigned(arg(index + ReturnVal.WriteLengthInBytes'length-1 downto index));
-    index := index + ReturnVal.WriteLengthInBytes'length;
-    ReturnVal.FifoData := arg(index + ReturnVal.FifoData'length-1 downto index);
-    index := index + ReturnVal.FifoData'length;
-    ReturnVal.ByteEnable :=
-      to_BooleanVector(arg(index + ReturnVal.ByteEnable'length-1 downto index));
-    index := index + ReturnVal.ByteEnable'length;
-    ReturnVal.RsrvWriteSpaces := to_Boolean(arg(index));
-    index := index + 1;
-    ReturnVal.NumWriteSpaces :=
-      unsigned(arg(index + ReturnVal.NumWriteSpaces'length-1 downto index));
-    index := index + ReturnVal.NumWriteSpaces'length;
-    ReturnVal.StreamState := arg(index + ReturnVal.StreamState'length-1 downto index);
-    index := index + ReturnVal.StreamState'length;
-    ReturnVal.ReportDisabledToDiagram := to_Boolean(arg(index));
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  ---------------------------------------------------------------------------------------
-  -- Flattening functions for Stream Interface array types.
-  ---------------------------------------------------------------------------------------
-
-  function FlattenStreamInterface(arg : InputStreamInterfaceFromFifoArray_t) return
-    InputStreamInterfaceFromFifoFlatArray_t is
-
-    variable ReturnVal : InputStreamInterfaceFromFifoFlatArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := FlattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(arg : InputStreamInterfaceToFifoArray_t) return
-    InputStreamInterfaceToFifoFlatArray_t is
-
-    variable ReturnVal : InputStreamInterfaceToFifoFlatArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := FlattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(arg : OutputStreamInterfaceFromFifoArray_t) return
-    OutputStreamInterfaceFromFifoFlatArray_t is
-
-    variable ReturnVal : OutputStreamInterfaceFromFifoFlatArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := FlattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(arg : OutputStreamInterfaceToFifoArray_t) return
-    OutputStreamInterfaceToFifoFlatArray_t is
-
-    variable ReturnVal : OutputStreamInterfaceToFifoFlatArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := FlattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  ---------------------------------------------------------------------------------------
-  -- Unflattening functions for Stream Interface array types.
-  ---------------------------------------------------------------------------------------
-
-  function UnflattenStreamInterface(arg : InputStreamInterfaceFromFifoFlatArray_t) return
-    InputStreamInterfaceFromFifoArray_t is
-
-    variable ReturnVal : InputStreamInterfaceFromFifoArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := UnflattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function UnflattenStreamInterface(arg : InputStreamInterfaceToFifoFlatArray_t) return
-    InputStreamInterfaceToFifoArray_t is
-
-    variable ReturnVal : InputStreamInterfaceToFifoArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := UnflattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceFromFifoFlatArray_t)
-    return OutputStreamInterfaceFromFifoArray_t is
-
-    variable ReturnVal : OutputStreamInterfaceFromFifoArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := UnflattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function UnflattenStreamInterface(arg : OutputStreamInterfaceToFifoFlatArray_t) return
-    OutputStreamInterfaceToFifoArray_t is
-
-    variable ReturnVal : OutputStreamInterfaceToFifoArray_t(arg'range);
-
-  begin
-
-    for i in 0 to arg'length-1 loop
-      ReturnVal(i) := UnflattenStreamInterface(arg(i));
-    end loop;
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function StreamInterfaceArrayToVector(
-    arg : InputStreamInterfaceFromFifoFlatArray_t) return std_logic_vector
-  is
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*InputStreamInterfaceFromFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    for i in ArraySize-1 downto 0 loop
-      ReturnVal(((i+1)*InputStreamInterfaceFromFifoFlat_t'length)-1 downto
-                i*InputStreamInterfaceFromFifoFlat_t'length) := arg(i);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceArrayToVector;
-
-
-  function StreamInterfaceArrayToVector(
-    arg : InputStreamInterfaceToFifoFlatArray_t) return std_logic_vector
-  is
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*InputStreamInterfaceToFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    for i in ArraySize-1 downto 0 loop
-      ReturnVal(((i+1)*InputStreamInterfaceToFifoFlat_t'length)-1 downto
-                i*InputStreamInterfaceToFifoFlat_t'length) := arg(i);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceArrayToVector;
-
-
-  function StreamInterfaceArrayToVector(
-    arg : OutputStreamInterfaceFromFifoFlatArray_t) return std_logic_vector
-  is
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*OutputStreamInterfaceFromFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    for i in ArraySize-1 downto 0 loop
-      ReturnVal(((i+1)*OutputStreamInterfaceFromFifoFlat_t'length)-1 downto
-                i*OutputStreamInterfaceFromFifoFlat_t'length) := arg(i);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceArrayToVector;
-
-
-  function StreamInterfaceArrayToVector(
-    arg : OutputStreamInterfaceToFifoFlatArray_t) return std_logic_vector
-  is
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*OutputStreamInterfaceToFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    for i in ArraySize-1 downto 0 loop
-      ReturnVal(((i+1)*OutputStreamInterfaceToFifoFlat_t'length)-1 downto
-                i*OutputStreamInterfaceToFifoFlat_t'length) := arg(i);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceArrayToVector;
-
-
-  -- Functions to convert the stream interface array types from std logic vectors.
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return InputStreamInterfaceFromFifoFlatArray_t
-  is
-
-    variable ReturnVal : InputStreamInterfaceFromFifoFlatArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    for i in ReturnVal'length-1 downto 0 loop
-      ReturnVal(i) := Vector((i+1)*InputStreamInterfaceFromFifoFlat_t'length-1
-        downto i*InputStreamInterfaceFromFifoFlat_t'length);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceVectorToArray;
-
-
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return InputStreamInterfaceToFifoFlatArray_t
-  is
-
-    variable ReturnVal : InputStreamInterfaceToFifoFlatArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    for i in ReturnVal'length-1 downto 0 loop
-      ReturnVal(i) := Vector((i+1)*InputStreamInterfaceToFifoFlat_t'length-1
-        downto i*InputStreamInterfaceToFifoFlat_t'length);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceVectorToArray;
-
-
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return OutputStreamInterfaceFromFifoFlatArray_t
-  is
-
-    variable ReturnVal : OutputStreamInterfaceFromFifoFlatArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    for i in ReturnVal'length-1 downto 0 loop
-      ReturnVal(i) := Vector((i+1)*OutputStreamInterfaceFromFifoFlat_t'length-1
-        downto i*OutputStreamInterfaceFromFifoFlat_t'length);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceVectorToArray;
-
-
-  function StreamInterfaceVectorToArray(
-    ArraySize : natural;
-    Vector : std_logic_vector) return OutputStreamInterfaceToFifoFlatArray_t
-  is
-
-    variable ReturnVal : OutputStreamInterfaceToFifoFlatArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    for i in ReturnVal'length-1 downto 0 loop
-      ReturnVal(i) := Vector((i+1)*OutputStreamInterfaceToFifoFlat_t'length-1
-        downto i*OutputStreamInterfaceToFifoFlat_t'length);
-    end loop;
-
-    return ReturnVal;
-
-  end StreamInterfaceVectorToArray;
-
-
-  function FlattenStreamInterface(
-    arg : InputStreamInterfaceFromFifoArray_t) return std_logic_vector
-  is
-
-    variable TempArray : InputStreamInterfaceFromFifoFlatArray_t(arg'range);
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*InputStreamInterfaceFromFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    TempArray := FlattenStreamInterface(arg);
-    ReturnVal := StreamInterfaceArrayToVector(TempArray);
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(
-    arg : InputStreamInterfaceToFifoArray_t) return std_logic_vector
-  is
-
-    variable TempArray : InputStreamInterfaceToFifoFlatArray_t(arg'range);
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*InputStreamInterfaceToFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    TempArray := FlattenStreamInterface(arg);
-    ReturnVal := StreamInterfaceArrayToVector(TempArray);
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-  function FlattenStreamInterface(
-    arg : OutputStreamInterfaceFromFifoArray_t) return std_logic_vector
-  is
-
-    variable TempArray : OutputStreamInterfaceFromFifoFlatArray_t(arg'range);
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*OutputStreamInterfaceFromFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    TempArray := FlattenStreamInterface(arg);
-    ReturnVal := StreamInterfaceArrayToVector(TempArray);
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  function FlattenStreamInterface(
-    arg : OutputStreamInterfaceToFifoArray_t) return std_logic_vector
-  is
-
-    variable TempArray : OutputStreamInterfaceToFifoFlatArray_t(arg'range);
-
-    constant ArraySize : natural := arg'length;
-    variable ReturnVal : std_logic_vector(
-      ArraySize*OutputStreamInterfaceToFifoFlat_t'length-1 downto 0);
-
-  begin
-
-    TempArray := FlattenStreamInterface(arg);
-    ReturnVal := StreamInterfaceArrayToVector(TempArray);
-
-    return ReturnVal;
-
-  end FlattenStreamInterface;
-
-
-  -- Functions to unflatten the stream interface types
-  function UnflattenStreamInterface(
-    Vector    : std_logic_vector) return InputStreamInterfaceFromFifoArray_t
-  is
-
-    constant ArraySize : natural := Vector'length /
-      InputStreamInterfaceFromFifoFlat_t'length;
-    variable TempArray : InputStreamInterfaceFromFifoFlatArray_t(ArraySize-1 downto 0);
-    variable ReturnVal : InputStreamInterfaceFromFifoArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    TempArray := StreamInterfaceVectorToArray(ArraySize, Vector);
-    ReturnVal := UnflattenStreamInterface(TempArray);
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function UnflattenStreamInterface(
-    Vector    : std_logic_vector) return InputStreamInterfaceToFifoArray_t
-  is
-
-    constant ArraySize : natural := Vector'length /
-      InputStreamInterfaceToFifoFlat_t'length;
-    variable TempArray : InputStreamInterfaceToFifoFlatArray_t(ArraySize-1 downto 0);
-    variable ReturnVal : InputStreamInterfaceToFifoArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    TempArray := StreamInterfaceVectorToArray(ArraySize, Vector);
-    ReturnVal := UnflattenStreamInterface(TempArray);
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function UnflattenStreamInterface(
-    Vector    : std_logic_vector) return OutputStreamInterfaceFromFifoArray_t
-  is
-
-    constant ArraySize : natural := Vector'length /
-      OutputStreamInterfaceFromFifoFlat_t'length;
-    variable TempArray : OutputStreamInterfaceFromFifoFlatArray_t(ArraySize-1 downto 0);
-    variable ReturnVal : OutputStreamInterfaceFromFifoArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    TempArray := StreamInterfaceVectorToArray(ArraySize, Vector);
-    ReturnVal := UnflattenStreamInterface(TempArray);
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-
-  function UnflattenStreamInterface(
-    Vector    : std_logic_vector) return OutputStreamInterfaceToFifoArray_t
-  is
-
-    constant ArraySize : natural := Vector'length /
-      OutputStreamInterfaceToFifoFlat_t'length;
-    variable TempArray : OutputStreamInterfaceToFifoFlatArray_t(ArraySize-1 downto 0);
-    variable ReturnVal : OutputStreamInterfaceToFifoArray_t(ArraySize-1 downto 0);
-
-  begin
-
-    TempArray := StreamInterfaceVectorToArray(ArraySize, Vector);
-    ReturnVal := UnflattenStreamInterface(TempArray);
-
-    return ReturnVal;
-
-  end UnflattenStreamInterface;
-
-end PkgDmaPortDmaFifosFlatTypes;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+FiK9KBulhkoyUl7dzWtZLepqOja/wRUqNoKfRczMihfNA0+vuPNW1Ro/ajw+Cx5B
+SDe8eyBny6eFH4xtvKUngeXul5rqgheY3/ic0k/OtaNKGyZsayd5ov6Sq3T+mdx/
+dqVg8KgeSP6dpN4MMFgLSHKCCAJ9LgRM3tJ2LdBh/hG79qxKyy3/9yuExMs3TIv+
+8DVps9Q0SxwthbRDeATgOrnJ95E5eK3dvuNT8dFp5cQvyYPV1KaeJy4GUAn99gn/
+8Mg7xrjHncr/MxpV5kn1Zvz9XKgAR34sNro1t16LQzWNULjRbgtr0WyPkRrBqfmz
+MNLEn4pRUPAf7ynOdmPbig==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="je2UZFMZBKLAw0ycXhOix6Mzrit1BQgW38MjgJnVOLM="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+dTasYuXuXXYsdKWrlSNxlzwKHoVs3kUzJuN610sYrZjpGFmu90ROjpuqHFLiloSM
+BSkl5i7hVB7IbVIFxEnJA2vvumaph8tBhRFiP5L6D900GYHevUdiU41QrAIhK2vG
+cxkZl11fE7X015vErVMm+6FLEXoxR42NXngd/Hq2RC4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="8MBqDLcIFGCAccq514Hz32xwDEuFHooG9Pd59L66LCc="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 29664 )
+`protect data_block
+uBOPZMumPK45+cUL/4s//C/96uNlAg9CCCFD6cZUfT0NttpbGnCgBjgD0fBKI1UM
+kyTtzRm6jZ1y83Mmz5ri98qNy+I8K4BRRnOW5vpbZ/Smepf+AWRTsFcGjpvFhE5R
+lmOQgIOM5jiJrGbWpsW/8hC2+wQVfzpSPOI0mjjX4uPpOYJkHcT8XsFQyFuPaBcC
+t2SImQQwF4h+X7hEbWIbunh+1bH9Xm5aKRxhJEbifBQBnjQ2nfs6WBciDyME7QKC
+zhzkJU1rwrzd9cCtxl2L62vp1qFxsKa8i0NziU/82VzUPdnkdlmMx2iJeynrFoiM
+E1cYkdl7vahWQmDDJQQked8pJBsNVgs5gGJ+bfz56C7F7+3GPcITxjS/cudoGIur
+vzSHttrJ9tpq1zPvTmZMCzl1fcR81iSQN3TC170eaiEZLEKR4V+4SGb3OqLinRuS
+nLgBE7DIQuUYJNKZnKeX9wECVRoNo68/BSEieNH6JfkoR56BSXcaoxcb8NXMTbXf
+3UmBVCH3SwmVWh5pRYL2oaP1hfeWh7Nv0jnGrodm797CelMCdTjdr6YU+O3VDWut
+BLMKhkQn+BfibjwedK2sbHwTNyDgCcMY3wrFp8UfoeBhxBDZSQ9GlZ1vadyVrwOa
+ixpl8cnXiZ0gqn/CRuH1Dqha4b1KVpuptxvCs93AvhQfiq5EJWukEpAw+xQRqCDO
+4gY0S6Uk938205GNJq89fuFBLD5f32RtLl0ujUKQSSbxp0GsI2r99sSTuAnL5zyB
+2J1vm0Q+77Ir60oayscKmOI1vBe2297/Hznmr/hL3gHFVFxCTdD3he27xsuL5YsF
+BPKckDH5eTIYLROVN1DsTlorQYVTSWAZ8NDObAzFNMSfR9Z2sqnp2czRbW/xcqtY
+aDECAEiLOZ22BcyJ8hh70NxaQgoZx0F5MDil2pVV1DkF4Y6K3UVwlcgZYkBF1Ou6
+83IfrSIR+zQX+avcBLhEM+eXIae/YeiQVsV426UZdjnzENneP20/MjRdbMhtNU1W
+F8UA+mNcTtVoZZvo5aLomHXXSkX3sYEYa1RnO4J3+Le6QDvDoZujotbMHvwyfWGG
+ttBCkbrqybJrDJANpg4OKa2PCGJJORouW4iT3/MUOx+zBaB4cijmti734Tp2U2NL
+PfGSInb0bcidwyPL6vCYUMA0g6hi3CBlQJNgtKzChnwPASmIrZCx7TS3+/4Ll+ZJ
+UPVNJ5vyBZP6HWGk12cLNigqTLhILudiDeys7jmY7FO0iNFsGQPrOwVnU7MRqxxi
+V2Y/WNczQGxCoQxTA5h2C6C090LWkzHb6J2DuJsPrTq3e38F9W6VQFhwgQG4K/za
+CmSWeik6thsBhxIlKQSvRRuo0WmZiUiLyc4egkvSvzk5iQiIebPAotB605KyOQP1
+QP1q3u6tFrvfHgaIACSTKMA5DQ2DG9N2Itm7HMVn6LRMX5wXYieB5quWVTGRp3TS
+rDqmr3Ok4tkkrwrJ7Awkw2sbZQklTSqW7/DEo3Gc2xoqFlxPd/N/Pb4ek96x2jrv
+ELgBxcthMQFpH0be6PoW7SVlah3uxG3exBy8KTmWzCl7zaB699LnU7w3OTbUbTZ6
+/xe3NBDNnBNC8Q1iM84I/DInzmEJLuPuVjV79Y9C20fz0Zg/fNDJHVLUxz/uuHhb
+Zi7jaUr0E3xHfWelyi7xwF1whvDVCwkBH3a6dpK+siLZYSU2o3cL4iKiyy0+pZid
+EZSc5gZsZ6be3wnxyM2LF4Fst7n1kbNeBwG9v3oz8GsVqDQARW6mFqxEmK4ZQgxo
+W94X6WwzMvSLTtrkmi913NHnSQzl2wC+9eZlNcVktyLb8HjTn/N6EPFNnNNL8aUc
+1N+TUWzWUGnzwkz5jPRXhyh6B1nQ4Lxrg2UnaMlswFaKkNO0zrzgDFS6jpBfbagv
+cZ7rQ43KvFGkooDtYF5E6HwEvyUFOXJI2NLG2UDDPp/qpjs0zTLfJAqj42Sx8vcm
+Y9VeG7Sv/6qyEs+i2m60GljLGCsUvnmV3yZ8sbkv0Gx10MXLI6DZYL8ry7wJ3Jmh
+nFDBkPmLyutG34Yt/KE2br964ukUlag9RGyHFI8Kx5tyiDVou6L7UiBE66Hzs7E3
+gIqtehMSLpAlpGKUXNeS4T0wjeulOa8ngfSi+TMMJmXNbwTyspA2PZUwoTVGsvAH
+MAIeAb1rgo2pctf0dS2P4cvVm+ckyu2nJ324CVuHMrzj06vJ4Muhq8T7R3l+hYai
+GKoWm6pBNRik7QMYXV/vMctnW862/OJm+Ov9vbN1zhiojfn1RnH6zi31YghwYpBA
+URsJzQXgJjFlh6WJ6OuJyHN1ucqG+HsN6t9ELKKWSS6LRARkjIN5GDCb001914Js
+iiBZp5DVQfXAsCTY6ItasG9QMYm/NrXgf+eXmeiQJttxEQ/P5/4NYbWvOkwb3opz
+Z4RBUUMa8hjh1wz7hZL1va/JMnYDy4JmyvmKnQcm9xEuenQPfo5yICrVfoKfJlbe
+ChChE22sWp165ULGPNCFqFS2hFfgGxGO1283sfPTWFjTI4EeTDVvCDY3zXNl3GUw
+3lAlKI+KDq4166vD4s0MUgGYJGN3VEykDRdXLVEiV6RPnsDnmEEnP0ZkgpgPN1lD
+VlXydRzCzf9H3IFOrKadN71SuBT+XV5ndTdKNE655W0m3cH3WVVbW4N0Mzi00JpZ
+sh78LfvuAdYnfqfKD+J6TBNH8t305MocRnrXc4BVP11c29oPxl66dDZIELbDesa8
+2pFSGeltE38Vzbe3hhFNaADL0hqE5UGyu926oCws/oGMzBcrus0xxBW0Hdav54p+
+OfUCKjphK9VbT0+v2BtaIJ40lZf/f13j+HyqQ3wIPQlOQwHHE9vCK6FDXpVYnXdU
+LQ+eFK7FhbXDuowZKGdF6PtKehksyHFLIOpbd2ZKYxFhw0mfUSvE9dhk1PORd7JT
+4RV5UycUnGdmcNS4ZGV+yKK648pHQFH/1rF0+lSO9dIGytGVHItDNhdvOC1griQM
+fwxkLI6p+iLCLVWrCQRx1vJOBsk+hRoZsOcBaOHNtCrMUL8CTthLIrDU3UBRqYKz
+lewbWRPgIO1bQa3KOVf4KrXYl/qt+eJitTpHPLwOugkBF4xxRRaPO7Y03WirWteN
+iptIE8yhXCbzo3ZayXaZ2D2DoeHYRo9Nbnze01BVbTsGFfIRO4y3lyvxhAL5bMQ1
+glndUMKHYoIQ/O77aLNokM0FtNIeIqpRd8wqeZB5Fe2882zfr8LwaGvNrKIdbLcy
+LUy2f+Q9e2v8+kC6PkdxHTuhsyrkGSoYtlwTJKmHsuuzosEsRzzdxAXClc3FbCgD
+XmFSsxbPwSIPngamPccnS9N1dpr34FuycT5TMBhG4kn0NhmfaEan/YWysxXvnlU4
+tahlQsX3GwuL+7wk0mhvIAbOeqtr76i1dJ33P+y/Ze4lwqHew0pjgUAhGTLXXtXU
+OtTBi2+HYM1huj6i45MfeomjPL0oaPfeouzenaqw+dkKjaWM+ngoxCFblccDm0XE
+WBu+hvu1PB2+CqLDueN9eyYsVb3KFEk4cu2wggKDmaYXwAGB8PwF84urGXN+p15W
++dRykNwTkvF+/aHSwF9YwBUlmTvDNGFkhs+CGQJQgwHAGnvnulc4e3h0+9sgoPwt
+UQcFMyMuvCSzVIEM96KRk4I/fXObYRtYNYJZmjAqpy/JVLegHwcPrAIT73lokeuN
+ZCeaQ7x2f13KiTy43rThOtv/heFH0Zihgj4BfZcYGUta8d3BnJYQr5/EZF5GS6E8
+UEEBzGt6iDu9w9Bhpc9y39kQnFrg9TUYNzO5ebeSpfXeBt5vJ07bBqAhNkCyxoIt
+xS2i/GDZ4SVbMT9UPXbnAsJzp1JC6ZZBN1Ua8+BasfSAc3YVRYcz3Y2PMCRz09wi
+HEEU1Q5k7DHzTqYXBfMCqCb0BT6weM/j9Vsd2X1pdoBnXdXxYWRr4S6QjhJA/i3J
+Fo6hrdjf7Qf4DsCEBlFbh3MqQtVfM/FwfV8v53eiScU9s5xJTc697R9DhLhQdgVy
+AOVbMBm5yTzi8BEUXG5cN/JxHSGfHV/9ezdDb21cPrFHtblHaQABSSvPIJGftrnk
+wXXOzHMdTp3/PbfwkUixewlpHYUDxKzbTYboCkODWZJYwjIbI7UAU3kUqDGzfraZ
+SiEuxuB3gd7PybVHwOc9uZuM+sL3dr3Z5p+1PG0EImig6WoDqPB9lHRuPTDSFr0v
+C6l2XJdbJ9QmqZGgl7+c4Z0tEMoms0Qwf5tWZr8CV4mOi8FfuNdJ2CpwNRDRKhUb
+ekIzDCiBddzjlmP1UXn34EFH66/jqxrfsi5ynQIo0VlXCS/fA10MskXbNGZvt7sP
+V6oqP+sXYoU67EgHtRUY5eUAg0HiVtfkWMMjiIRB++U7DG0D77Ky09MdhP9ao72z
+bhbjwEf2FJCeeWvJVUeCD+5xw9oRU//D+3JFoJasMmnvWIEchImD+hJBR/7jK7bK
+EXWW27hjlS56WTuHfgFtcyU2kJ2oRFQXF9PZ1Vc9PxRQdG2jpo6sYDcXKE2YarzT
+l4YpZ90COGpwhJS663WoBZAnypAzeU1DDtIo8sExru7QtzM+djB6r7gO2kSJVrXH
+EAJwwpAcmAPZNcb3NEqv7F5iPGNN6WpKVLhrNBzW5Cgc4uOmhHerHTU3de9hFuJ7
+30LwElqUNO+Dr1N8nI26kdK72WtHdvafdsm0CZLfCcVumQZcFBG2P1L7cUsDWVSx
+fp7zy9hDgymIgyKRDHMScTIL7P12e6DaGMOK40iKWvppjf8bDEoNvKAcCZLX/pj5
+Rvy3/yP/ffAlneeQcGgdQIG36NtF7zbkjETxSfk+7HaNeEssUdDK6kZsk72/z81r
+aPGMUBRQeFcp04qPrlyNZZLbfaJ3D6Hj/oZFaukBGVdnqHJJfOM0t/rEA6omoL7M
+Ua7zbmLA5E8W+EtJbhnrN/+4e+WTFJ+GEpjM+yAbsk4FWYIa5HarL8RWA0CQkgzb
+uwKLLk4e4W8dRPaa6lOMhLWgwjZxFtpmdIvVIbelNXxgQcEKSqeX/vFMr7qrS+Z0
+IuWcjxtTKPJvD91/3s+EzZKcPOLxheMU7BB8v1ujhvn8dU2ArcwSNdHVOxeibLZX
+MW/IBwcklbij9YFVQxIsUKcHkz/kWGj6WfinSCRbo3SgapCLrgAjEwflExzYLO58
+bAq4pCcGccLZ6AWlTZteg0BsBbvxhhaYaTo0P46wIEdbmrYzKt0yjCd/ld+E87mR
+oFfxXqbWhu06xu/eRyGKokoYju0Wrq+3qQ+fz5dqeb+HJW+PC3gZcnQBhphfI4zK
+Qldm4CMc4ynbJe9Awe+iFBTYRaERR8tN/c82y6lcAw+bTaxQtZ9WgPC2phEdCaX4
+qCF8vbHMTILFEgQ2AjtsRS8kSi4sMXrqfgJg9bEVHu3vvtygOz8YRmI/GCddYZd+
+2zgO9kbdyu4O+OMTxZ5XYSLvUwGhCFnROZha2uYCBccQmKsvs7iHIiigaYrltueA
+iTo3aPNlI70dQUsbt59KPhPVuT92HYsOfNJQnT42W746qdxxtDUrq+4VDEjzcQnT
+AKfuclf1+mAPPHXCRNV6uTc0D88PW5uYn2wvvMpLLAJhI6pib2rLd0mtgBw9gGZb
+icmiJmTcW/Xy4lF3lyGfjX9qn9A6czmfnPAVtNVHQVPkaQ3S34BTeWJX6Hm2mVxg
+dPvuj0dqKVwS9bAdH0+oAT9MyTjGW67rNhNfUFG88StpYCZqvmPEeMyoteffGD3B
+zPCXEjDMbHEKZ6zMjwbQFxV/eadwrY3q2+URm11zZYjVUrjxrSiIGiaPLEq+vWuX
++DXxn02yy/C6a7RBnW+PxnHuRuIipCQbymvI9NgkJs7o1fNAXh8PDIJ2HhmuYpjj
+61PUzTVT4jTtf5OdWHl7agzaJlv8VEkA/AzxZ5oWGJ8/wEP7EAAD+Fvwbd6wua+4
+6DEWzs97HHlwoFF+BFO1nW4Xx5UO8A+Q6HAuBQjemUyqxcOvipf4culXWiS7em9k
+1AAle9mLDb1OWJDnyFkMfDPtoHbsoY+s8djMjC+CFewBR2Wp0gfWIvxBLY0OY2gS
+bpnLTNHFeyJmO5VB1PYg3W4x2yUsk0ygafx7SDuBY1Mi9iHvRDNwDOpY/3ai+j2S
+Dh95r8yoYXgtQ4liZUSwhG1FasfXJba7bIJj9l2rFR6z8QhkI0tJ+HdmUz1vA2bz
+pErxbaTcwKSfgNF1oZeEH31PlOzjutbtlwZZ1krLvdFSj0XEZbFbkMeq/8IUHKL4
+KM/pu34AL/duACevTSYRhmBNNyRKQbCd17tN2FDDHyeuONoFup3WCZpRDgXx9GIr
+CNzw1ahDqLVKm3AP9cvChY4KaffOYmwoUZqsdVcjXta6j+VdiVdOvxQr1dr09Tsv
+pLn6lVFdn6Q4yesmnKJkOUVEn9BoPyK1vrHVLfSc+ljoPWP0yjAYhodX207JSQYy
+yAsna7j2KJLahWlHrL2e4motVd2Rz4OmFoSg5Kc241HyNoiB6D9hBpRXTMNuCuyS
+wbdecUF7+JQENgXYfrgbNZFB3X6ZHaieB6C8Mkiu1dVt3nTHvQLRKaVWuip7cM44
+ZKlMkIYEMA/rROmqZEhKQ1C14GwWgj+tUYsvFA5q9utAlO9cA2kIF2y/Vt/7fJM+
+Q/e6qcc7eU6Y/8OMnWh2d91apT43npVr+bZFNAB7f6gxdtN/PaDXvzttJEepFZtW
+QsDwHeQfnjWKE8uLgxF7CGCWGmEPyVRpZlkNZg/N9g4DBAp1j2PTXRK5CkXiQ8OM
+/K21BmbQNVasaTABvtb+662FT3hfVfWsbMMiSNawvjcmBovDzJmarA+TRNTpn4Jx
+6VGGJWB4768q7S2XHgzKqrAmpPOpRbeUrlqVt27726TubdPKLnr7LZ7Kf7BqT8tL
+/4CHi7tz28yfBGRGvv6nJEr5uORgy7N4bm+lAFAvn01D8cWiL1jA7WnDRZtc9Y+n
+djSFofj38mqdqcIa/DDBl7iym3mcYAxEBmFaZcpG/s+6nST+FwO7y17KYCUfIFDF
+rgPEEEhWPOmDr9ttut3Uo/OpfM0Qcdjia0Gww9Zefxe/dSMy1X9wzAG4HecsMWn7
+ZtM7nRtJofPxOrKotGx05Ys6r4V4e2CkT5++cO4G8YAbHrkZm25n1SyFwfe5/J4W
+Jso1DZBSRSLtUOD9fjk1mheCKkbWk2oOTJP5MIXAh4OHR0uXHxrDTPtq/Bu2UByH
+wtWKeofWQKicIoXp2T/bUAqmOrVZ0xghPGEW2QKGHGaepLO0Q5VS5C7faps3s07e
+IHQTdfEze97ptsIdIl0PVsPYQzQlH9nJsgyJupovdfPzPMKhf801nhGpAvRBv1m1
++GaGmUHt/EhvKh2BcAQ7Gea52Yyx+Ynxx2UV8fNBzMCyZTBRKm/vvKDCYBQaRJMM
+sRKNbjXovj/Ztog/Ms3ibNHKBD6M/q9pVhvDaQehae59jxcvtE+Nyj+I5aFFKXCI
+SPN2hsNkzzrXAEFDBec1FzitN6CLDrKDpuQQXV9THhKYwHAHerUdLMbWhf8b/rYC
+zA7A89Rgq/fA/HTLuOdHhfEDfklRhKG6a4NfirED+6MOQDkTdzsoewTxY7ZX2Irm
+R3bFY4/XJSLhzV0lkIxJI2YXP0h6MtAbthMPhZAztdEtriEDORo9J3rEjJmfoMEI
+KBuROheD/KMM5KkUmr5a6it6XZg9ZzTA3HMiIXzW2r6JxGUH1ch+aanat+E+oQT+
+lKL0qfYKA69ol66weVGCx7KkiaUF6sKDp9cEXpkX7+eJPLdamW4Xz98nXXtO68Jl
+XMZCZBLcultYpcL3iV4XMXQtDjUmu8SYoo7YMlH2KFzAPo6yWLRuzWFm82ILzUuO
+V1PcShEekakx5U2gvOC8nMca4N2RZ6I9Eo4KJYy2X32T9uBnYo9/dMUVghXXH7Yl
+Y3EF/2aTk0hpMuYYadKBjuOG6KawmznUAzcMeMwMKQaN51SLJ16DqCoI1wGGUa4z
+NtI3yF2yyXUDGLMzco7FCJSZy4fhYmXNXfLAt4AaJEjNNDEz+6XdlrfuBp41tp3n
+WlVuFoabdYGbJiCxxiLdLPagPBn+Sb50M2YqbQgSIeBggSonFTMIaawYkCK0xUq2
+odGpReBhxw9ttb4at9pO8yqM15A71xnoaBxs2xBvjl1tRhHgnk3wne5WPeN8DDpF
+vJm/aGexL2zuEeZqCsXJp1oes6c4anzsMD5SEtulVcxuYqr0/oi0gLigTkS2LOhj
+TrSC7xHab4yZOkI5jzFhrgJ59jmvmu2rnYGhpXeOZAFiNw1wOJyAIAgO39OopYgn
+bGpqkpy3haOMd61a2iXuTcRC3fj4xVaxFD+twYfdfTqdElULOIJaAhv94AOroOFK
+SL0dmy4g7AY+eXhggD6WJe/wIDz1RvpBR/cgtoaFMQ9nR6TNMWo+tp6O+KudrfoZ
+HDvcJWYYQVYVwbHLhe/OcAxMvCKeKTubFETpz7YlF+pzBGyMi5KvGhbsuNzz4EsI
+updciG4yTVSPo6ccRXvFI5SW8Og707kshg130ygq6dAgdwMI7C11EoDqCMwnLf66
+37+1hq+GIflfxnPaU/Yn5dJt0ZTtGM2xoWQEHGGO9RNVS0l7DtnjBMMscN68qPar
+ucX9xyBDb/ps/yn5xodq4e+iyniAdJmbxXumjsLC0tUh7MQjGaX/LF4Xu4a1/+A5
+6M1Bd8pFGCMpN4oB7dVXivBrD5xPjokTbxtNWEPaYCseKxnuVqEUy5yoSLUA6c3V
+fe3pmUjS9QBercfVJicOTixa36XjpWAHrw+4Uw7beVy3cClzKD/V5O2U6Im84h/C
+ELT2eKSPYt7WVNA2ptjI78/CDrSuKy1vMF7St+g2cP88gg/bLVSg9I+x9/sU/Hw6
+4EiLoI/17icAJFixkczizakAI8CnE1fOCa1VbhL3N+inWJSxQvY9E6tPWUfsghHe
+Zm7xgpe80RIwnhVThxc4gPUr/qy/TUgCMI3rCKEnYCYnaotkWZ8a8ZU8qt/M0jUC
+BuEo4TpLtnO9AYHJbv4A4GghPo2v01M/Z3iaRg9PXjOb2OKQ8OaKHfFTqxhqjSKh
+dRdj8IOl7Mxz0MVY8q8zjUroKUn53Js9TI7GH+E9N3sIQiuLOP0CwA34Knf21zRa
+gITSXcDU9iPC/eQFowjxQB8A/thYyBdnhQINyqwCe5ayg3f3ARQ8Tifbu0XKi92l
+4gidPvI/2pZTKgnp69+3s5dDnRK463g22rrA5TydNx73GfKmlTzuSOX8QMj8wRVS
+wnfbTovknBaCTDyv98GsOvPuGbBtGyx6G9uRk8rOQgtTj0DfrUZBsPjSHhzAMVo8
+DS8e+2w3UBo6avIQVTmv4BWyHgdovqTArV17qWGY/HWxDi4FrhDNX96MkO3RCoH+
+NujnuB4jLbqV0+6dkDtcjtiY5MjcA1sIwhF2NzUlBAhAoL5htWLW2B5gVm9pu08O
+5ILV090hY9+IJXw19Hly8DP+pUh8FU5kwJBuorpmnp+TIthk8cc2j+GtxIblCK1k
+G5YSpAOJlTEhoY32J+m22MnlRAB9p2MJIgWvAZ3Z/KapxQNMY4MMzKc3BOBiInu4
+WkejGw3ZIwhTg5e5YZrX7G4USZRPpyGHjaAYlqMd2HXz9f3hTYDuzPmJn9LA6xls
+/kn29uf1Rdi/v5Sj7rLeaMOiYBXj+FB9B03v1AssJ82IynRE/HUpObINndvQDPfv
+9vu93HFV7bRlw8lkqzAuUIraTGd0FXs37BxgnY2IaNWMPs8ckfFGXF6ViGIE3S/3
+Yg//B6z7y7IDQTQK5cSHJCL58wdIug+S2pRh/FxRFp1FQ8bp/eeciDOr9IggIx/Q
+CZGon/BFrMDmo/WL7mb5WJZWwrgMBIMVTm47q7GBcF6Auqt/RBkW03eJbU+FlQce
+T3oqj8sdT5YgQao2q/FdawLfal7R0Qt7ZsH0fk+Eor5EjvEqcvi95HUK7DvlSvms
+ZNFG6FB/P754sp8J78fiVPA5+Elj+WzQMaI5IJ6dshyIiJUwuGKG1ZXoEUftrpYh
+7+bCmFOOzNuPMns7ik3E6NlDpJEs92x87UC+O9b/E7ZtZdQ7phQJZuSzPFCWpaBg
+rJZ7tycYD3pQNiBhktyhxqq6mUKywYa30Jx4O2MSHN+cRNYfTnZrXbhrC1aqwF+8
+vDotO1A8DNl+KknCz753I8SDeSp+/xAaS5akmtfQobYMpt8xOaEtvGkjz3h6275J
+fHJTaymwxEL78VBHFUt10GJXgZ7uGqtwUg/4vCnpn9NVKzHmIdMJAPgB1ow7Sqh5
+a0yJiGCj0Jdpzj+405PEAhWizeWrVYSaMM6uLqbakvn9Vk5OW8RwdD2AhU2YrtNt
+DN5L/FZIhrIuOqXD25rZTAXiJ3BhLoL/t3s7xc6PxrtUJRNusF0eS2LZaCgvi65O
+WDAPSDlhNPTL3eDeQZHnKd0A+uK5SYQV93BYDxSK+cM1C4xvoX4/lQyQvYXpywar
+B2h+H40nlVNKtCk6SE8OkYq30uzErAob8nZCsffDx/mq11HuhWmRqAHie47LRko6
+1QYRUFiU+HfyCEURlsrIVvFb1Xz2IcCiRpbnwm88uv1Vq0BhNdQeQ7Fhb5yHsXg+
+MnRO3lWPQYX++aY2IAzzOC/59K/WAHt6FRXQVtZ9Tued5xMyuI50majAyxy/uF2m
+Qz6Nh1sAhkXEovuY3WF/6OaQUcLmmcZTC0OEqAZhGhnJY9haaqUBv87b7xfrKRwV
+K/2F+NUj1nk4NPld2nY/VXVpNwiVtxGZPSY8WznaGWBTcWVTEKVHxpAfyNDWSiOM
+mt0K9qf3ymVEOsp+iRUi78I6Tmgf4IveBnH1/hvzqEb7cOVsWAnzG99Q2VofNoSV
+AVO0EPLwtfdjJ1HOk/gMNoK6lBZ1ilqaUw0LX+AZ+8aNmnQzHJERqS/H2amWENHy
+YuF3uZnG0y5HQfDJXIsxUobut1B/WRYdKCTUt68ReFK/ab/Y0a9USp6iRcfs0gwj
+IMUgmem3x0IADHmFVWFLGskBXvpr4OeQv68dCk0l4vyywnEhdDpWO34iU35TZF+g
+Ic44kFPmEzYdXxJIP8KGe8svt/KsNEcTGtxbDKdJKrQa6FIWUvsHLAiK7dO+lMw9
+7OOV8M9RHFg9S4mueuTznUQyO5p+7Xk74zwfIrPTfL3qk9+1YL+wRUTqb4CM9FAZ
+3QdLOQqme7CwNZXzzU+Q6QEVt+v7HOfW5ujI4hZtux2eIsqF4K6aafIAYdLRU/6q
+KLa/8GPjORHljJHLmWNejEIg4JXkaTOvvtmxRo5K2ulnOECSQhfvXCilaBOjM0hW
+2GMxqqZmIkO587Zb+939CgEfhyoB1qEvqg1Xz0oMgc4Yu0wfmSSu+sdmcUm+zV69
+YCCsbDoG44FSBeVjcZZYhvUviqMBROXFmvQE5czNA9pSUibRQhx+VAgdmJoSKku4
+wzgZwyYY3J4H8lcpovf0QlctKG9rMnHMhuzzWIgzGU/ZLNyv7HsRR4bwVTpNObVB
+U9o58p0qAkX/P28iAxp1M2naGY7X3wUC7mBKAQZBYklfNhp+Y409TOWOmYqA9W7Z
+whqlt7kdNNyvW+KFSOK0GxOq9/G+pOaBeopmPwiWZ1urYsR+w45yTRWk8tIB1Rt3
+JFbdJyQvdq6OnEvrF6fFYQtgTfenKYMRkx0nvBzA5Spy0qywPTKMJdAWWrulrn6s
+Bvdg9WZkMKJpFLX7u1l7x6Ar/ou3CBpniYlBxXC9qlmvbd4TuxgaUpOBqrB+P1Dn
+LMmisPgeu2dgFSqwh4RfupCuNKsIh0h08uE00Gvj2G75OS2SYgrKyUtKdAgc0vE1
+As0Iz2asMWZ3zyU/oNL+G9soVNEooHfyAirMjk9QKZ9qVCyB+adBUwhOdN3el4hC
+uTtKEFPVDuC/MbEqd3SRXEtmzjDX0zmC6oDbXa19Bj/xyOdtxXORLv1edGb3IT0W
+wIYgoSkOibAx5um+byal0xuDRcutqQIOYXcNWCfj0UV5YyvUFYecqla7VzmnbOps
+Y9aN52V6ef1lNxGTcmaeUsNS6YcmwRXoCsymRaH01Vr0CcY6TYQZ2nys1ydul5rN
+2EAy1Rogk78l7ZDrCkUYetHteVgArPhcAuTDEBLxi3GH38Z33XEr4VTK13IloAQk
+fAibQwCNI7iIc6kCE0sXZt73LXRhBRtf5EWdWblXyXu4F6E20sFbzrQ5ssh5sgVI
++6cW0VKL6Ivls+sffX4fYJdkVuZjaqAA6jsW450N5oAEoia3if4oc1FsV9K9jfSL
+Q96604HGklEmCkIxga0iIa9fFHDunxv7OR6lJEl7USpJ+M3hRY2OBlmAQ7DJR2Xs
+iMUAVG/tdSHmTOfkBTsO8gcP0RzGEkqOhVzkCLEpGEa/yVLETTObWR98HbmUbiTk
+w00+T+LB3BhMyi/SEsy2WjwcWNwADy1J5WcGIUJj76zJ/C4o8NdyoQEBClANpylc
+MY9UwRaJ/DHpZDmkAyO4Yh4vFv8roKr4EWery7yyG5RqfWUBUilhvux7HSggz+OH
+w/YFpp+/B1VN/045593vBJr6S9Ka4278riKsQV42lO3XlmmgvxDJzCieewZPw0el
+d3T5GWT0UZ1ox50ptLyUcq+V7aQ2h/DsqBD6paNxPjAOAZ7yV34ILDtjwo0AOtUX
+cyg6iSFbqrdOjtzzV+bBwmI02wZgpUFJkxUpIRi2azQp/k7tXYV/NTqjcy3pGGmG
+FqTJuMdayxNeBX/ofHNjzv7ArrYHRTHyakFtsvC2sldz+EtJG7z5h0wDty9SIrXE
+ki3D5M7+uSlG1fznMZKVEyoaEkp0kdQzOjmp3OD2IbCO9l+q2MjfIzGUZznhfilX
+YyMnYzHHDOKpSuerdH6eAbnInj9CtuIdJJTAyhqpxEEMfYtcDk/XnflnKCK8fHqi
+K5n7ZhYzZ8HWqc3K8abg/MgyO1AOw42OCQx/f7hiSE4huQSKDfbNKYC6HTwSsrmQ
+PjOuk6Kp6uh5+PVJm6ZSrzZugQRrM1qriHPbmORvklkbxVlxa4Bb90fLb5eGXwjV
+19Cuce6qaaEM57U7j/Q28vOpi6vbM1EQ8RXqxS2NrguzF5HcWP6tdsrOdXH/GLov
+2WFHZ+zQjVVZOSIt1k/KP+5tt6MeRYp056u19FEZxhGtFD97mnACvPuAyku555Pt
+XPcUjjKEzqtBDnKAMg5w0/Ow3EJR6IJ9Wy8t33kK4JHCcPA3X+9BkLANAKYrRK4i
+qVKe3oIplrImEJ9Mro86HgNSP0H/Cx9JKu1lh6ug017wzv0+FyxebxeUo4vm2JY0
+9GSXcKL0Ou478Rj8l0He41UZtgFvpry7zaXuvDE151TO/zjiw0Ce+cYPw2zX3JO5
+NrWqpKRdR04VWgIRAHd817FUV+t9iHXCBuxYrpBUuE2Ab5tD8XJ2pEqVcl4qNnTZ
+6TfnBszlnYQsUwEmDSZOa+U8lz3RzoRYMKu3zdhst0ZD3luL4/G199WAaHto1NJk
+jG9S4UCU/FanYy2wEh5hoHvgHNaEl6rBYBkBSzvm3k7doXszEoUsCJkeTdhroKdA
+Rg9pG9h6Dg5b3473fmlsZkNA2rWuaLPD9Y/XoTCWAhW4jjw3thd0mqzNTU+pXRIJ
+QFjdjMQ+pafmdzut9yQgOewuv03rHsqwN53pQ9vA7JezcvtcTTqbGGhfcAzP1ja0
+NowG/jm2BQtJhws9yOIF9+sZVu713P13XQZGUMdPZHBVGULrG9aY3rTOePceymfz
+t3CRrki6aY1CWrtYNh3ilsHzYsGiRUO8hwMogPaqNMoGwJiHBn+vABA7DZui/mfr
+gDWuaidrSy7EpQKpUI9cdjLdeklViUFLhkefphPAE5n2XVr5Q+RfvgxYAQoZfIB8
+Me6pug8Sl4G7QGiOLb05p3kQxZs084bRbiRjn30rlHHDq45gE7tVeDlnPaIyxLsM
+ROEBVkkrQ4D7KV1SyOQ4d7JKRT44ppg6DX7BFPUs0Oo3VokeyQFSpOruGlsKT3uL
+FcwHBj2JB9L2HN6PdTAC/il3qaj7JJ4yk1yjzB7KEX7cTe3Uy+Hh6poQnNoDCpz3
+DRPm90KAQGoX9FdM2i7EX/TShb3JF2hExICuqoksW3Dxk4TqAKDpXn4zV5aeNv6I
+GFZJ/Mkhb/uugULInT1fS+Hepw6TVLXXw/6uvVY1LwiDT7O1klockuEVbuQ8lMoU
+jlXHjdickRlBo8ZlQZnBomEuliqVEz2ghOLfS6R1NAEIlo2HgMj3o3Bgkz61Zl0U
+MfHIiEyRExMAGTuN9ZV6j/0u3QcOnPznIzDlbKYPYud+A4dr5y0VKROYLLxfyqbp
+vB7TBhQi5/7JgtVq2M1C0b/iEzhU6p+buYralTC8feK0S/IrdMVRJDJLypfUZ9O+
+wpr9wl9hjQJx0UTxyGXskxgt8QqDMpZ4GnuSNSd4ZwUIw1ATjxvTyi0QJxRfEGPF
+B8oQGorXpQMFO/RnSr1AuJWZ/mKZi5K2h2kSihkX8idy7M7UqdQtr08X49BNlTTi
+fLgRfj4uZuz75qNjA+a/UMSGBDlRwDU8rmHTYJrI+FBnZrGIL1gKgpyRPCmmqXox
+8iGJ9M5DB7SoRKyj5Tlb5W7vlTCfZV6I5yjPmmkB63KKjGngH4tuPqsGAxE7Enx2
+B5W8KnYCS+ZkngPrvE+PLltcdYtbduid9Yroq2kw+bZEs7CKgUczG/0xhLGhBRxa
+N1277fW8EyTzv3N4ZcFjbUYFvu9ZtUybCYmO3lOIJ/m0KgI/9FNB4jzMO91898po
++mrYb+7vv8nBQ0RCIXAok2ergZGD0vKn5UZRX2SsZqx/ftpsSue3/JTFj+CUBzvt
+4f1ut4zLi64eA/QUVtAhL3H8Nb31mlRtFzXHG8bXFx7iwQP8gaXBmuOdR3qrkeVN
+nxy/CUvlzDFCQM/55Db2DiY0Q08xs3lchWn5LzCewa8g4LkP4gJOTKFg5uHq3GpP
+Zl6VLHV/ARrvXZEq250ELhLCEXvvdCc26VYFmk4xDBWr9faxkl099Yv64VwjR77E
+UDQVG1cnTOY0HdUj5SnL8UuKwnoM8LbTJNlf9rU9f5N1WI1lmPqYw7R+2rDlCKct
+MtbZ9z/wzhZyLq6GtG0sb7tOfIUgdC1ZVdue15RxdJg7RouS7eHZH5UQYSDw1/p/
+ncki90mCNYqsxhe83gyUbGwrr4Jl8b8eXk7gBqZSPBWChdiVYiRqnMo1sUscWX2K
+LsOWGpcMGno1vgmF71blitD3HBwYchLYzO9OlU6XVY7hRBnuvihfCERrz26AiVds
+w5MiiDqhdOc995Hw2c60YC1btPGzjmlnEIbjBJnlhHpdewyhZOvq0Eb1F8BjSk8X
+69y2OHyFaepdl9vqqxPwQzmux3oOoCVeas/SufgoOXWcWJ249TeSPPgevo0NzXU9
+k2TNye0cGHvR45p1sBOaQZKXBYMukzM8LifubKKQf3abeY+54IbLK14CpIRTk+zH
+C2CbUpgh5MlzM2MclMPpOaWawSQoPKhy1fhrkr+SBeh9L5+W9JOVAKPx+r8fVd++
++iiuZ4m2bn+ziEmB/iwPxvOflH2LMdMRXRj5ksGxeE++J+fBWJ9psO1Lc87qzP+V
+ZZvzhKdJYu5RWXMDIKAFuL3Rr0otcgnzW+MNAst9S6KbvS+tMIb1TWpEKhRmWL3C
+jaTl7n+GspWmWACTNjooMVveCAYK8UwuIUGGjxvHJFy4cHV3+zpoLPGpoQ+ISIQi
+KHSPsZJuaCiGxw3uz1tVG1ju0o0oiiamEvLYtqec3mr5ddDULwwvPoWtJfiPFVE4
+SD15IPuWvtZG0am2P0guCVMQH5la4ticsWaSg0DhJAK0xPj9/BIZn8QNshD0ln1G
+brwnMnggzBDpbpYHnS1d/YhoAeWm3O9acaT7NuCNp7zBZyfqp/oj3X8bTBZZZjkX
+N1Jo1c4AQUZeArqmz3sBXZCZ1Y4yEe9mNFoHyRqKJOseD9DLs0HzWdq3Ke7vRien
+bqbtCZmm36s5yCQ0qT6UCh6zTzRRfWBIndxRh3GUfBnsvGoT5ibvCejdSh5cQmAd
+GWMEpRlJgm9z2Rax+2onw056Hpx5os/mTLtF5VAXYvnz0N2uhmd80TEgBjWllxB3
+BMmB21tsUxsCELU9RVxxypQPXW142Nd/BNWyv3/gLWE0Ust87oDy52+SmR7r0V7Z
+PR0WMhIgZg4PfLIC2y3jqg4IgO1QJigoZZHQu5daKOLiU0o2bD66TcfX9MphWFgy
+zqiIvnuhiVdbRmjKVOQM3YCR2Fx6z0WyfD16OWqTrMomqCoic9yt/TPTy4jXr8Rx
+T/v8PdtpR50ZSScjwWzj4crtRwAk7XPu/2/pnFTAzTADB0mJbBinrQPKE6GUO7qx
+OKjIUzL2YdCpULPnNy3B3klQXdT1+wx1hBJvYX75U8v+kH+Um4+rrAchuJph6EEN
+9/fYQ3U1v5dqPGUDLpGw3cYT6WAB6HI+P3jyQ0O3IctzLuuEAlY2hmVfgdW/XdXV
+CgL7FOFNoarrOQpO9rnN+CvorxDPfbEUDtewCsB+NJvz6dBlFpcPAprXOKrdzbar
+jg35Si9tpbvJec9xSK5cd0SBrHVG3sXNUeenkQmnGS4iEBgdADTNj6ytjmOkNHjK
+PHxkqC3TlHpW2dyGTquTDQGNVMLtgNRh424AOAu7T23yWCpBqOb8fGx8uVtPH3ou
+lypDtgS5oybr/yhrwAC7ASU/9trf+ubCbcSirf7AI0XXWdZoWz9/wRU3X0IAIzwa
+Cm6K/BXu41Y4noK3yzA7GvpvVa8GQOQ33ZX7WbI4ibPIS/s/3CCokpR6wU4fyp7O
+lckbBzMSPbGEzXEOKAZqdahqwyV9qDREnvcR4Y18TFDTBA4rVuzDVao9ftVSEuJg
+tBUiqVCK7pygV+Q5bG7P1kUg3DkXGqeK/Nn0utJFuPPfEdCAmkexuuKmnIAU4lu3
+VyYz6ByZ0NFvIcxsCnyrsh4wOGVxQ/0RhQb627xrZ1kAp2XsfW0JCi36Az9h7KEW
+2qdHQzoV4x0+6I2fsomHx2Va6TSxDJhj5Hp/uRJ78cywkWpgInFdPZ45jrkwL3Yl
+jmtcLJ5A3YelvVRbqZ5c1XTI0DDDSYw44pEWMD6bsCXAJJbIdqhvx9YF15+0M1/E
+ZSIPDhR5nkxVZH5XV3/co9qNbjXXkut0RWa4I5Wz65ZYfYIVEb+ASR9LfITAprt+
+WqNSoA/RWY5xMLkXqOFSRZD/FucfLJ+HImRqU8ynHT8dBf5x35MyymKfnkBScnbH
+bMRRP7zticmRryJko8ia8+JXZ9IMnwFC/88Cn2URacPYA+gRkRTHNXhj4m/UT8sQ
+LrCi0HpYmy+fsiLo4EoBF5vZaX50R2ISelHWBi2qQM7P79eakkRoS8KC1PUKPfSw
+XtYllvCG54bwEpkCHcG/zcHVX54FPJvqmAutj7m4+jTrECwUPuUnl/JcJaP8zSw9
+y+IiIL6ySi+n15SwH+G6B7SwtczdCW0wt0Mx2SaNm+KF2Y8fZjJ0gtJUrzAHM6lI
+YtorOsTKitMOFY0ZJ0Qz2zgCJ1bv1a/tAQC6KzwML3IS9Pn47/S5Joge1X7cvgfB
++kaq5YjfyYJntaV3gAQhlafJakxQ3wkJK9688oXNPlSAy4rdlOuTpFrxibMgkw2/
+R2LIuFgsJTx1o4mbA5Bu5ZlN7gCGIhRrDM8rSURctn7jWHcPD65/8ljSQ4bTTVmW
+6Y5MOGUhAk6zn6qLMY+RTO5aPKWHGaDzqxI4V2IzQ/oEO+/IA4T8K/DmnDtZnXll
+ZwkZGu/q1Wg/+WnvTbvbmDoeBL9PLJo4DwTRbEANRibK1m90cjw3YImy5KzK5lhO
+RSJsnlk526ga/gjEurIFSkx2QM8mTfSypSZHcdgQLJUQfgAyON0SaqvPVULegsFn
+2o4HmnL/UW9o/pUwwrVE51viAtN5mNgg0yAxQ2Wnn8MnH8WDQtiuXCHce21MAjeF
+5/T37Po0PcUZoyjXQ+cwjF8oDV/r03bwh8OqvLm3nLurIysJzYpR6Ux1mgRnNHZA
+B/bHJCBl1AhjnyrDbvulzVGL1DrPQ0rrn90JObbd9Qb1MWYo34hIROOF7SqKhIqK
+L474rQcI/uEorEqMSwgOJTzZFWyB50AHPkBDiRR0SLtMVgxcKaWASl5JsGejv173
+IdJm6Ffqzh8MAPCJHZpEzZj0NDzhNEL6us5VKrc0l7S6452iQBKoszYozU1hUC3G
+hQvU3BkGiad3XZREfEBBgoNsZ8wkhH2CIugGlEI5awoocFtw6i/ayayJJoAi9L/t
+vRhvlcYpGZE7B+1MRaJRM06YBN5MDaj9p55QrgyQpEMRrYOrj6xM9SeahBuaGeZf
+lnfbIgDJNps2k8D/DmOpAAPNz1mv+16iTsGzPgO8bxaXPgvl09ZPelSJf0tUJAYD
+3JiH1wGeASHiVfcRJDBPCOYnkhpP99AMMe3OHNYWmc+GmMXGenRNpbrhNrFNTp6i
+ENr+giE5xF7zXcBZkIEkUpdkU1298qsmVwQDvAPHtfBA//WGh65yhpV47zmWWtKB
+jlUgZyiP54b3KAXhHn8zLwuWkdZ4IS6CB1I1qp0qLrS0Lx0tOvbT7ZpVJM+dlr0w
+lXSAh6MSlKdnnprN7ElQl7cUswqWwPH6fQKKOXVZab7diFF5CU+GITQhHjFaHti6
+NCQRZtaaIOCH79BJ2Ywb582UFMeC/2vdbRHgUIBdZg4QtluF33o2sgDsP/Wxo0d2
+kONkmDLVsGACqNc3A0ph+2cC0amv4rDFWSgYCK4rfAs6Ai8jR30czx9Z8GaCtq34
+rpCztWw4JWOxxh/+AcxvJtVKTgt/zWqJOrD9Sc2apZ+GwFxZ3V8TG9rDA6hObPFy
+aRzke2UYzyQj+n9w9W5tX5NpLcvoHzPkC+J1s1wumapdu35dwjQOdYGJN6rV0uab
+D5IL1hAKRPQVz+PjgodJCbqL0bYQvKzo6Ud9G+ykcwg3Hjx9DY+FUp3KReMAUIjl
+mg8CfMItRFBUup74hmscjYGCCAILuvqNW/iH92KY8+vBuYxf9jo6IjMW+qpueAS8
+GpeWX56scvmb9yIpYRAiCe0d4h9CWpWO0Z+M+J8YuQK6lZ2qWiB3EEeMSiPHyTIw
+S7Mh/fbogjG3Pv2WYHL/ntQ2x3YS0EpRMmbuhp/asTUry5W9z5WPTmQW0vAYgt9C
+/Zc5rQkQjER722k2s9XNmScTcs9/nXhYqmFAnMeVibW8Zkqolk+LV/6zQnJwZSlg
+XqR3N12cpMS9+6Hn3U4KCawUtPWYbbagWqvJiq9LiavuSIAUYPvXMGM6CoOZu0QV
+9oHp9tYoaSU3zcAw2B58XJzwyab7/1xQaXNFBASwQx+D3G1p+GXnMo7Ps/4XAV5P
+TTvI+dPu80ahf1X759qLry5pOogUChIilHDGU28oCNHWHVoSipJM5k5SPPjQyvMb
+a2RqqugZngedDFBwoBS/nymAkFKoE/mQpHPSyPV0OZJKBj7JZP/h4a505uq+7Aw5
+4wY4xjR57VoxpYVRwsokmRW/ZibQwiBl7h4ISGNxjZi3eh9NQmfUFna++JfsGggU
+vjt1gvQLPnUgzDlWxDsDXb+BtYwB+eIXqfBLIHL4MyFLE0w7C5d5TktfHEqNQrUF
+RNHw8dKbItQpRG7Mty75dpkQNludvblXPOD0ADDnk+7W62yRON8UKtSLwMsR117W
+0sA17KZUH9Fg8j5fCrLg4IhMDowxXXZWozF/q8x+6JOmXU0e87f+xb7W3P9nkgl4
+JQFnuF3PVgJhu8Jc2n1whXnvNkkCZmSirl3VuyujQLlOirQ2abGhICoWZ34umY/3
+bO8AoGnEt3oymqUq6/W5Iqx7FZ7VBsap9db9dQPxvE5aWEwCJWXO9dSHuIkDu5RD
+34jeSBmPCM3h5Yla4uDwsTDhYZe0VCc0x+8jYbagJnDPEdYIUFfQSu5jQOor8y99
+nnyKP2UlQOgmJX1ZabwvZiF9xRi2Tuv/NilGhdvkKA5t0rcbiymipVLdD4krz0bX
+V/bJFP/PEWNwYeJ8zSeHzHVSu4WA3JBb4nbti6DrSwdUdYqOXWeeoG7vZ9x+XEIr
+2acEOIWQhtjXr/zJ83tRU20T15GgApYU12p9uP7F+oQWzqVxEH7A5mou8jcL1ZZe
+rwjSAe41zlkpqjxK92g/oh6Xrh7661KTlMTQhNsb0FAUHEF8RfWIfGHNvfRiDcHy
+V/sTe+VZ2Yg/jl6Cq0ZDB8MeMSqryhciwOYWNFA8VSYjhpSucmckkSmTrhfv71MU
+5Y0svNSifUXIWbIm5rA9cB45SWy1eHoQt2og/ADAMmiypm3nBhS0Ox3Lhz2T511E
+LTKTupceCLf2ZbUGqxeRYqhZdKZtjivQHlmoihuwNKDkkMbY2JIGpEfMzRklO1iC
+JHPphOS0+5f59Yh0qcSSkOrG0gh25M2EB6WquRspe08n9xVpJNtsM7PIvMo1iNRk
+TdOcisSH1zyYUQ23jmrPvAoc7MHilDDoxOdQUILYlv2+i/FrnavrAWoY+4zYV8eP
+PEisrR3hBsF/JuHe2VZspmT49mQI9cuoylDM3GczcbmX9BRPOpwi7muLCpk+Vnkh
+Abh/IZYzZmuE7C1AfQ5AFpC5VHjLxGvD6r2WRxb6fEY4CWv+xzLF6klAU6LrwcND
+31eUiqqaGxynrlkbdyNmfg63r6utsN3xC5SsklBtNOm1aRFX/GpPKme4Zod4a5Xp
+GUCiYX2Okl7H+5DGKaylnwko2Ubh35d4S73KtdrqXKlXb5qnbMoqkFyjMwb78UTc
+5xbSiNbr/xxDOtmvgMIblqUJieZtLhnD/2YlNe5YOerWzEpFx0zg6gOXILb5tIMl
+fZ7ZwDfBHl7IPRuE8kQBNyJpc+5jnN1xJ4miBZuDM/gXuua7BFx8RMHXIEcpmyuA
+vx6Ho1QVgaOTg8CvNQZ9Wfaiw7BElJOrEIFkxejJ5pXu+E8CTxeRdRJg2GirwG1x
+zqtqumea0m5/Wl+9VTqxncYFb3/a5EHq3en/+CXHvwzsflrVa0LVU5c20lxoaMBY
+OdsvjRfAgKzI4nhziRzF1XdJGtxmpl+rUYg26Nk1OHXei5D6zQfg27C3D+e0spoe
+v8RpfVapQwsoDDRZqkn0qO0UW5pgJu2L8kJaKb1f9tPy/teZZj2KbnnnrYF1BB/t
+D1bs0/BRuiptSExmQmq1D35JiF6v1DrnxXe4+48A3DBkPdLerKHP6qVaAOt4H+um
+3YkS/BNa7gG+eg+f/wSTZ1bIa9QRPwwLzfJAO5/DqOhcOeqv9uZSaq/EuL9Kfnw2
+4ER/cI5Caj9h1w9mRyTreiYJVsHUdhuK8F7hqiXuf+zKvhM42DaRt1Y1vHGiWmd9
+376g4EYNSTr30kZkmCSX5ILyCjT6PB1PPlw/naYPSBxLj7V+nM2i5dCDxFtpyMp4
+x4OEQAqD0kDxAKJAIWXkIZl4+39tecfgsgb0QFc4ISIRrRCnyoypfso3NU1gVYpJ
+wpNAGGEWdS6f0yp+VMuTMB2sxhjUA4zWioR3GmXukV/jan++ti8PMQ8T7M1E5A44
+hvQ85pUcJFw438zikDzcAvYYM15+sORSppqSASrGWm0rT5W6VVaCuHFiabSgOPuM
+dD2Zr3UtlNU4+vspL/BNcVV5WensXvlIKhs+FvpybUo3mj1+P6SjdjiSY8p/lrqe
+qOnSdcosvVg2cxTVp8kZkCGlUNu+QpX0dsIx94r8H+Bc1PHzZ6YLupgoVu6FV3f5
+kgqofwSZwhVf3wlHCmjwTNxmoiUxVvHXc4uiMOtaWLte5ktFAoDG66XCvAxmn01S
+QwNvuD5uz3ojpb9IfHgMEgdQsb1ivVE/GGKj+RVc153lpDqhVR5JAdptLZZMnsI6
+Nw1R2k2ZsDIO+lKtPTobapfVEECxWyj+dV67mXY0QcZ7zxtmQ5cDzA20ZqoXq9xP
+szsiiluF0LIfpS0g2GknCiqf3dyvE8kHpS+eb/EPJuM/ZaEEhnoJLelyJXqowMrm
+Ck5LB/lsgZfgidKqnt5z0XORl+7wFBgX3Vlw+wgFxQmrXDb93F8FHG4XlkubNpKz
+8wp5wB2csP5qPU/2gSf53Tj2zFnc0soDA/HfonO4YJ9UPNhQbCksXlwHDJRkYiCz
+QvqJWW9yNjT5GpfdQksdpszmYi476gDBm0fUa+MledNGWbF7ZFp87PbpmqEthEv5
+Luy9F8+OCzgUfipxxt+wuESVN+sOCENcgvjEgL1UwLpbdPjwGurylZcIfx8Pthyb
+AMNhyMswIKubt1+1tFBdD2Snkzp9Mw/3EBbRQhRMwMTPOMiJahyxgauXzSYrunzM
+onQ8TV1DQlb+WyHuqC7wqQ5ZTSrRR9OOlGHcFtrvTapEk6wnSWRGHNFhigrO+YlI
+zXa5rfoT9YeYT1tbcmtrsINI4iIeOR1VNVqxFDfDwuHglzToGcPxdF3wXxTLo7MO
+JfCYafW1UMxeG6qpTu1GJ9CWwvWIY9YUulZoDSpY4JGynQlpR5AlqHmGv1hNuBv2
+s9d7FxN/mCCddPlYnV3rS0Vcq6xvprYx1NutHEGDBF0Z5UGLabPQ+hZJtiDhxCb0
+fH4t/fXtqxN5N/He83Bh77nh3CTLwvAftUZKGo11ITM3TqhmQz8PCl2Pw4TfT/bE
+QQX7HTGOTf68JXG810CRroFVDpwO2T1ZgXylHzb1wXrQqgyPJUt/ufVbgpFcfNB+
+YbAytSr9poaaBNUDkYuRgZZrTF4CEy35hNi8EuWwh9PcO2Ba8wmUNF82HeF3VefW
+7wAhx1Jfn/CLuAAYaAKq3NauXqZCuH5GhTTlqGvdD+1u5ja5NG7MYPYMEMXfW8DJ
+bT6AhXIDFKa3i2Mi4QcEiaPYAkXgjU2GiBCIYQ2Qmd6OdJvApJCwWSJAHlLu5gT6
+scXvyh4n99oppAwXb/2KKMobOlPQ9mHfgkF9PF0w5Dis4lE1uxgrjsIHnczxr8/m
+DuyDfX96oE0Y0EJH/i088CGOAwAQ4wmjc73q5IC7R7X1Xuzgtydya79gHijXEl3z
+H2HoZpjkki4DmJHSlIPNHN37yENc0g/3Sp7AjF3ugjNJGHKxLYcaulR4whOMGP8f
+GMPI7TXai1SZ69Ccj5z1uE8DUrCf8C6/9MXyDKYS8GQLFbcwdtc5kLjO5hX2oJGI
+PvnsGd/SMQEijEK7qGCJyaIkUYdXqkhO93Zwjm2jLIonNz3A1p0S520WZOessJLe
+Juveg/4MVKAdarIJemordh/GngLkOat2LGYWYPh1bAj+VamXvAuTO8/j/QhV459Q
+JUL7Ydw+iqeYjPJKfFeCNMsaRS9C37qhau/i/U0sFyPgsBa1UXGQa2Ml935lYUVq
+s6SJp9gcuTqDSJUNAzK/j7mbALRkOIeIvefq5o+ueNBgA+LdRePyOS031UyCImU5
+WBghRVSUV0tykwE2DMFmA17x1QwfdshYwEYfsFqx3lyy6S/vC7uAAnhxGeG/pMOF
+8JcWAKZkkbeCHOMnZNXDKzu1VZdJEcuxdFWP1+Dbvg+8TpLftgxNUXF+ATddmzGZ
+OOoUjXgjLMB/Ia5ofP1iWtuAszRNPuaXzX2hQrsPAKsIOkTEPsC3X17aQo2xueA9
+OUc8T32gqQginnp9ZRU/eJ1cX3aFVc7r6nAjMHufr83ZaBkOxlB4gK4IRjGzIak8
+zLRgaWAEhIZnSq4osSpFvOguYJwdd1lv0nPpHX4r7In94GLfUeHwfLlZi+E50KoK
+KIP3FpJ1yZWfbCNbpio8NRhfwPRojeXQcJJGfyrE4Qety38+KiqcBM5x87dArhLl
+pmsOSpzA0SXx29LNfMi3TN1RstGNPKSOkfn0PpFCTQ/MP5s5ni+etBDsuub5Y/GR
+NGlBQVF+gErcVPsozPVern84203vooz3MfR4CFufW3zQ6x/Ysw4EoK6xdndmG1y/
+ECNl6UhmQcvYCo0T+cfpPyzDABrqHG3VZ2c2Jv8mxJXmNN2FuwNSgHdQ6sHNrXs4
+aTnEmxK2Sfyjvly3Q/yUVVOv7MDBdRpxH4u41n5BFF8dJNMD5ZEHGXNuz6kDNz/a
+dkUJR9HWQTkJeLkdT41sp6nLPq/uG8IOPi/vjmok64r/ZOAsq3cQDI8molhAoRdr
+Q4qq+BNqIkLno9G1PgEbb2N7Q0fkvJNnjNiGMK58MTtgLtGrQQgh0TEjcFE0YNLW
+EOTmxc3rsE+BoWRM5PqdZcdA0NjvFoOAS4RN/sSkcnkiEJsXUZ5gePGg9yBX1wwG
+KLezjbAwJiNnX0FMlJiumF2WKf7J+f5XYK6qCpF99V+KReNthSF0kK1LKZSFA6we
+Zr9+ySiAaCkHT0kGK69VmpD+CpOdOmaqXmJPQ0e9/FCSAGoUW+wXQUFLgdUE3DO3
+HPYZAoI9pfTJLCdU/GtjThER4QY/OXMpqN6RUoLc5VJAnjYylde94IU14gy+Fx+F
+9R4ijUkxrRHv8VIcN5PPqaleBhEyjTiI1ZMO+xOqG6X0PQ9r59AwUwhM6QmTbTZK
+whe5S4e3H9fyS42A4rSTXo1hPe5WcKxLtZia6uU53zYao9SOpSHpWveWlV0bHmeA
+WW7jTzVFcQL4lxVcn/cDluKXl27yn5vK3Su/p+3FiQI0ZH0vbbqBeQXTYeYs3heU
+vDXYoyFNi1KVbzU3h7lnvhP8cvqQefBJhsHkZcn7Mz1zzwCYwQzKJ4rht2DPfkSp
+4uftAadRXxkH4RqXhyHi55cpj23vdZq9MCgE8W/wl18pRDcV3guP4hlJBbazQ9SM
+Wo5qwF+GJNo8WqK/bRoTl1GhGaGPjKC6iodMHYfO57wYwtAw17Po5luStkI3XRDJ
+1aiQZIJua0NSN9noKI96lQW5tFKQmFOGzZkHY5+Yy/F2Qom48lK+M0r/tI+VzUgE
+OPXlB/mxXzoenjI06AX+HT3vQ3HR+NtIfguz0gUQn4j2JSiklewA4JAomH8FEGD6
+XVUXHBgFTZ0Jb20pDUf7Ux1dkbqE3JeW0sCvIstqWe7In0cREdTMRANHXrpkfyFF
+WrnXIDLyax4LJuCwtks8+COJOmwWVFxMBPrw/aaJDQVBfhEC8zcT7l4b10S7QIS7
+8/CqfOnkEQYjRyEsOohdXvMxhlfmnDQc9Q6DGlBJt11lHHFAzBhqOxyjHlDYAtKF
+bY77HMTwvKO3op7WDBfY1Wlg5dVzdkEUF1LqtcFBsjlcBAUN502O1UtyDzzovhYO
+4bmolUUt9nNqdlH5Bn/Q/kYDIevL+vZC/I5ePfQWmUFcjnZgPU7CbNmGB1KTDlgb
+NptjOa1B19tXX3hzTZABaG8CA58QZXmvXsIaVhaYQRQ+NVL+x0OmRD+2yv1QTtRJ
+p4GPd2HABDKNuNtUeYavsN66ZVV3+rfIywxlrtTtrzvXK/1t5TMiY6vR6xt5PgZC
+Yim/6nMU9807de1GducSNYkjPJne4mkVZcsy1x1M+4s/ZME1TDM0E3qCUyEsZGvu
+PtiPHx9rvvwbFcAZQJ3mizv4jIXU2lzXrFYGj2+tzFPY0ypFrPVDPVO+mMqa5VGO
+8072ZAD5zp0UIV4RKGRRzcPReXHIBK3qe7iEIFzUHo22AvdIVOc6gR+2N9FJ46Jb
+z++cU35G4snWy8CfZQmAU3uWDyZi5Uh48HeJXUgux5jzKbX99jch97AXjdrW4yxo
+DygKMfnMil34QnadkeFt/mMdvfpX8Ok+wu53SG03zVF6oib6hjm0CGDaYBJ6yf/s
+EeDtEWqFFW3jBCsxQXZ/A+uqeBSSUTj6ceFg1K5fYRYXemcW2089tS+WZsACXI6M
+bnwl2hG8I8xSyCF9MOERYUfnxKbLTQdRI0r3O+weoGfmT+4r9tOU6TRlPRBvPhmh
+zOe4uxR6oNdFbf21Pz/H8a2MRulJboro+tPwOGcYXpYyXSDwIExjjwrUYKlCi7xB
+pgCDI6Y+GHZoFeZhaIJGbWTEUJcuU3Ca8DA7nPzKRY50uCr4XNiaxGggko6SkxGS
++0K+KVJDsq5ZGUo5tG010SL8uY+GMwwdVQGefOGO5f0a0YnZwt/pB/uObecQb6mt
+wmd5uYtJ8zkY5Qx3iGZMH5XdHaUFJK0lJU78WnusR8QqC4CehdNDHDUyq61ZnSYL
+DlbJksVldbO09AjMOGyILlEPj8lJNr9V7dioRzPt3GqWjcVzjd+E196m7rNDPpnR
+k2c9bH8jVTd9zskmAjASKI7t/79S6kgTYEUMFcBIGWHaKuJ3kTksqHE0WB3k92El
+m+fDOxcJlIPFPCMHxRtIcksXDQ8sC+lZA9cBJ34WGxq1yX37qMa9CmUipH/sWe0a
+4iT40KHYG11ZSya0on9WAu5VYYJayj9HffdTRs58IJL4pPRGBFcygI90Lbdlub7b
+MpsLWb8uDeokU4dvdvamFRpvmQW0Jo3qRRL4KUjRPE36rvh5auQDPhRZxKGfnb4b
+X3fBAnaha0xcFcaP1bgBVRG+GN5yEba3E38Wip6yONT9blS1Mj3Kopr4PZxQTqrN
+w+pUwRo2ktHFB1P7nvbLWm5Z49BsRCw35CtrAtsOcMl8AP9TRgLQJVF+Bsg7Knsg
+ibGHVJoHR1KiYll9gbtyjfAvLXOKpvp/2GO5wc08f4EQSjT1uy5RKUqthJr9TCHe
+3QSV3mkMWGpv7AZTb+IhGs00fofkYJgCBR/K3Auao9XNdbRok1z7Fal8vBrSJzUW
+mq4ygbP8A3fhzVKcy2arCEeBpsZtOlqd+f9mmLq/yzg7kQ1VmxGARoGhJUpQsrU5
+OowtjrWRBxd5swHpEG7xYJAOwR2BDTb3GNuusuPU1X5EWQm3xDYR6T2TUV5nFYa9
+ccTAG2yBN3lk7vAuX/TMjtAQIqEOi8TNN1ou3Ty+BXxjr5QkAee6YAkDGTURqJPW
+LIB8lbHrjc1V5javmGYQTbTmbuBKc21iOTo82MtQ/UUXkYYALeQzIMZMInErkN6q
+W0Bfhz7EIlLzLBcANkUl8kR06e56YGlkqmY2ud6g6EjSU0j8w2rMLTBJxGU92z+1
+ZLDfyrMn6CqUWSCIguskzpNKPR1DEmDSV17mE1xToaVfBRRhfhP1B+03umYoD7Mg
+FX0OQjz2RA9ASthGNfnAivlMxYja/8tZwcPRxl8rQ5aYHPFPJ58McXzolOS+ckJC
+E5z2UCvIhjEmKvZZ9qgphw2fPozjkXZRKTjeqDnYheJk5wH7XJOvNYLFgERmSxTy
+x/fcZX0MC5IT+gVGvhI+SyMQwRJUJEnuCj27BCIXho51NwmxeHemUMQqPGP9sLwF
+ayplIOtN5/O8afji4oyA0Z6vXsun4tpGznfEq8fP9QWm2Kr8x6VK/Tr+jSZYQTpM
+xSqkQiq6omY5Rp77s624fRnHU//8Vy7SHgIlPk7dTy2zqHqUrijTgBz1NJJmqOU/
+r36vTi6GXVUym6SlFbCOWWPFU3WNL82vmquoPX7lrrX/w63jufXZ9ED+1pN8wfId
+/qdqSWn0SI6a3y6ElKm/OWwL3bkbnOg0f/drNuFew3QHDxoL5UrcABGnypwWy5NV
+FQphj339v+dBj9x72xt9fPPYLFyuhYA6fAiDrDfnWe2bUUx9GMLYquTSrGb5Z1Fz
+PsR/KEX/tfh/UfsVE8HLF+Wz2upLAR1FaLq5TGfJ3gZ3jr/0CWq+3gChf290yoo1
+4XxJc+8nCtsSMrmeUbAAiRJmCyueEByPKwwF84v0OjHRgQ9GWgEZ5eDZDUsLg0Zb
+2Tvh0dsnjwj6ORr1BuBF/I4r2ErhshWqRHgLc7YR2091n7NEQ8aYpo5HwL+gUSY7
+dDX0qObXZpoCoYlYZFsszYKShhZBfPAt8AsrugOpnDyGMycEKwo97HRMBaN8ndr9
+vDnV2o85QvUFGaVfiBT5WvJZnHYIrWRY5r2qudr/tRMItMkK8UfHB6Z4OSKDwWe7
+eFZR2/B0zTPr65WwDCT5lVd9x7Q5pBOwYelYlmWQI+hlJQxOfj+FBcsjJZPPXg8/
+MPwMvS95xtu42VighWxce/X1AWsZ8viOsPo1BM6BYBob30GJxWSL4VPnTWUCnyuk
+6ednV2Cf14yddX6lTgiT9fi7e/DtboARhn1FCfCmnNq6Bqrpoj8Ax4d4Xx68BvQw
+cL3u9f+HxZRddURXR1n0eJfQE6o+JCER8jKJMN902Sb/wNV32u3CHfXZtsVljPEV
+xKL0UXsUhJ/T4o1F1Q7HXdxiyodBlAXc6vtV3kg6POa8sx45MzbJSMCijkO9RRiq
+fz8rBR3jiE5A6PEi8YGIK+5eh3tYUNHOAcPJk7jF68Lw8uHAoxHumNGwFSj5k8c+
+ZVvlwDLB/p9X00hBkImdY0blXDKTQmNRoy7mPctWi3/HFN8tCpmMBUS69pL4xTdS
+i6dEPOszdkbnpNwJMnb3KJoCexkLk8l76VQiNKWR3A0/h/X1lIlUeuyiI1bL9i4x
+DWZA7LG0e1wHCA0L76YKGWK9mHjjCrLchR08H13r3I6Kx47pHjNWXVZjhEr7PC3M
+X+f+nLhMsai+y8o7db9T7eA3Jo7z5g57x/zLGFrUHQi728dRcIA22qBIGiuro5NG
+rQj6npRuYW5NCtlFu5yktZYFTT8ESf+7qpOH5To1wS0trIfrSC8ZJBLiHBP0+592
+fEgp20RObo3PPTKJ3yQo2a112Pl9IjclhGcgo58g9GoeLNpxeVWdu0f24s0ZXlrt
+0veFOfKlo4mPbcP/9XSRunPrZVikx5JMFNbjSDTYplgud7oaHH+2fNmY2akDZUBP
+ttWf+amXIuIuPJVFo31ophOQvLFmEEXv9wbDLwqUFS+a0A5DSOB3994NrLaQ5rXF
+i3vN9Dwz4SC6fzf/6rRetJvjJeS7zl2q63CQZ08ZuO8KunRaGZ43QxNEIEXUwD2w
+959+kXuc/NmnsnWBECLfni8uV/8wHVb1IBiK9PTe3WOkVNhQ7Kuf3Ip1bdrXWZyE
+89nrP0KVmX/AUlWcto1XzBHcVj2QFgHtJyZBf4IGLxzBWiFSyRWNAySwTG4RsHT1
+0/Xl3o6jK3SxYvL7FmPYv2wZHE+EbHFq3ozY5AMBJvGb39EEewmiZq8Z1HJUMsSf
+V2EeE8IryDNYQvvc7U23krW5Ch6VUET4VHuL8Kav/yzdHCcU38u46fVYp1aIXp2C
+G+Z3t0UltMEel980c8Di1i0qPtQhDvNnpZ6Bitfbg9nvyttNuIQsoHaz65/ONcN4
+v0IdQQ5CAcptKASZm8tYaCoJ6piXj/Fbxpl1HZzeLBfUFnHH/fWAVKy223AFkLvL
+9AUUhm8KGDCyBOMffTWZRS8AYUY+E70gyaqNs0WPYA/NJAN9gvCkIUdqaJErtcN5
+R3BcLCbFC1t96rdsS2CCiJ7/O88t5I3t9CqAnUxNkUAgr9A0CuFHz6Vsvf55fpXu
+NmZfxUnmmZrClkwcFXeGawhvkXGpYmfq1PLOX9iBr97LxHGnPkefa4LP8VUtS1Tb
+uzxk4y8T8l30YoYr0JdbDQxN3lHLRH5yM374I1+mulmlv51CgHheUzALwdabYAOw
+lo4MZIRq7Ge1rWlgzQ/b7JYfVijl8HrroJhFQYkR/cDgnHtqcjRvDAwXd6go+m6p
+hNjzmQDePol718Kprm9/gorL5TWVnVNj/JM3AfyK8Irxd7/eAP2NxBHc8+clgJJc
+hILawAYKuNFkRY/gbCl2EpvoVfEbDiSD8oh5Q85nhFOzvi6TtFOEbhW+M/+/3Xdf
+/aEvUwXEB40h6oFKIZy9QHIhPUCcvU/RuvRNs5xgPhTs1ebOftACv9t02E53NG6u
+bz1SCDICSJoFss+Dx3fywsJau+3DAL9ZSje/T1g1S9E4OZuBWu5g7wVA9y1Fv/3A
+lxX7RO0WdysL1k1EqHS7gZLBZB3rhxu5jTvXsFCAHc65HVSUJfpFQptdTnUSmJp4
+6Yy9CQZOMGGhS3rBJ3BvHx3SghKLOTD9v8IsBrlpn8YFA5AQiYzV2Hv+T3hQ7RHo
+nn3b1qtteKu3oY1nYRbqWLw7W2pG7jl/o3ZMVr53zQiAg2qmxjSPYEd7OvODQObO
+p+YKr/HaPF+tE/FLbHMrPEQQO1b6NTUlh5SiXanFCuipUnCjMqmXGLYPnwHB1gj7
+gI4Bqel16k25mmf9Y9M9d6wamhFuODGRoaC31/5Lm9OlrY2CV4SwjRT8vWzkWrwK
+ELTN15zyxz/5ZjVGBkaKQStpzm9OrjEdVCnHQ9Y7f4UB2kOyWoedy5kD8fLcWofL
+cIXP0AOryRXcwtZnwoHkpbyFSbITDlgJ78KsX0iw5RMr8um6ha7fkHflGiFyk07T
+uSjt6k+qI+XxU55DHh1qnl9+uBvsF6T9hcl2ZVDsS+cKTzLRkXFuq4q22o59t2Jm
++QMVU6FDaK2BkQ/VefGveY8p4z5IuVRnjQ/R2mPFUCYPvaXj+EynxX2e2O5JW6vS
+7drEx9lROz3xdPg9dDS8EEHynB1ECOAOc8Qu8/309Ot6+/cMTVdONmqlscsJB/gQ
+oZeRNSOWQX7RgX1ylf4df6iZ2pZ9bi2oJinusuI5RwylQNOx5Knr2Wgik8A2UrRG
+iNXZOqIPE4ynAxPLpw8MtLNRvTj7pr+7DhoQmJfYzX9wvclVSdg/4tOboaYDfJbw
+oWoZxL5WGnszPoSEVBw5GvZXxNz+f80kdXsRGavnjqdhjjIjS/JtLRfsDISC2R3l
+utvm1LAFR9oHvZYck1fiY4IQS9MCFczKdK70nrewDmzlfr8Q/gKfGtHEXqahvJhb
+lBtc4LEOmrcNuKTF3KrwaShmz+bk/F9cXBsOoOPPlG3s6WWPsz/nzhhcwYbsYPuw
+ckQwoZC7CdJ4GxCL9ywOuAtlGhLAXwuSPqS5enrFyQfdZJoHSGnG7l4/y8QjyhBU
+yFWjnpIYq/qsdc+y963Xa52yvfwCCO0F2vd8jMYMB277Rp1xMmQakxfz0cV3cTju
+ciQ+0x01bGpyI0YpyIyvuQAZ58FpvOMGGIAGLUGnNZ2OVn5b31PB+G5rj1ed9Fnr
+RV+//g82GHkZ7b9MdPezo2ClaY6ZbEFycar5BtjeRWfuYRhDyl4N9gLo6Kp3bfJE
+y8pucXSbsUKfEImVVG5TGGfzCtyrnedlrY72lKmfGgq3weudksV3rDq6Ik0FXlCG
+xw08nG7XnFnUpRfM6A1J46hFT3bsM5AuPvEk4Djp3mXGIfsuoCNvRYDueATEGSui
+OxHf0LK1bTELJPsk3jDjTY8iKdXB0pEuht9ppHv7VhmlYST+t223jAAw1yRQ5K4f
+6M4y0fMG/VD0bmFgX4gpLEgyi9zzHXnZcdJlnk/8MwUk2K5vxTxr85KzFXgPLY4d
+gR9R8FOPCwj8OTeIuNIaGQ/qbgRhGRMfQi87G217+z+wnRwN0MVIWNjR8XncS/EN
+V6MrjtOmpWywix+8NJLGtRtZLK+Q0iEChHCtJnJ4S+QrtZG5B8xXXFGnzYbxkNMw
+l7sH9Gz0lVTx+xeum/OTGBuG5YaNr5ajT034aeTYzpTWhDQ2RfW/VXs22exFe0Ly
+eZKy41GmS+gwgCJHzwwDrl22T8UzbF8IQSRrcjlM4xeROjDYOOUeH9Uoy89ElU3v
+vh8Xx8yWzR5EtLQQgGTwX69kWMDXdl336z7VXcXVqMT8JPYeJkgKASMU+mV1fQXt
+9bQ5Us88eZpV4M2UmbqXp1GN1WqeFTPrwnTQzBkAHtAfkYjSmBy8s+YYtwzzDLgl
+Ugu65omU4YLyN82qOAGSZ+XmK+HP7fgD4iTGKqtkOiqVh1wRe3EZg3mH/YC0Lpde
+G4hsZTb9uLA39cdw330K4KaX1VHKsX59aUL6ibZbmVi0E1f2NvSW4EiQaM+auR2v
+q7YcBPFLtJVAnZr3ohIoUQBAUpA7R4JfdXvGpWWC6TPQ3gHLrH5Y/mhHfI4oEElR
+jWA1Vkwo3HktsrHBPO3Tfj+GKmhnS0beHftcgniHWrXNgclOQ96lOb8efWdfvf1z
+In2uMLD/KcZob1zNFr1XotyY8RLBvwHIOzVXnIZDcBxipBqoSzEYJneaHDtfDPki
+MxCniYnqDWkTnYGeF4CM9gr40WM/+2GWQsODHX5cfuNTNX7RsVXpHNoSZI/qwuy9
+GFodGCx1DKzZPFBXkGuM/P0w4RsQ0vcMeeVdlfRJLiVKFvCaPAXAyD01ZngSpdaf
+6raFtScID9wonybvgxIyTE6/dBilcAJJa4YUOI+fieD7ZIyxyOEwVW7W/WfY6thf
+3FsVKOkrlKGiW23itympkSZqhoHH3Jb1yM+713HMiyYellzo8LhdApY/9GdBJaBP
+O5IyRQ9IcXLa4VjmWM4fcToA5wCZtN0BkUPmbmr6DLdcaHBzsUrbWBUFiuYw/B8V
+W/vq9qqaThykBGpySZMyKI/+SuIxYaptGlOjEaP/nNyc0YCmVvdf9PsZXChUhK0V
+psBfQU09qth95x8WUG/PcuvVkGwWbW4Ts/ByfalwYz4Lh3lISl+Em0eE5hurQxax
+RlIC1N4LCH5nDy0MQyEBbfvV9GigjgPL4jcJ/ftLj3fAh5LlsgnNDlfNS5EVX+s9
+F/SLMnVtlrqDl3rOZ6ugt1st8n9ePZGQd+5tUnYxgeK4yoNYN6R0FGJ0SqLvMfIX
++6gMV2evyAvwm5E1INI5DunHDJWE7EZuO3Wvk60MYyb4XXU/KNXktaqFWR2hGRRu
+Wiy9pyM0u3BF5U5AFHvg3Fd89VmKBYskTSSri32sWc/iSWkecPhtfNHIOJhUX1Yo
+JakWnAljtJAaahWTwMB1NckTjYMOFbPyxBHymFvuo98wdG57sP3ozHPYVQk2s1fr
+7Hkw+nfyWsCdcM3QUmSVcdNaQr+1PdGrFBEcWptqFyVy8LDP++x7Oy1kORr0QwmM
+EYVRdIG+tPNrIvaCwUiBwytY85V7xw8qy9HjspcNGjIoEoRx320zHOiJ4Yi6LXPw
+GYUHNlu2sWpMzyxjbwxgZBZXEqDqxlJiP5ZWuvzUuyIPOV3IcdRqV5ulNI0SnqAv
+inGMft4nBrNXHiNn6yZxiZyHEzlCpY3wRr6thvq7d2wrSYtMiNswubT8ZgCy94hE
+e+HjWhYl1HtaEtHRThmTF2lOVCxvXXADnY571BD98GJGI2PenQVuhjy9vk5aEkNE
+be27RMrBOcZLDaPxJ7uxikpAfW/48LZPPcH7yz3zhLIkJDm6Uf8h8u3zS38oX/wQ
+7aywhEkJ5DmJXE3ocwkZs/WnU/Oln/1Kp9GPz44we3RCGlW8Sr8nBydXiL04iIJ8
+bjQKTcCJgL+EIzAl8X0A42gQrBKQs9sNB4Kxk3y6pQ6lAA0i2gf4RMA0H98TtICT
+8xSIpIPK9Cr+Bj3ozm2pkAtmPTSwNNBSXpZwDd1n1Ww+GiLknq965yBlne6vIDDD
+evru0i75uSXkQWyfpS/UzGZAl7F+kjQzXcGWk23ZHzRyOhassOw6C5Pz29xGBjVk
+EQ8O5hWti3/KnZEy4dhxZZzLFYQfpLX9OOAi0rdiEg+t/+Jc+E52BIke5F08LdWA
+6sYc/pS0CEiCd6xf2ZndCzVfl/5+aKFkQrIDOBq6CNblReZGNfn+L79ZPAU4eGO5
+H7harcco7D0oz4z/TdpDktTjgjE7iNjvd1XLHmNBdOwUccetFBngBxQXCVI3+ISB
+4E9ZiKheZuYu7dUoSYo9/3RO/gbSo20m0Vs0dqNIC+EShCQTqBRO87fPshappmx5
+pW04EQ+j1KQ0hdnZY6vclAr69L9u4LM6vwjfcJHa/tAParbRAnCOpZyKzNTzWIvV
+XFywyqNtmseXcRQDdMpsofYA+lgkNgNPzzOBAMS7ZMWGyP/R3oaAV/hk/ghoc6Lg
+IFnYP4YoIYPMZnY9zS930Ry6f47pQnTp0Y7L2ZOiooT6e83GG3iNw8Gd4HDt/IZK
+aXUpq4287qGRCBqgX39KyXTHOeHSRy5rxJwFLwH4aLvIT5/24mcepCy4/pNXDTjE
+SXvozqXv1u9b7YppI5wXT8cEJKdV8BcA58UoNfmZZkIUBJuogwTf0urlzszvnu38
+gi+nzC2QfmF6DaRCi7SvlbW/ZOrh2FrylAvezmEMz6fs92ANd9T+MsWENbySRx/M
+T4eCitUEdjBVHxLRukIU1WRDZXfnTzcFu80qhrCL66PGJ3VNvJfi9LaM1oCl4cy+
+LHsTFNkotCBmEFMyZNFRQsNUf/9JD8VgDKXgAOVZiMKS1mOlEUdKF2o3ucLIIqEo
+5qmqIWlZYXN6s2bNoZ9WToXqnuR7tiK2DPEDZ9teaWGR4bOuEzdpM+ZqMQNaY0Zv
+FGjJZu48v+hp8LPHXF1ItNNb/MWz6GcwwTxVCQaIdAgaqAzJiOXz6oJmxTBJ6PQu
+0DwDUyB4ZCu4oDnvxAwixLuP24CuVzWHFSI0XnVElGqV1/7ZouNqnsCcNP9gU99p
+kNb5q9PneQY12Ri5pPlqHKe/EOt2GbmxyxbbryWfKQ2Od0z4TajcLaA5sNEjuNCI
++6jwsw/CyWcRxV+duxN9lklklC565aNzVI7uh6U32uo7IAcNRiQ86YWzN5FoCvmC
+X0pAx3k9qLpPbGToq6SJA6UmXUO7Brma3DkfEEjSa8L89LBHolhNlNgHqpunUrlr
+EKcB4KWOZKl2KII/mVkqlXNvchQ9eNxcTrwJq1QAPR6jxnOmeW+VgW8FWJklneDE
+RGxzveJiDfjnvGAhQpbKaTjL/XEc76eVqn+tIzh4Us0hkrt+E3Q8yjElxOy/MwjC
+41ydwM13tmTtzN+R8mODKBWwaymgobk+xsgH9WVhiMaTBzQc5mP1QGO06HRPtkSH
+/xge0dXiuCt026ufc/EATyn/U4RekV5RbuzdedPsv2CRIu8kHQmvB1q/zd0Vwmk4
+onz/1trEkOuMqkStblwM0ghhkZQjv5de1flbFAzCWz1WQkBU8qDE72LjnIU6dkT4
+W71bzsbKC+LuSr3bemZUmW65iGed7T3uxppWuFFJI/CGfDp3Mj2+NCSrW6TZhBbX
+8dROow5xHUb9MNOv59WC59zrGtQ9yz3+/oS2voR4dC5LcUCIGGw/L4zC3Irz5S+R
+J1XGKyN7zX7euL8WF4zayS3t0G25UQzPmHr4doKxMLLSTHF5k270DAuppIVMBzt7
+eVUNC7S3VKDec6a8cmenyl+b/CHpufctSj3No0KU21Rz7MNYDMVDMAE/8GjbwvHE
+fNPCpliCwGJGRTtMSorzR/iDl0VP5Sn4mGv4KeEvi60kJGwRRrpJw4n4QJVJCe2d
+QSkvJi4oT5I4LC/JogILvTxrh8mWMzYxMWLnwjFpI87OJ9u1csLJ68j/lFu+Y1Mi
+JWy78xDcgnbRqiM9FKssv9nJ+V+UXiDDplev3DRMLd8lOfkQ5+fmQEaRb9p6Vmx/
+kAK7vCPOcJIJ5m/nOqVGg7NdZL/e5OrJ2LUhaqwg7dE6TUF76iAl/SAhXhOsA7ks
+pFpOQLc164/uCJqrhIiHvTwaBO+REBfZCrXxJ/QG5xt/3KUzKT4OFJLdrYYdcTZs
+Mbn/iVHJZHoYfEOjQm6Z7LdLExGBdLhHlfrZQ8H1igOs9Jd9b4t1apId65pf6I3B
+byU3cnseVY7LvVvUFdtd0UCRAWG85jqNpxlPEGRpAxBWSdKfUCrDhesE4KnXtJqZ
+qeaFvMjgSewznTcX63lEKCrYJ/aOEwucED4XS0PdDcDXOT2CEdxs6KXWaXH8s6ml
+WxNnkBidqa8NyYPUVO+KhsopnQNwZF67/gRRbtwOCYS1BjRt4AQIf/P6cCfOyDz8
+r8ZTYOrLnzpMJ5K46qZTuP2VYn7WUeaxkUbdgx1CE/AF0KQgusqn1h9+SMUfVvl8
+BFe6UXGoKYaEM1GyFVHYkCwx7ol8auQvNhdpc0N9oT2dzFPbIArJW2DDLsP3K/qb
+pm4ij6MInLrVZUBqAi5zvtcIuHQ7EL4hSVkUM0F+J/ZeLshH5e5K9Aw4ZJcS2LN8
+PTchD6e73iEk1n44irG6PXZQXjbdSVzhLko/EAWTQ1bGoZ4XgglYD6VK3Kl46mry
+f5rW6sAog76H6ZLinMZMuz+sNI03qpM7u69EpCNFT+ZxTp++J9DPQ9SlrrP32VEs
+/7QwghMj8nD5Ql5nFD3Hvqdh14qc8naqShbx2goXRT80zfQBlIsyA+Lu4ii/1ZlX
+DhqVMrIepSl3b8KrC+wLJ6D6nkCtcA0sXmGcC4zPIQhUJTe7REULZYi5BgI7SC/O
+x35OZz1lFWUdceqs3T3ZQ7Oyvh0T1Cqk155uipYLtOyYWuJCHHZAKwI6sfbTSM4+
+H5TP7JIK5zuN3XnV6G4KxSNEaioUmryZ+2Pp3pahnNOl5eO0x4MoKrBRnoygOo3T
+/0FDkY98YWS0mTYSgPOdWKQZXDcKINQklUYXCMI9dppgRGHWuXOZOUkuiNkspfSs
+QH5kBWvaAUgBKFfrKMzYvtkzRm7BgSD6SMkdgikRuSvBNlolYhznEnAvS5YnN4Co
+6AsLXeYa/+RYYSh4sAGA53nI2Cz5ib1b1RZENLfC1jbttJSI0NTmVY3Tdir7WtQS
+ex7qT+QvszROcWpzL/Aep6YO5XEeew1HirPLYaa3A5Hl64g2tdKKBW3u3ZiqYaRW
+l+rVhVDjBgGDb12gl0ASOntpxrAzGkMxLhOCguiYmNqsQr9qrkIXlkvPWT2b2zKO
+FehNHcDAC13j0aJbA7kMHusjJeiS5XBxGYKt4V0g5L1lTkdQlx7FY3ZE+nq6cMP2
+K16uiWRNqKE3AAQ7gC3zZ1YbKSu6g5M1iZcHg4HfhwM/Y5ITxm8/0GfNPUqqSNtc
+Rj8fZf8hLF1HTL5tQpgwnHU/qJxVz1pfsKYXxxi4xJRWk0+EwEptY1hcqsy6Go5a
+r1TxPfk3IhSeFhoMvJ5EiVnJnOEW2pY+RujuWSw1Gr6j9Dz+rY3moP2Hcgv4jGTJ
+Q4x50pZ+kKUWAnX4w4eiLgrHRBe88PQM6K5b8O7QYbqG4jey8XqNP8S1IGuTq1rC
+fuV18RN+LxIvyZ2X13MJLXwThdieYbPrtOk25CgkZn4/U1by51ewhnrL1zgM0qAD
+E2TyoSJFBedxf79PImSxOXYiDpCVUqbiXFMh2vtUMUwK36UL27GGAupNhBf2F5H3
+uTbMdzkw/PDf3aurAtD0OIOi3BvHYZQ4ImhtiSsikIbQJzn8yl+Wz3JSO7JuMdHz
++r3K4ey6Kig2lS4W6tj4qztfds2RlxRkVQkI4Ap46BkcqohyE7NXetADLnfGPbk8
+27z5hkNp/HxyzvWS5ROr4elBN8iG51a0yDY4HOOFPSLXNVK3gyb7sY4bEqX1asXz
+v8maYMFOywgp436NIZp5W2PEUFT/iWVqu1qNsW+nD/0efTRH3/bei5QGzeKVdiOZ
+iCz/z8n9YMb9ES4d3YiztwdMquVFaulDvq83X+MsM8gBa7FV3t4FqdXltnIMR5mh
+J3nGgzrwC+hzkJUqIKUYnxP6pmOfMEKtr9TXhd34J5/yMbGGj1qV7ArgIUQAnUst
+CXem1R3u0lwemERw0fUMAay3UAe2W8Ft9fh7q4EMDSZ35ombZy7jONDfMFUfajL2
++LRtcEU4HA04ABeIkeoA7jvH7YuLwbiDxPsIGTaXrfTKj/8+r0CRlIZtIryilv7I
+HRpQJvWr5yb51S/Qos7fxuvGfqfEf8V3oj0vUUVyJVRE17136SBMMuAMN4jP+Q3R
+XEgMLA4eKdfUwTGKjcrV+IVRkSSno/Wnn8Cx3PeHAjLSWh/IRn1bff2MV9NgBN34
+lGqQAmNLBY+Pz6TCKjuGd+Ftzn5SEKf/s1KZwCW20riqfLxgNAMCM+WTrYKS4oUe
+rwXQR1ZHtYV9e2qxkJdKVg9ApO6zcltwOuauAnVK1iBTFo7m2lk72iFY0F8CNDyH
+SbKMvbCPOszcZF+3CRtSqxtLsvSF6kueaj9oXj2oLjzqVZ7OH3tw0gL1beti8FeB
+VAjVuBuyChq4yC35UDB5NNANkXTeAc+Gm7q2B5T72BM9GVs3mle5WJt68UPTt+li
+tihr05V5sVXWbavsVxOqEWdY0a2jzSmlhpEz3NWJta0SnC2guNwMC4Tpr/0rywkC
+ZkwqYqlE9OkO4R39t6YdFsIY+t3AcZSbF3D82+dLmOW+/DTlAcerNo3aA2cGaRQU
+flU0fqk2Q0y8WWQ3jZFNSEvhQIGhDaRUx7SfePM9xCrjOsNIHEN91r9Wzz7QrrLp
+rsWcSUAqWm5Q2KtsDlgzROwsJoV2aYthUonTG2690Hmwrf4X8p6aihJOk7tIN95z
+x9rhegjCweYqhXw4It21sqiz3i8/B4aDFry3YP9dlxIHvXCR9AYUB2LVOQf8t4+M
+cIA6Ugvfu/EHMLn+9Q22IcNgPu5KIz6Bz2UIjZZH9CANaRKkfDjJR2L7+yLJH939
+O+7+8MkRo3cvFZxvn/dbLVbSuwy7xlAAUGYNyKnlTXWPGpUXnNz3SwNiTz9XnGzr
+QkPHxFTg7Kb9rNbNBNppaASTf/pDptcl8X5GTIBIB222weySM5HMs/+wXY1IsMMx
+0wkcjqoDVKvY3bake7Gc7EkQGedlv9NlBHTX5aWWoUhmVWNRIUpwFxpugopbCXp5
+o2bdMKmWwbrBc46kZUJNVUPUeisyacR+jVr5Nm76KUc93A3F3DJ44KIml0H2NlTW
+28/Uu+OyqOiVWql1XVqx5TgOnjsNe4jsqitDl9u7oE4cfENANfMMuuAE3xVLTWFv
++Y6Ur4GLwjKGoz2epuwlQ4PujYX15qHvjipyxBp8Vt5APGipmlo4Ah/ELyutQd0m
+FogZtycOkLO+7uPCcdXRoBpKTV/EHVUyL5XlSyhD7dsuPxeTG8OQFeQvBsjkozQS
+UTRE18ioijyr6t6S+rufEc94fDEEHJABnP8eLQZeL0lSeXtiRAbeYLAMs3s43o1f
+QTx6QOU2TfjvHcNosVGw/tQU8xACLFJkgU5WsDkKjk9XmEJWBZqQmG0V2MLwS2kT
+jDmiZmW5HBn3z44eCY6wi7ZIZrVBJLJ4WLt406W8tftcgq5ndJrfyWmslTf6VyD5
+Hg3mFstjJlO8ZREzWQnROb6bRchKt4+wipdxpVT6XcKvV8H/XvxzGLirRMczNUet
+/bkdnn4EwVrtO+ul7ozM9o4WY+KVGZKoMhDo8N8iFgS0CpE9bHMPz5x1BW3ci9w+
+U2f3T2+Euls3XN5V3gydiyw6o9GulSZN+8tYj0vASmEQExWKwG0MUHR3ZwskTXDO
+bO+NdY2oOqBuG0w2oAlOl0byiyouLoDZc0ytJbgH+3S1Ymeqt3jyGhj8xpmEcYra
+D2XTxbzoz/kL7pQY/NabvEGEllajU/EcXr4yW249UYZGBV6cH+UWBMcLSMA99yu3
+Xj9V4BHzFeiiGv2ISGkg1s7knsHOIMTIO2GuwfZZlTPLA7lfcdtMC3CGLWAiG9sG
+H9tXXAwfoHOyGSG7uICYFxClKV9GFK8eA9Of+MOQlvexl7j64OLsR6oToBblsj+l
+B13QuC4Oyt/+Cjeqymm0OJsDgBY+YT5KKYZQPRARXEgE4TwpHbpJqkqohRPOcn4P
+ugrdQCqfRMPYQXBcFAZezGVIwY6xgQ/F8r6Vnr835iws0Piq2z8t5fwVsYTBAH9R
+`protect end_protected

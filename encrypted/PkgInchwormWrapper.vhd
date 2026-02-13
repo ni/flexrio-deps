@@ -1,67 +1,103 @@
--------------------------------------------------------------------------------
---
--- File: PkgInchwormWrapper.vhd
--- Author: Rolando Ortega
--- Original Project: NI Cores NiDmaIp
--- Date: 18 Jun 2019
---
--------------------------------------------------------------------------------
--- (c) 2019 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
--------------------------------------------------------------------------------
---
--- Purpose:
---
--- This tiny package holds a single function that is intended to determine which channels
--- require Link Storage memory. If any Inchworm target has a need for this function to be
--- defined in any other way than how it is below, the package should be branched and the
--- function redefined.
---
--------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library work;
-use work.PkgNiUtilities.all;
-use work.PkgCommIntConfiguration.all;
-use work.PkgNiDma.all;
-
-package PkgInchwormWrapper is
-
-  -- This function gives us the channels that are enabled in the Chunky Link Storage RAM.
-  -- Channels that are totally disabled (unused) by the client application, as well as
-  -- channels that are P2P readers, don't need Chunky Links. A client application can
-  -- force a given channel to have Chunky Link storage by setting the corresponding
-  -- channel to true in the kForceChannelEnable generic.
-  function kGetEnabledChannels (
-      constant kForceChannelEnable : NiDmaDmaChannelOneHot_t := (others => false)
-    ) return NiDmaDmaChannelOneHot_t;
-
-end package PkgInchwormWrapper;
-
-package body PkgInchwormWrapper is
-
-  function kGetEnabledChannels (
-    constant kForceChannelEnable : NiDmaDmaChannelOneHot_t := (others => false)
-  ) return NiDmaDmaChannelOneHot_t is
-    variable retval : NiDmaDmaChannelOneHot_t := (others => false);
-  begin
-    for i in NiDmaDmaChannelOneHot_t'range loop
-      -- The only channels that don't need link storage are channels that are not used at
-      -- all (Disabled) or P2P readers. Technically, P2P Writers shouldn't need link
-      -- storage either, but they're implemented in such a way that does use that storage.
-      -- Any channel that is marked as true in kForceChannelEnable will be enabled
-      -- regardless its configuration.
-      retval(i) := (kDmaFifoConfArray(i).Mode /= NiFpgaPeerToPeerReader
-                   and kDmaFifoConfArray(i).Mode /= Disabled)
-                   or kForceChannelEnable(i);
-
-    end loop;
-
-    return retval;
-  end function kGetEnabledChannels;
-
-end package body PkgInchwormWrapper;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+FiK9KBulhkoyUl7dzWtZLepqOja/wRUqNoKfRczMihfNA0+vuPNW1Ro/ajw+Cx5B
+SDe8eyBny6eFH4xtvKUngeXul5rqgheY3/ic0k/OtaNKGyZsayd5ov6Sq3T+mdx/
+dqVg8KgeSP6dpN4MMFgLSHKCCAJ9LgRM3tJ2LdBh/hG79qxKyy3/9yuExMs3TIv+
+8DVps9Q0SxwthbRDeATgOrnJ95E5eK3dvuNT8dFp5cQvyYPV1KaeJy4GUAn99gn/
+8Mg7xrjHncr/MxpV5kn1Zvz9XKgAR34sNro1t16LQzWNULjRbgtr0WyPkRrBqfmz
+MNLEn4pRUPAf7ynOdmPbig==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="je2UZFMZBKLAw0ycXhOix6Mzrit1BQgW38MjgJnVOLM="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+dTasYuXuXXYsdKWrlSNxlzwKHoVs3kUzJuN610sYrZjpGFmu90ROjpuqHFLiloSM
+BSkl5i7hVB7IbVIFxEnJA2vvumaph8tBhRFiP5L6D900GYHevUdiU41QrAIhK2vG
+cxkZl11fE7X015vErVMm+6FLEXoxR42NXngd/Hq2RC4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="8MBqDLcIFGCAccq514Hz32xwDEuFHooG9Pd59L66LCc="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 2688 )
+`protect data_block
+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
+`protect end_protected

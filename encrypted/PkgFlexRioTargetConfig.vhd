@@ -1,78 +1,132 @@
-------------------------------------------------------------------------------------------
---
--- File: PkgFlexRioTargetConfig.vhd
--- Author: Kyle Green
--- Original Project: 798x NextGen FlexRIO
--- Date: 13 February 2015
---
-------------------------------------------------------------------------------------------
--- (c) 2025 Copyright National Instruments Corporation
--- All Rights Reserved
--- National Instruments Internal Information
-------------------------------------------------------------------------------------------
---
--- Purpose: This package contains configuration information that describes a given
--- FlexRIO backend in a way that allows a single IoModule CLIP to be compatible with
--- multiple backends.
---
-------------------------------------------------------------------------------------------
---
--- vreview_group TargetConfig
--- vreview_closed http://review-board.natinst.com/r/328688/
--- vreview_reviewers kygreen dhearn esalinas hrubio lboughal rcastro
---
-------------------------------------------------------------------------------------------
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-package PkgFlexRioTargetConfig is
-
-  ---------------------------------------------------------------------------------------
-  -- Target Description
-  ---------------------------------------------------------------------------------------
-  constant kFlexRioIoModuleFormat : string := "48-MGT-USP";
-  constant kFlexRioProductGroup : string := "7903-PXIe";
-
-  ---------------------------------------------------------------------------------------
-  -- MGT and RefClk Counts
-  ---------------------------------------------------------------------------------------
-  -- These constants indicate the number of MGT lanes that this particular backend
-  -- implements. This allows the same CLIP design to be adaptable to a variety of
-  -- back-ends. The MGT lanes will be grouped together in two signals, which will
-  -- always be of the form:
-  --
-  -- signal MgtPortRx_p, MgtPortRx_n : std_logic_vector(kNumIoModRxMgtLanes-1 downto 0);
-  constant kNumIoModRxMgtLanes : natural := 48;
-  constant kNumIoModTxMgtLanes : natural := 48;
-  constant kNumIoModRefClks : natural := 12;
-
-  ---------------------------------------------------------------------------------------
-  -- Polarity Control
-  ---------------------------------------------------------------------------------------
-  -- To simplify board layout, some of the MGT lanes and clocks have had their polarity
-  -- inverted on the back-end. Three polarity control constants are provided: one for RX,
-  -- one for TX, one for the Reference Clock vector. These constants indicate when a
-  -- polarity inversion has occurred.
-  --
-  -- For every bit in these vectors, a '1' signifies that the
-  -- corresponding MGT lane or Reference Clock is inverted, while a '0' means no
-  -- inversion. This is the same convention used by Xilinx in the GTY primitives'
-  -- RXPOLARITY and TXPOLARITY inputs, so the bits can be passed on to those primitives
-  -- directly.
-  --
-  -- IO Module designers will likely find it convenient to also avail themselves of the
-  -- possibility of inverting lanes on their IO Module designs, as it's preferable to
-  -- invert the polarity of a lane than to compromise its signal integrity. The
-  -- recommended way to do this is to create a new constant vector that follows the same
-  -- convention as here. Then for each GTY primitive would receive the XOR of the
-  -- corresponding bit in both vectors.
-  -- TODO: These polarities need to be set once the layout is finalized
-  constant kRxIoModRxMgtPolarity : std_logic_vector(kNumIoModRxMgtLanes-1 downto 0)  := b"0000_0000_0000_0000_0000_1111_0000_0000_0000_0000_0000_0000";
-  constant kTxIoModTxMgtPolarity : std_logic_vector(kNumIoModTxMgtLanes-1 downto 0)  := b"0000_0000_0000_0000_1111_1111_0000_1111_0000_0000_0000_0000";
-  constant kIoModRefClkPolarity  : std_logic_vector(kNumIoModRefClks-1 downto 0)     := "000000000000";
-
-
-
-end package PkgFlexRioTargetConfig;
+`protect begin_protected
+`protect version = 2
+`protect encrypt_agent = "NI LabVIEW FPGA" , encrypt_agent_info = "2.0"
+`protect begin_commonblock
+`protect license_proxyname = "NI_LV_proxy"
+`protect license_attributes = "USER,MAC,PROXYINFO=2.0"
+`protect license_keyowner = "NI_LV"
+`protect license_keyname = "NI_LV_2.0"
+`protect license_symmetric_key_method = "aes128-cbc"
+`protect license_public_key_method = "rsa"
+`protect license_public_key
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxngMPQrDv/s/Rz/ED4Ri
+j3tGzeObw/Topab4sl+WDRl/up6SWpAfcgdqb2jvLontfkiQS2xnGoq/Ye0JJEp2
+h0NYydCB5GtcEBEe+2n5YJxgiHJ5fGaPguuM6pMX2GcBfKpp3dg8hA/KVTGwvX6a
+L4ThrFgEyCSRe2zVd4DpayOre1LZlFVO8X207BNIJD29reTGSFzj5fbVsHSyRpPl
+kmOpFQiXMjqOtYFAwI9LyVEJpfx2B6GxwA+5zrGC/ZptmaTTj1a3Z815q1GUZu1A
+dpBK2uY9B4wXer6M8yKeqGX0uxDAOW1zh7tvzBysCJoWkZD39OJJWaoaddvhq6HU
+MwIDAQAB
+`protect end_commonblock
+`protect begin_toolblock
+`protect key_keyowner = "Xilinx" , key_keyname = "xilinxt_2021_01"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 256 )
+`protect key_block
+FiK9KBulhkoyUl7dzWtZLepqOja/wRUqNoKfRczMihfNA0+vuPNW1Ro/ajw+Cx5B
+SDe8eyBny6eFH4xtvKUngeXul5rqgheY3/ic0k/OtaNKGyZsayd5ov6Sq3T+mdx/
+dqVg8KgeSP6dpN4MMFgLSHKCCAJ9LgRM3tJ2LdBh/hG79qxKyy3/9yuExMs3TIv+
+8DVps9Q0SxwthbRDeATgOrnJ95E5eK3dvuNT8dFp5cQvyYPV1KaeJy4GUAn99gn/
+8Mg7xrjHncr/MxpV5kn1Zvz9XKgAR34sNro1t16LQzWNULjRbgtr0WyPkRrBqfmz
+MNLEn4pRUPAf7ynOdmPbig==
+`protect control xilinx_schematic_visibility = "true"
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="je2UZFMZBKLAw0ycXhOix6Mzrit1BQgW38MjgJnVOLM="
+`protect begin_toolblock
+`protect key_keyowner = "Mentor Graphics Corporation" , key_keyname = "MGC-VERIF-SIM-RSA-1"
+`protect key_method = "rsa"
+`protect encoding = ( enctype = "base64" , line_length = 64 , bytes = 128 )
+`protect key_block
+dTasYuXuXXYsdKWrlSNxlzwKHoVs3kUzJuN610sYrZjpGFmu90ROjpuqHFLiloSM
+BSkl5i7hVB7IbVIFxEnJA2vvumaph8tBhRFiP5L6D900GYHevUdiU41QrAIhK2vG
+cxkZl11fE7X015vErVMm+6FLEXoxR42NXngd/Hq2RC4=
+`protect rights_digest_method = "sha256"
+`protect end_toolblock="8MBqDLcIFGCAccq514Hz32xwDEuFHooG9Pd59L66LCc="
+`protect data_method = "aes128-cbc"
+`protect encoding = ( enctype = "base64", line_length = 64 , bytes = 4064 )
+`protect data_block
+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
+`protect end_protected
