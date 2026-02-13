@@ -1,3 +1,3 @@
-# Contributing to felxrio
+# Contributing to felxrio-deps
 
-Contributions to **flexrio** is not supported at this time.
+Contributions to **flexrio-deps** is not supported at this time.
