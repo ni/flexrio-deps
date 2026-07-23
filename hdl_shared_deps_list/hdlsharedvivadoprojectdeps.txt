@@ -63,4 +63,3 @@
 ../../deps/flexrio-deps/encrypted/nicores_nidmaip.1.1.0d14/CommonFiles/Source/DMAC/PkgNiDma.vhd
 ../../deps/flexrio-deps/encrypted/nicores_nidmaip.1.1.0d14/CommonFiles/Source/DMAC/PkgNiDmaRegMap.vhd
 ../../deps/flexrio-deps/encrypted/nicores_nidmaip.1.1.0d14/PCIe/CommonFiles/Source/PkgCommunicationInterface.vhd
-../../deps/flexrio-deps/encrypted/nicores_nidmaip.1.1.0d14/PCIe/US/G3x8Tandem/Source/PkgNiDmaConfig.vhd

@@ -61,4 +61,3 @@ PkgScoreboard.vhd
 PkgNiDma.vhd
 PkgNiDmaRegMap.vhd
 PkgCommunicationInterface.vhd
-PkgNiDmaConfig.vhd
